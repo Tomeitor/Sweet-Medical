@@ -1,5 +1,4 @@
 import express from 'express'
-import z from 'zod'
 import medicosRouter from './src/medicos/medicos.routes.js'
 
 const app = express()
