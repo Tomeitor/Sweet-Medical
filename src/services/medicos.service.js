@@ -1,4 +1,4 @@
-import { medicosDB } from "../repositories/medicos.repository";
+import { medicosDB } from "../repositories/medicos.repository.js";
 
 export default class MedicoService {
   async getAll() {
