@@ -1,5 +1,6 @@
 import express from 'express'
 import medicosRouter from './src/routers/medicos.routes.js'
+import disponibilidadRouter from './src/routers/disponibilidades.routes.js'
 
 const app = express()
 app.use(express.json())
@@ -12,6 +13,7 @@ app.get(PATH_APP + '/healthcheck', (req, res) => {
 })
 
 app.use(PATH_APP + '/medicos', medicosRouter);
+app.use(PATH_APP + '/medicos/:idMedico/disponibilidades', disponibilidadRouter);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)

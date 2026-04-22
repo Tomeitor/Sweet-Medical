@@ -1,4 +1,22 @@
 export let medicosDB = [
     { id: 1, nombre: 'Dra. Ana Gómez', especialidad: 'Pediatría', matricula: '12345' },
-    { id: 2, nombre: 'Dr. Luis Pérez', especialidad: 'Cardiología', matricula: '67890' }
+    { id: 2, nombre: 'Dr. Luis Pérez', especialidad: 'Cardiología', matricula: '67890' },
+    { id: 3, nombre: 'Dra. María Fernández', especialidad: 'Neurología', matricula: '23456' },
+    { id: 4, nombre: 'Dr. Carlos Ruiz', especialidad: 'Dermatología', matricula: '78901' },
+    { id: 5, nombre: 'Dra. Laura Martínez', especialidad: 'Traumatología', matricula: '34567' },
+    { id: 6, nombre: 'Dr. Jorge Silva', especialidad: 'Ginecología', matricula: '89012' },
+    { id: 7, nombre: 'Dra. Sofía López', especialidad: 'Oftalmología', matricula: '45678' },
+    { id: 8, nombre: 'Dr. Diego Torres', especialidad: 'Psiquiatría', matricula: '90123' },
+    { id: 9, nombre: 'Dra. Valentina Castro', especialidad: 'Oncología', matricula: '56789' },
+    { id: 10, nombre: 'Dr. Martín Romero', especialidad: 'Urología', matricula: '01234' },
+    { id: 11, nombre: 'Dra. Camila Sosa', especialidad: 'Endocrinología', matricula: '13579' },
+    { id: 12, nombre: 'Dr. Fernando Iglesias', especialidad: 'Gastroenterología', matricula: '24680' },
+    { id: 13, nombre: 'Dra. Paula Navarro', especialidad: 'Otorrinolaringología', matricula: '11223' },
+    { id: 14, nombre: 'Dr. Javier Molina', especialidad: 'Neumonología', matricula: '44556' },
+    { id: 15, nombre: 'Dra. Lucía Herrera', especialidad: 'Reumatología', matricula: '77889' },
+    { id: 16, nombre: 'Dr. Andrés Giménez', especialidad: 'Cirugía General', matricula: '99001' },
+    { id: 17, nombre: 'Dra. Florencia Ríos', especialidad: 'Medicina Interna', matricula: '22334' },
+    { id: 18, nombre: 'Dr. Pablo Vargas', especialidad: 'Infectología', matricula: '55667' },
+    { id: 19, nombre: 'Dra. Natalia Domínguez', especialidad: 'Nefrología', matricula: '88990' },
+    { id: 20, nombre: 'Dr. Gabriel Blanco', especialidad: 'Hematología', matricula: '33445' }
 ];
