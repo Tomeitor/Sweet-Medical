@@ -10,24 +10,20 @@ import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 dayjs.extend(isBetween);
 dayjs.extend(customParseFormat);
 
-class turnoService {
+export class TurnoService {
 
     async darDeAlta(medicoId, pacienteId, fechaHora, sede, practica, costo) {
     const fechaTurno = new Date(fechaHora);
 
-    // 1. Buscamos al médico (Recordá que guardamos en memoria [cite: 36])
     const medico = await MedicosRepo.findById(medicoId);
     if (!medico) throw new Error("El médico no existe");
 
-    // 2. Validamos disponibilidad horaria (La lógica que ya vimos)
     const atiende = this.validarAgendaMedico(medico, fechaTurno);
     if (!atiende) throw new Error("El médico no atiende en ese horario");
 
-    // 3. Validamos que no esté ocupado
     const ocupado = await TurnosRepo.findByMedicoYFecha(medicoId, fechaTurno);
     if (ocupado) throw new Error("Horario ya reservado");
 
-    // 4. Creamos el objeto final para guardar
     const nuevoTurno = new Turno(
       Date.now().toString(),
       medico, 
@@ -44,7 +40,7 @@ class turnoService {
   validarAgendaMedico(medico, fecha) {
     const fechaDayjs = dayjs(fecha);
     
-    //mapea el número de día de Day.js (0-6) con el Enum
+    //mapea el número de día de day.js (0 a 6) con el Enum
     const mapeoDias = [
       DiaSemana.DOMINGO, DiaSemana.LUNES, DiaSemana.MARTES, 
       DiaSemana.MIERCOLES, DiaSemana.JUEVES, DiaSemana.VIERNES, DiaSemana.SABADO
