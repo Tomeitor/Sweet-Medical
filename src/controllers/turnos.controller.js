@@ -10,8 +10,8 @@ export class TurnosController {
         medicoId: z.string({ required_error: "El ID del médico es obligatorio" }),
         pacienteId: z.string().min(1, "El ID del paciente no puede estar vacío"),
         fechaHora: z.string().datetime({ message: "Formato de fecha inválido (debe ser ISO)" }),
-        sede: z.string(),
-        practica: z.string(),
+        sede: z.string().min(1, "La sede es obligatoria"),
+        practica: z.string().min(1, "La práctica es obligatoria"),
         costo: z.number().positive("El costo debe ser un valor mayor a cero")
     });
 

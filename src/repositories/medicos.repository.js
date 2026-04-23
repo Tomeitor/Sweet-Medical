@@ -4,5 +4,5 @@ export let medicosDB = [
 ];
 
 export const findById = (id) => {
-    return medicosDB.find(m => m.id == id); 
+    return medicosDB.find(m => m.id === id); 
 };

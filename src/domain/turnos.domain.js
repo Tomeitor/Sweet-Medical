@@ -3,13 +3,14 @@ import { EstadoTurno } from "./estadoTurno.js";
 
 export class TurnoDomain {
 
-    constructor(id, medico, paciente, fechaHora, sede, practica, estado, historialDeEstados,costo) {
+    constructor(id, medico, paciente, fechaHora, sede, practica, costo) {
         this.id = id;
         this.medico = medico;
         this.paciente = paciente;
         this.fechaHora = fechaHora;
         this.sede = sede;
         this.practica = practica;
+        this.costo = costo;
         this.estado = EstadoTurno.RESERVADO;
         this.historialEstados = []
     }
