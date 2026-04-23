@@ -1,8 +1,10 @@
 import express from 'express'
 import medicosRouter from './src/routers/medicos.routes.js';
+import turnosRouter from './src/routers/turnos.routes.js';
 
 const app = express()
 app.use(express.json())
+
 
 const PATH_APP = '/api/v1'
 const PORT = process.env.PORT || 3000
@@ -12,6 +14,7 @@ app.get(PATH_APP + '/healthcheck', (req, res) => {
 })
 
 app.use(PATH_APP + '/medicos', medicosRouter);
+app.use(PATH_APP + '/turnos', turnosRouter);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)

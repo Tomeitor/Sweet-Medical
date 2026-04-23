@@ -1,7 +1,8 @@
 import { TurnoDomain } from '../domain/turnos.domain.js';
-import * as TurnosRepo from './turnos.repository.js';
-import * as MedicosRepo from '../medicos/medicos.repository.js';
+import * as TurnosRepo from '../repositories/turnos.repository.js';
+import * as MedicosRepo from '../repositories/medicos.repository.js';
 import { DiaSemana } from '../domain/diaSemana.js';
+import { EstadoTurno } from '../domain/estadoTurno.js';
 
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween.js';
@@ -24,7 +25,7 @@ export class TurnoService {
     const ocupado = await TurnosRepo.findByMedicoYFecha(medicoId, fechaTurno);
     if (ocupado) throw new Error("Horario ya reservado");
 
-    const nuevoTurno = new Turno(
+    const nuevoTurno = new TurnoDomain(
       Date.now().toString(),
       medico, 
       pacienteId, 
