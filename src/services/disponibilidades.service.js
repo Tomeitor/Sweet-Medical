@@ -1,10 +1,13 @@
 import { disponibilidadesDB } from "../repositories/disponibilidades.repository.js";
-import { medicosDB } from "../repositories/medicos.repository.js";
+import { MedicoRepository } from "../repositories/medicos.repository.js";
+
+
+const medicoRepository = new MedicoRepository();
 
 export default class DisponibilidadesService {
   async getByMedico(idMedico) {
 
-    const medico = medicosDB.find(m => m.id == idMedico);
+    const medico = medicoRepository.getById(idMedico);
 
     if (!medico) throw new Error("Médico no encontrado");
 
@@ -13,9 +16,9 @@ export default class DisponibilidadesService {
 
   async getById(idMedico, id) {
 
-    const medico = medicosDB.find(m => m.id == idMedico);
+    const medico = medicoRepository.getById(idMedico);
 
-    if (!medicosDB.find(m => m.id == idMedico)) throw new Error("Médico no encontrado");
+    if (!medico) throw new Error("Médico no encontrado");
 
     const disponibilidad = disponibilidadesDB.find((m) => m.id == id);
     if (!disponibilidad) throw new Error("Disponibilidad no encontrada");
@@ -24,7 +27,7 @@ export default class DisponibilidadesService {
 
   async create(idMedico, nuevaDisponibilidad) {
 
-    const medico = medicosDB.find(m => m.id == idMedico);
+    const medico = medicoRepository.getById(idMedico);
 
     if (!medico) throw new Error("Médico no encontrado");
 
@@ -40,7 +43,7 @@ export default class DisponibilidadesService {
 
   async update(idMedico, id, disponibilidadActualizada) {
 
-    const medico = medicosDB.find(m => m.id == idMedico);
+    const medico = medicoRepository.getById(idMedico);
 
     if (!medico) throw new Error("Médico no encontrado");
 
@@ -54,7 +57,7 @@ export default class DisponibilidadesService {
 
   async delete(idMedico, id) {
 
-    const medico = medicosDB.find(m => m.id == idMedico);
+    const medico = medicoRepository.getById(idMedico);
 
     if (!medico) throw new Error("Médico no encontrado");
 
