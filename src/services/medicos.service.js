@@ -1,42 +1,36 @@
-import { medicosDB } from "../repositories/medicos.repository.js";
+import { MedicoRepository } from "../repositories/medicos.repository.js";
+
+const repository = new MedicoRepository();
 
 export default class MedicoService {
   async getAll() {
-    return medicosDB;
+    return repository.getAll();
   }
 
   async getById(id) {
-    const medico = medicosDB.find((m) => m.id == id);
+    const medico = repository.getById(id);
     if (!medico) throw new Error("Médico no encontrado");
     return medico;
   }
 
   async create(medicoData) {
-    const nuevoMedico = {
-      id: medicosDB.length + 1,
-      ...medicoData,
-    };
-    medicosDB.push(nuevoMedico);
-    return nuevoMedico;
+    return repository.add(new Medico(medicoData));
   }
 
-  // Actualizar un médico existente
   async update(id, medicoData) {
-    // Ejemplo con BD real: return await MedicoModel.findByIdAndUpdate(id, medicoData, { new: true });
-    const index = medicosDB.findIndex((m) => m.id === parseInt(id));
-    if (index === -1) throw new Error("Médico no encontrado");
+    
+    const medico = this.getById(id);
+    
+    const updatedMedico = { ...medico, ...medicoData, id };
 
-    medicosDB[index] = { ...medicosDB[index], ...medicoData };
-    return medicosDB[index];
+    return repository.update(updatedMedico);
   }
 
-  // Eliminar un médico
   async delete(id) {
-    // Ejemplo con BD real: return await MedicoModel.findByIdAndDelete(id);
-    const index = medicosDB.findIndex((m) => m.id === parseInt(id));
-    if (index === -1) throw new Error("Médico no encontrado");
+    const medico = this.getById(id);
 
-    const medicoEliminado = medicosDB.splice(index, 1);
-    return medicoEliminado[0];
+    repository.delete(medico.id);
+
+    return medico;
   }
 }

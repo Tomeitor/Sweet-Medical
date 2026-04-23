@@ -1,5 +1,6 @@
 import express from 'express'
-import medicosRouter from './src/routers/medicos.routes.js';
+import medicosRouter from './src/routers/medicos.routes.js'
+import disponibilidadRouter from './src/routers/disponibilidades.routes.js'
 import turnosRouter from './src/routers/turnos.routes.js';
 
 
@@ -15,6 +16,7 @@ app.get(PATH_APP + '/healthcheck', (req, res) => {
 })
 
 app.use(PATH_APP + '/medicos', medicosRouter);
+app.use(PATH_APP + '/medicos/:idMedico/disponibilidades', disponibilidadRouter);
 app.use(PATH_APP + '/turnos', turnosRouter);
 
 app.listen(PORT, () => {
