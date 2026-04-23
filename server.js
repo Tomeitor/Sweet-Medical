@@ -2,6 +2,7 @@ import express from 'express'
 import medicosRouter from './src/routers/medicos.routes.js';
 import turnosRouter from './src/routers/turnos.routes.js';
 
+
 const app = express()
 app.use(express.json())
 
