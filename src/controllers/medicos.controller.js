@@ -8,12 +8,10 @@ export default class MedicoController {
       const medicos = await service.getAll();
       res.status(200).json(medicos);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Error al obtener los médicos",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Error al obtener los médicos",
+        error: error.message,
+      });
     }
   }
 
