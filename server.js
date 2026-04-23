@@ -1,5 +1,5 @@
 import express from 'express'
-import medicosRouter from './src/medicos/medicos.routes.js'
+import medicosRouter from './src/routers/medicos.routes.js';
 
 const app = express()
 app.use(express.json())
