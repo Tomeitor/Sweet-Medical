@@ -1,4 +1,5 @@
 import { MedicoRepository } from "../repositories/medicos.repository.js";
+import { NotFoundError } from '../errors/AppError.js'
 
 const repository = new MedicoRepository();
 
@@ -9,7 +10,7 @@ export default class MedicoService {
 
   async getById(id) {
     const medico = repository.getById(id);
-    if (!medico) throw new Error("Médico no encontrado");
+    if (!medico) throw new NotFoundError("El medico no fue encontrado");
     return medico;
   }
 
@@ -20,7 +21,8 @@ export default class MedicoService {
   async update(id, medicoData) {
     
     const medico = this.getById(id);
-    
+    if (!medico) throw new NotFoundError("El medico no fue encontrado");
+
     const updatedMedico = { ...medico, ...medicoData, id };
 
     return repository.update(updatedMedico);
@@ -28,8 +30,9 @@ export default class MedicoService {
 
   async delete(id) {
     const medico = this.getById(id);
+    if (!medico) throw new NotFoundError("El medico no fue encontrado");
 
-    repository.delete(medico.id);
+    repository.delete(id);
 
     return medico;
   }

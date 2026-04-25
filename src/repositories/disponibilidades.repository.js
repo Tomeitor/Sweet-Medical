@@ -89,3 +89,10 @@ export let disponibilidadesDB = [
     // Dra. Natalia Domínguez (id: 19)
     { id: 45, idMedico: 19, diaSemana: 'VIERNES', desde: '08:00', hasta: '12:00' }
 ];
+
+
+export class DisponibilidadRepository{
+    constructor(){
+        
+    }
+}

@@ -2,16 +2,14 @@ import MedicoService from "../services/medicos.service.js";
 import z from "zod";
 
 const service = new MedicoService();
+
 export default class MedicoController {
   async getMedicos(_req, res) {
     try {
       const medicos = await service.getAll();
       res.status(200).json(medicos);
     } catch (error) {
-      res.status(500).json({
-        message: "Error al obtener los médicos",
-        error: error.message,
-      });
+      next(error);
     }
   }
 
@@ -21,7 +19,7 @@ export default class MedicoController {
       const medico = await service.getById(id);
       res.status(200).json(medico);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
@@ -43,9 +41,7 @@ export default class MedicoController {
       const nuevoMedico = await service.create(req.body);
       res.status(201).json(nuevoMedico);
     } catch (error) {
-      res
-        .status(500)
-        .json({ message: "Error al crear el médico", error: error.message });
+      next(error);
     }
   }
 
@@ -55,7 +51,7 @@ export default class MedicoController {
       const medicoActualizado = await service.update(id, req.body);
       res.status(200).json(medicoActualizado);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
@@ -65,7 +61,7 @@ export default class MedicoController {
       await service.delete(id);
       res.status(200).json({ message: "Médico eliminado correctamente" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 }
