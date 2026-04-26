@@ -53,10 +53,6 @@ export class TurnosRepository {
         return Object.values(this.turnos)
     }
 
-    getByPaciente(pacienteId) {
-        return Object.values(this.turnos).filter(t => t.paciente === pacienteId)
-    }
-
     validateTurno(turno) {
         if (!(turno instanceof Turno)) {
             throw new BadRequestError("El turno es inválido")
@@ -69,3 +65,5 @@ export class TurnosRepository {
         }
     }
 }
+
+export const turnosRepository = new TurnosRepository()

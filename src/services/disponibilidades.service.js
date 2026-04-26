@@ -1,8 +1,6 @@
-import { DisponibilidadesRepository } from "../repositories/disponibilidades.repository.js";
-import { MedicoRepository } from "../repositories/medicos.repository.js";
-
-const disponibilidadesRepository = new DisponibilidadesRepository();
-const medicoRepository = new MedicoRepository();
+import { disponibilidadesRepository } from "../repositories/disponibilidades.repository.js";
+import { medicoRepository } from "../repositories/medicos.repository.js";
+import { Disponibilidad } from "../domain/Disponibilidad.js";
 
 export class DisponibilidadesService {
     async getByMedico(idMedico) {
@@ -25,10 +23,13 @@ export class DisponibilidadesService {
         const medico = medicoRepository.getById(idMedico);
         if (!medico) throw new Error("Médico no encontrado");
 
-        const disponibilidad = {
-            idMedico,
-            ...nuevaDisponibilidad
-        };
+        const disponibilidad = new Disponibilidad(
+            null,
+            parseInt(idMedico),
+            nuevaDisponibilidad.diaSemana,
+            nuevaDisponibilidad.desde,
+            nuevaDisponibilidad.hasta
+        );
 
         return disponibilidadesRepository.add(disponibilidad);
     }
@@ -40,11 +41,13 @@ export class DisponibilidadesService {
         const disponibilidadExistente = disponibilidadesRepository.findById(id);
         if (!disponibilidadExistente) throw new Error("Disponibilidad no encontrada");
 
-        const disponibilidad = {
-            id: parseInt(id),
-            idMedico,
-            ...disponibilidadActualizada
-        };
+        const disponibilidad = new Disponibilidad(
+            parseInt(id),
+            parseInt(idMedico),
+            disponibilidadActualizada.diaSemana,
+            disponibilidadActualizada.desde,
+            disponibilidadActualizada.hasta
+        );
 
         return disponibilidadesRepository.update(disponibilidad);
     }
@@ -56,7 +59,8 @@ export class DisponibilidadesService {
         return disponibilidadesRepository.delete(id);
     }
 
-    getAll() {
+    async getAll() {
         return disponibilidadesRepository.getAll();
     }
 }
+

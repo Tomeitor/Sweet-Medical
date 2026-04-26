@@ -1,36 +1,30 @@
-import { MedicoRepository } from "../repositories/medicos.repository.js";
-
-const repository = new MedicoRepository();
+import { medicoRepository } from "../repositories/medicos.repository.js";
+import { Medico } from "../domain/Medico.js";
 
 export default class MedicoService {
   async getAll() {
-    return repository.getAll();
+    return medicoRepository.getAll();
   }
 
   async getById(id) {
-    const medico = repository.getById(id);
+    const medico = medicoRepository.getById(id);
     if (!medico) throw new Error("Médico no encontrado");
     return medico;
   }
 
   async create(medicoData) {
-    return repository.add(new Medico(medicoData));
+    return medicoRepository.add(new Medico(medicoData));
   }
 
   async update(id, medicoData) {
-    
-    const medico = this.getById(id);
-    
-    const updatedMedico = { ...medico, ...medicoData, id };
-
-    return repository.update(updatedMedico);
+    const medico = await this.getById(id);
+    const updatedMedico = { ...medico, ...medicoData, id: parseInt(id) };
+    return medicoRepository.update(updatedMedico);
   }
 
   async delete(id) {
-    const medico = this.getById(id);
-
-    repository.delete(medico.id);
-
+    const medico = await this.getById(id);
+    medicoRepository.delete(medico.id);
     return medico;
   }
 }

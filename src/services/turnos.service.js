@@ -1,6 +1,7 @@
 import { Turno } from '../domain/Turno.js';
-import { TurnosRepository } from '../repositories/turnos.repository.js';
-import { MedicoRepository } from '../repositories/medicos.repository.js';
+import { turnosRepository } from '../repositories/turnos.repository.js';
+import { medicoRepository } from '../repositories/medicos.repository.js';
+import { disponibilidadesRepository } from '../repositories/disponibilidades.repository.js';
 import { DiaSemana } from '../domain/diaSemana.js';
 import { EstadoTurno } from '../domain/EstadoTurno.js';
 
@@ -11,9 +12,6 @@ import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 dayjs.extend(isBetween);
 dayjs.extend(customParseFormat);
 
-const turnosRepository = new TurnosRepository();
-const medicoRepository = new MedicoRepository();
-
 export class TurnoService {
 
     async darDeAlta(medicoId, pacienteId, fechaHora, sede, practica, costo) {
@@ -22,7 +20,7 @@ export class TurnoService {
         const medico = medicoRepository.getById(medicoId);
         if (!medico) throw new Error("El médico no existe");
 
-        const atiende = this.validarAgendaMedico(medico, fechaTurno);
+        const atiende = await this.validarAgendaMedico(medicoId, fechaTurno);
         if (!atiende) throw new Error("El médico no atiende en ese horario");
 
         const ocupado = turnosRepository.findByMedicoYFecha(medicoId, fechaTurno);
@@ -41,7 +39,7 @@ export class TurnoService {
         return turnosRepository.add(nuevoTurno);
     }
 
-    validarAgendaMedico(medico, fecha) {
+    async validarAgendaMedico(medicoId, fecha) {
         const fechaDayjs = dayjs(fecha);
         
         const mapeoDias = [
@@ -52,7 +50,9 @@ export class TurnoService {
         
         const horaPedido = fechaDayjs.format('HH:mm');
 
-        const disponibilidadEncontrada = medico.disponibilidades?.find(disp => {
+        const disponibilidades = disponibilidadesRepository.getByMedico(medicoId);
+
+        const disponibilidadEncontrada = disponibilidades.find(disp => {
             return disp.diaSemana === diaDelTurno && 
             horaPedido >= disp.desde && 
             horaPedido < disp.hasta;
@@ -80,15 +80,15 @@ export class TurnoService {
         return turnosRepository.update(turno);
     }
 
-    getAll() {
+    async getAll() {
         return turnosRepository.getAll();
     }
 
-    getById(id) {
+    async getById(id) {
         return turnosRepository.findById(id);
     }
 
-    getByPaciente(pacienteId) {
+    async getByPaciente(pacienteId) {
         return turnosRepository.getByPaciente(pacienteId);
     }
 }

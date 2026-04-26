@@ -158,3 +158,5 @@ export class MedicoRepository {
     }
 }
 
+export const medicoRepository = new MedicoRepository()
+
