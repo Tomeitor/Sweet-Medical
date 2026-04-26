@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch --env-file=.env server.js"
+    "dev": "node --watch --env-file=.env server.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +14,11 @@
   "description": "",
   "dependencies": {
     "dayjs": "^1.11.20",
+    "axios": "^1.15.2",
     "express": "^5.2.1",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0"
   }
 }
