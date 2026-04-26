@@ -1,7 +1,27 @@
+import { BadRequestError } from "../errors/AppError.js";
 import MedicoService from "../services/medicos.service.js";
 import z from "zod";
+import { disponibilidadSchema } from "./disponibilidades.controller.js";
 
 const service = new MedicoService();
+
+export const medicoSchema = z.object({
+  usuario: z.string().min(1, "El usuario es requerido"),
+  matricula: z
+    .string()
+    .min(3, "La matrícula debe tener al menos 3 caracteres")
+    .max(50),
+  nombre: z
+    .string()
+    .min(3, "El nombre debe tener al menos 3 caracteres")
+    .max(50),
+  especialidades: z.array(z.string()).default([]),
+  practicas: z.array(z.string()).default([]),
+  sedes: z.array(z.string()).default([]),
+  disponibilidad: z.array(disponibilidadSchema).default([]),
+  eliminado: z.boolean().default(false),
+});
+
 
 export default class MedicoController {
   async getMedicos(_req, res, next) {
@@ -23,29 +43,21 @@ export default class MedicoController {
     }
   }
 
-  medicoSchema = z.object({
-    nombre: z.string().min(3).max(50),
-    apellido: z.string().min(3).max(50),
-    matricula: z.string().min(3).max(50),
-    especialidad: z.string().min(3).max(50),
-  });
-
-  async createMedico(req, res, next) {
+  createMedico = async (req, res, next) => {
     try {
-      const result = this.medicoSchema.safeParse(req.body);
+      const result = medicoSchema.safeParse(req.body);
       if (!result.success) {
-        return res
-          .status(400)
-          .json({ message: "Datos inválidos", error: result.error.issues });
+        console.log(result.error);
+        throw new BadRequestError("Datos invalidos");
       }
       const nuevoMedico = await service.create(req.body);
       res.status(201).json(nuevoMedico);
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async updateMedico(req, res, next) {
+  updateMedico = async (req, res, next) => {
     try {
       const { id } = req.params;
       const medicoActualizado = await service.update(id, req.body);
@@ -53,9 +65,9 @@ export default class MedicoController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async deleteMedico(req, res, next) {
+  deleteMedico = async (req, res, next) => {
     try {
       const { id } = req.params;
       await service.delete(id);
@@ -63,5 +75,5 @@ export default class MedicoController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 }

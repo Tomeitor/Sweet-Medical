@@ -20,9 +20,8 @@ export default class MedicoService {
   }
 
   async update(id, medicoData) {
-    
     const medico = await this.getById(id);
-    if (!medico) throw new NotFoundError("El medico no fue encontrado");
+
     const updatedMedico = { ...medico, ...medicoData, id };
 
     return repository.update(new Medico(updatedMedico));
@@ -30,7 +29,6 @@ export default class MedicoService {
 
   async delete(id) {
     const medico = await this.getById(id);
-    if (!medico) throw new NotFoundError("El medico no fue encontrado");
 
     repository.delete(id);
 

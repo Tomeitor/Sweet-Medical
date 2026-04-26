@@ -40,32 +40,14 @@ export class MedicoRepository {
         return Object.values(this.medicos).filter((m) => !m.eliminado)
     }
 
-    // getPaginated(numeroPagina, limitePorPagina, filtros = {}) {
-    //     let medicos = Object.values(this.medicos)
-
-    //     if (filtros.especialidad !== undefined) {
-    //         const especialidadNormalizada = filtros.especialidad.trim().toLowerCase()
-    //         medicos = medicos.filter((m) => m.especialidad.trim().toLowerCase() === especialidadNormalizada)
-    //     }
-        
-    //     if (filtros.nombre !== undefined) {
-    //         const nombreNormalizado = filtros.nombre.trim().toLowerCase()
-    //         medicos = medicos.filter((m) => m.nombre.trim().toLowerCase().includes(nombreNormalizado))
-    //     }
-
-    //     const inicio = (numeroPagina - 1) * limitePorPagina
-    //     const fin = inicio + limitePorPagina
-
-    //     return {
-    //         medicos: medicos.slice(inicio, fin),
-    //         totalMedicos: medicos.length
-    //     }
-    // }
-
     add(medico) {
         this.validateMedico(medico)
-        // Validar que la disponibilidad sea ub objeto adecuado
-        
+        if(medico.disponibilidad.length > 0){
+            medico.disponibilidad.forEach(disp => {
+                disp.id = medico.disponibilidad.length + 1
+                this.validateDisponibilidad(new Disponibilidad(disp))
+            })
+        }
         medico.id = this.nextId++
         this.medicos[medico.id] = medico
         return medico
@@ -75,19 +57,18 @@ export class MedicoRepository {
         console.log(medico)
         this.validateMedico(medico)
         this.validateId(medico.id)
-        if(medico.disponibilidad) this.validateDisponibilidad(new Disponibilidad(medico.disponibilidad))
+        if(medico.disponibilidad.length > 0){
+            medico.disponibilidad.forEach(disp => {
+                if(!disp.id){
+                    disp.id = medico.disponibilidad.length + 1
+                }
+                this.validateDisponibilidad(new Disponibilidad(disp))
+            })
+        }
 
         this.medicos[medico.id] = medico
         return medico
     }
-
-    // saveAll(medicos) {
-    //     if(!Array.isArray(medicos)) {
-    //         throw new BadRequestError("Debe enviar una lista de médicos")
-    //     }
-
-    //     return medicos.map((medico) => this.add(medico))
-    // }
 
     getById(id) {
         this.validateId(id)
@@ -95,41 +76,16 @@ export class MedicoRepository {
         return this.medicos[id] && !this.medicos[id].eliminado ? this.medicos[id] : null
     }
 
-    /*getByNombre(nombre) {
-        this.validateNombre(nombre)
-        const nombreNormalizado = nombre.trim().toLowerCase()
-
-        return (
-            Object.values(this.medicos).find((medico) => {
-                return medico.nombre.trim().toLowerCase() === nombreNormalizado
-            }) ?? null
-        )
-    }*/
-
-    /*getByMatricula(matricula) {
-        if (typeof matricula !== "string" || matricula.trim().length === 0) {
-            throw new BadRequestError("La matrícula del médico es obligatoria")
-        }
-        
-        const matriculaNormalizada = matricula.trim()
-
-        return (
-            Object.values(this.medicos).find((medico) => {
-                return medico.matricula.trim() === matriculaNormalizada
-            }) ?? null
-        )
-    }*/
-
     delete(id) {
         this.validateId(id)
+        const medicoAEliminar = this.getById(id) // Se verifica que existe en el service
 
-        const medicoAEliminar = this.getById(id)
-
-        this.medicos[id] = {...medicoAEliminar, borrado: true}
+        this.medicos[id] = {...medicoAEliminar, eliminado: true}
         return medicoAEliminar
     }
 
     
+
     validateMedico(medico) {
         if (!(medico instanceof Medico)) {
             throw new UnprocessableEntityError("El médico es inválido")
