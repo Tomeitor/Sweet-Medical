@@ -1,3 +1,4 @@
+import { BadRequestError } from "../errors/AppError.js";
 import DisponibilidadesService from "../services/disponibilidades.service.js";
 import z from "zod";
 
@@ -15,17 +16,13 @@ export default class DisponibilidadController {
   });
 
 
-  getDisponibilidadByIdMedico = async (req, res) => {
+  getDisponibilidadByIdMedico = async (req, res, next) => {
     try {
       const { idMedico } = req.params;
       const disponibilidades = await service.getByMedico(idMedico);
       res.status(200).json(disponibilidades);
     } catch (error) {
-      const status = error.message.includes("no encontrado") ? 404 : 500;
-      res.status(status).json({
-        message: "Error al obtener las disponibilidades",
-        error: error.message,
-      });
+      next(error)
     }
   }
 
@@ -35,8 +32,7 @@ export default class DisponibilidadController {
       const disponibilidad = await service.getById(idMedico, id);
       res.status(200).json(disponibilidad);
     } catch (error) {
-      const status = error.message.includes("no encontrad") ? 404 : 500;
-      res.status(status).json({ message: error.message });
+      next(error)
     }
   }
 
@@ -46,14 +42,13 @@ export default class DisponibilidadController {
       
       const result = this.disponibilidadSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ message: "Datos inválidos", error: result.error.issues });
+        throw new BadRequestError("Datos invalidos");
       }
 
       const nuevaDisponibilidad = await service.create(idMedico, req.body);
       res.status(201).json(nuevaDisponibilidad);
     } catch (error) {
-      const status = error.message.includes("no encontrado") ? 404 : 500;
-      res.status(status).json({ message: "Error al crear la disponibilidad", error: error.message });
+      next(error)
     }
   }
 
@@ -64,8 +59,7 @@ export default class DisponibilidadController {
       const disponibilidadActualizada = await service.update(idMedico, id, req.body);
       res.status(200).json(disponibilidadActualizada);
     } catch (error) {
-      const status = error.message.includes("no encontrad") ? 404 : 500;
-      res.status(status).json({ message: error.message });
+      next(error)
     }
   }
 
@@ -75,8 +69,7 @@ export default class DisponibilidadController {
       await service.delete(idMedico, id);
       res.status(200).json({ message: "Disponibilidad eliminada correctamente" });
     } catch (error) {
-      const status = error.message.includes("no encontrad") ? 404 : 500;
-      res.status(status).json({ message: error.message });
+      next(error)
     }
   }
 }

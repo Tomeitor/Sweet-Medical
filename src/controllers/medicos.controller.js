@@ -4,7 +4,7 @@ import z from "zod";
 const service = new MedicoService();
 
 export default class MedicoController {
-  async getMedicos(_req, res) {
+  async getMedicos(_req, res, next) {
     try {
       const medicos = await service.getAll();
       res.status(200).json(medicos);
@@ -13,7 +13,7 @@ export default class MedicoController {
     }
   }
 
-  async getMedicoById(req, res) {
+  async getMedicoById(req, res, next) {
     try {
       const { id } = req.params;
       const medico = await service.getById(id);
@@ -30,7 +30,7 @@ export default class MedicoController {
     especialidad: z.string().min(3).max(50),
   });
 
-  async createMedico(req, res) {
+  async createMedico(req, res, next) {
     try {
       const result = this.medicoSchema.safeParse(req.body);
       if (!result.success) {
@@ -45,7 +45,7 @@ export default class MedicoController {
     }
   }
 
-  async updateMedico(req, res) {
+  async updateMedico(req, res, next) {
     try {
       const { id } = req.params;
       const medicoActualizado = await service.update(id, req.body);
@@ -55,7 +55,7 @@ export default class MedicoController {
     }
   }
 
-  async deleteMedico(req, res) {
+  async deleteMedico(req, res, next) {
     try {
       const { id } = req.params;
       await service.delete(id);

@@ -3,11 +3,21 @@ import {
     BadRequestError,
     UnprocessableEntityError
 } from "../errors/AppError.js"
-
+import Disponibilidad from '../domain/Disponibilidad.js' 
 
 const medicosMock = [
-    new Medico({ id: 1, usuario: "anagomez", matricula: "12345", nombre: "Dra. Ana Gómez", especialidades: [], practicas: [], sedes: [], disponibilidad: [], eliminado: false,}),
-    new Medico({ id: 2, usuario: "joseperez", matricula: "54321", nombre: "Dr. José Perez", especialidades: [], practicas: [], sedes: [], disponibilidad: [], eliminado: false,}),
+    new Medico({ id: 1, usuario: "anagomez", matricula: "12345", nombre: "Dra. Ana Gómez", especialidades: [], practicas: [], sedes: [], "disponibilidad": [{
+      "id":1,
+      "diaSemana": "VIERNES",
+      "desde": "08:00",
+      "hasta": "12:00"
+    }], eliminado: false,}),
+    new Medico({ id: 2, usuario: "joseperez", matricula: "54321", nombre: "Dr. José Perez", especialidades: [], practicas: [], sedes: [], "disponibilidad": [{
+      "id":1,
+      "diaSemana": "MARTES",
+      "desde": "08:00",
+      "hasta": "12:00"
+    }], eliminado: false,}),
     new Medico({ id: 3, usuario: "mariafernandez", matricula: "67890", nombre: "Dra. Maria Fernandez", especialidades: [], practicas: [], sedes: [], disponibilidad: [], eliminado: false,}),
     new Medico({ id: 4, usuario: "pedrolopez", matricula: "98765", nombre: "Dr. Pedro Lopez", especialidades: [], practicas: [], sedes: [], disponibilidad: [], eliminado: false,}),
     new Medico({ id: 5, usuario: "mariajimenez", matricula: "24680", nombre: "Dra. Maria Jimenez", especialidades: [], practicas: [], sedes: [], disponibilidad: [], eliminado: false,}),
@@ -62,9 +72,10 @@ export class MedicoRepository {
     }
 
     update(medico){
+        console.log(medico)
         this.validateMedico(medico)
         this.validateId(medico.id)
-        // Validar que la disponibilidad sea ub objeto adecuado
+        if(medico.disponibilidad) this.validateDisponibilidad(new Disponibilidad(medico.disponibilidad))
 
         this.medicos[medico.id] = medico
         return medico
@@ -122,6 +133,11 @@ export class MedicoRepository {
     validateMedico(medico) {
         if (!(medico instanceof Medico)) {
             throw new UnprocessableEntityError("El médico es inválido")
+        }
+    }
+    validateDisponibilidad(disp) {
+        if (!(disp instanceof Disponibilidad)) {
+            throw new UnprocessableEntityError("La disponibilidad es inválido")
         }
     }
 
