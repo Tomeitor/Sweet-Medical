@@ -1,91 +1,129 @@
-export let disponibilidadesDB = [
-    // --- MÉDICOS QUE CUBREN TODOS LOS DÍAS (Lunes a Viernes) ---
-    // Dra. Ana Gómez (id: 1)
-    { id: 1, idMedico: 1, diaSemana: 'LUNES', desde: '09:00', hasta: '17:00' },
-    { id: 2, idMedico: 1, diaSemana: 'MARTES', desde: '09:00', hasta: '17:00' },
-    { id: 3, idMedico: 1, diaSemana: 'MIERCOLES', desde: '09:00', hasta: '17:00' },
-    { id: 4, idMedico: 1, diaSemana: 'JUEVES', desde: '09:00', hasta: '17:00' },
-    { id: 5, idMedico: 1, diaSemana: 'VIERNES', desde: '09:00', hasta: '17:00' },
+import { Disponibilidad } from "../domain/Disponibilidad.js"
+import {
+    BadRequestError,
+    NotFoundError
+} from "../errors/AppError.js"
 
-    // Dr. Andrés Giménez (id: 16) - Turno mañana
-    { id: 6, idMedico: 16, diaSemana: 'LUNES', desde: '08:00', hasta: '14:00' },
-    { id: 7, idMedico: 16, diaSemana: 'MARTES', desde: '08:00', hasta: '14:00' },
-    { id: 8, idMedico: 16, diaSemana: 'MIERCOLES', desde: '08:00', hasta: '14:00' },
-    { id: 9, idMedico: 16, diaSemana: 'JUEVES', desde: '08:00', hasta: '14:00' },
-    { id: 10, idMedico: 16, diaSemana: 'VIERNES', desde: '08:00', hasta: '14:00' },
+const disponibilidadesMock = [
+    new Disponibilidad(1, 1, 'LUNES', '09:00', '17:00'),
+    new Disponibilidad(2, 1, 'MARTES', '09:00', '17:00'),
+    new Disponibilidad(3, 1, 'MIERCOLES', '09:00', '17:00'),
+    new Disponibilidad(4, 1, 'JUEVES', '09:00', '17:00'),
+    new Disponibilidad(5, 1, 'VIERNES', '09:00', '17:00'),
+    new Disponibilidad(6, 16, 'LUNES', '08:00', '14:00'),
+    new Disponibilidad(7, 16, 'MARTES', '08:00', '14:00'),
+    new Disponibilidad(8, 16, 'MIERCOLES', '08:00', '14:00'),
+    new Disponibilidad(9, 16, 'JUEVES', '08:00', '14:00'),
+    new Disponibilidad(10, 16, 'VIERNES', '08:00', '14:00'),
+    new Disponibilidad(11, 17, 'LUNES', '12:00', '19:00'),
+    new Disponibilidad(12, 17, 'MARTES', '12:00', '19:00'),
+    new Disponibilidad(13, 17, 'MIERCOLES', '12:00', '19:00'),
+    new Disponibilidad(14, 17, 'JUEVES', '12:00', '19:00'),
+    new Disponibilidad(15, 17, 'VIERNES', '12:00', '19:00'),
+    new Disponibilidad(16, 2, 'MARTES', '08:00', '12:00'),
+    new Disponibilidad(17, 2, 'JUEVES', '14:00', '18:00'),
+    new Disponibilidad(18, 3, 'LUNES', '10:00', '16:00'),
+    new Disponibilidad(19, 3, 'MIERCOLES', '10:00', '16:00'),
+    new Disponibilidad(20, 3, 'VIERNES', '10:00', '16:00'),
+    new Disponibilidad(21, 5, 'MARTES', '09:00', '15:00'),
+    new Disponibilidad(22, 5, 'JUEVES', '09:00', '15:00'),
+    new Disponibilidad(23, 7, 'LUNES', '14:00', '18:00'),
+    new Disponibilidad(24, 7, 'JUEVES', '14:00', '18:00'),
+    new Disponibilidad(25, 9, 'MIERCOLES', '08:00', '14:00'),
+    new Disponibilidad(26, 9, 'VIERNES', '08:00', '14:00'),
+    new Disponibilidad(27, 10, 'MARTES', '14:00', '18:00'),
+    new Disponibilidad(28, 10, 'JUEVES', '14:00', '18:00'),
+    new Disponibilidad(29, 10, 'SABADO', '09:00', '13:00'),
+    new Disponibilidad(30, 12, 'LUNES', '08:00', '12:00'),
+    new Disponibilidad(31, 12, 'MIERCOLES', '08:00', '12:00'),
+    new Disponibilidad(32, 14, 'MARTES', '10:00', '17:00'),
+    new Disponibilidad(33, 14, 'VIERNES', '10:00', '17:00'),
+    new Disponibilidad(34, 18, 'LUNES', '09:00', '13:00'),
+    new Disponibilidad(35, 18, 'MIERCOLES', '09:00', '13:00'),
+    new Disponibilidad(36, 18, 'VIERNES', '09:00', '13:00'),
+    new Disponibilidad(37, 20, 'MARTES', '15:00', '19:00'),
+    new Disponibilidad(38, 20, 'JUEVES', '15:00', '19:00'),
+    new Disponibilidad(39, 4, 'VIERNES', '09:00', '13:00'),
+    new Disponibilidad(40, 6, 'MARTES', '13:00', '17:00'),
+    new Disponibilidad(41, 8, 'JUEVES', '10:00', '14:00'),
+    new Disponibilidad(42, 11, 'LUNES', '14:00', '18:00'),
+    new Disponibilidad(43, 13, 'MIERCOLES', '10:00', '16:00'),
+    new Disponibilidad(44, 15, 'LUNES', '08:00', '12:00'),
+    new Disponibilidad(45, 19, 'VIERNES', '08:00', '12:00')
+]
 
-    // Dra. Florencia Ríos (id: 17) - Turno tarde
-    { id: 11, idMedico: 17, diaSemana: 'LUNES', desde: '12:00', hasta: '19:00' },
-    { id: 12, idMedico: 17, diaSemana: 'MARTES', desde: '12:00', hasta: '19:00' },
-    { id: 13, idMedico: 17, diaSemana: 'MIERCOLES', desde: '12:00', hasta: '19:00' },
-    { id: 14, idMedico: 17, diaSemana: 'JUEVES', desde: '12:00', hasta: '19:00' },
-    { id: 15, idMedico: 17, diaSemana: 'VIERNES', desde: '12:00', hasta: '19:00' },
+export class DisponibilidadesRepository {
+    constructor() {
+        this.disponibilidades = {}
 
+        disponibilidadesMock.forEach(disp => {
+            this.disponibilidades[disp.id] = disp
+        })
 
-    // --- MÉDICOS QUE CUBREN ALGUNOS DÍAS (2 o 3 días por semana) ---
-    // Dr. Luis Pérez (id: 2)
-    { id: 16, idMedico: 2, diaSemana: 'MARTES', desde: '08:00', hasta: '12:00' },
-    { id: 17, idMedico: 2, diaSemana: 'JUEVES', desde: '14:00', hasta: '18:00' },
+        this.nextId = disponibilidadesMock.length + 1
+    }
 
-    // Dra. María Fernández (id: 3)
-    { id: 18, idMedico: 3, diaSemana: 'LUNES', desde: '10:00', hasta: '16:00' },
-    { id: 19, idMedico: 3, diaSemana: 'MIERCOLES', desde: '10:00', hasta: '16:00' },
-    { id: 20, idMedico: 3, diaSemana: 'VIERNES', desde: '10:00', hasta: '16:00' },
+    getAll() {
+        return Object.values(this.disponibilidades)
+    }
 
-    // Dra. Laura Martínez (id: 5)
-    { id: 21, idMedico: 5, diaSemana: 'MARTES', desde: '09:00', hasta: '15:00' },
-    { id: 22, idMedico: 5, diaSemana: 'JUEVES', desde: '09:00', hasta: '15:00' },
+    getByMedico(idMedico) {
+        this.validateIdMedico(idMedico)
+        return Object.values(this.disponibilidades).filter(d => d.idMedico === Number(idMedico))
+    }
 
-    // Dra. Sofía López (id: 7)
-    { id: 23, idMedico: 7, diaSemana: 'LUNES', desde: '14:00', hasta: '18:00' },
-    { id: 24, idMedico: 7, diaSemana: 'JUEVES', desde: '14:00', hasta: '18:00' },
+    findById(id) {
+        this.validateId(id)
+        return this.disponibilidades[id] ?? null
+    }
 
-    // Dra. Valentina Castro (id: 9)
-    { id: 25, idMedico: 9, diaSemana: 'MIERCOLES', desde: '08:00', hasta: '14:00' },
-    { id: 26, idMedico: 9, diaSemana: 'VIERNES', desde: '08:00', hasta: '14:00' },
+    add(disponibilidad) {
+        this.validateDisponibilidad(disponibilidad)
+        disponibilidad.id = this.nextId++
+        this.disponibilidades[disponibilidad.id] = disponibilidad
+        return disponibilidad
+    }
 
-    // Dr. Martín Romero (id: 10) - Incluye un Sábado
-    { id: 27, idMedico: 10, diaSemana: 'MARTES', desde: '14:00', hasta: '18:00' },
-    { id: 28, idMedico: 10, diaSemana: 'JUEVES', desde: '14:00', hasta: '18:00' },
-    { id: 29, idMedico: 10, diaSemana: 'SABADO', desde: '09:00', hasta: '13:00' },
+    update(disponibilidad) {
+        this.validateDisponibilidad(disponibilidad)
+        this.validateId(disponibilidad.id)
 
-    // Dr. Fernando Iglesias (id: 12)
-    { id: 30, idMedico: 12, diaSemana: 'LUNES', desde: '08:00', hasta: '12:00' },
-    { id: 31, idMedico: 12, diaSemana: 'MIERCOLES', desde: '08:00', hasta: '12:00' },
+        const dispExistente = this.disponibilidades[disponibilidad.id]
+        if (!dispExistente) {
+            throw new NotFoundError("La disponibilidad no existe")
+        }
 
-    // Dr. Javier Molina (id: 14)
-    { id: 32, idMedico: 14, diaSemana: 'MARTES', desde: '10:00', hasta: '17:00' },
-    { id: 33, idMedico: 14, diaSemana: 'VIERNES', desde: '10:00', hasta: '17:00' },
+        this.disponibilidades[disponibilidad.id] = disponibilidad
+        return disponibilidad
+    }
 
-    // Dr. Pablo Vargas (id: 18)
-    { id: 34, idMedico: 18, diaSemana: 'LUNES', desde: '09:00', hasta: '13:00' },
-    { id: 35, idMedico: 18, diaSemana: 'MIERCOLES', desde: '09:00', hasta: '13:00' },
-    { id: 36, idMedico: 18, diaSemana: 'VIERNES', desde: '09:00', hasta: '13:00' },
+    delete(id) {
+        this.validateId(id)
 
-    // Dr. Gabriel Blanco (id: 20)
-    { id: 37, idMedico: 20, diaSemana: 'MARTES', desde: '15:00', hasta: '19:00' },
-    { id: 38, idMedico: 20, diaSemana: 'JUEVES', desde: '15:00', hasta: '19:00' },
+        const dispAEliminar = this.disponibilidades[id]
+        if (!dispAEliminar) {
+            throw new NotFoundError("La disponibilidad no existe")
+        }
 
+        delete this.disponibilidades[id]
+        return dispAEliminar
+    }
 
-    // --- MÉDICOS QUE CUBREN SOLO 1 DÍA A LA SEMANA ---
-    // Dr. Carlos Ruiz (id: 4)
-    { id: 39, idMedico: 4, diaSemana: 'VIERNES', desde: '09:00', hasta: '13:00' },
+    validateDisponibilidad(disp) {
+        if (!(disp instanceof Disponibilidad)) {
+            throw new BadRequestError("La disponibilidad es inválida")
+        }
+    }
 
-    // Dr. Jorge Silva (id: 6)
-    { id: 40, idMedico: 6, diaSemana: 'MARTES', desde: '13:00', hasta: '17:00' },
+    validateId(id) {
+        if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+            throw new BadRequestError("El id no es válido")
+        }
+    }
 
-    // Dr. Diego Torres (id: 8)
-    { id: 41, idMedico: 8, diaSemana: 'JUEVES', desde: '10:00', hasta: '14:00' },
-
-    // Dra. Camila Sosa (id: 11)
-    { id: 42, idMedico: 11, diaSemana: 'LUNES', desde: '14:00', hasta: '18:00' },
-
-    // Dra. Paula Navarro (id: 13)
-    { id: 43, idMedico: 13, diaSemana: 'MIERCOLES', desde: '10:00', hasta: '16:00' },
-
-    // Dra. Lucía Herrera (id: 15)
-    { id: 44, idMedico: 15, diaSemana: 'LUNES', desde: '08:00', hasta: '12:00' },
-
-    // Dra. Natalia Domínguez (id: 19)
-    { id: 45, idMedico: 19, diaSemana: 'VIERNES', desde: '08:00', hasta: '12:00' }
-];
+    validateIdMedico(idMedico) {
+        if (!Number.isInteger(Number(idMedico)) || Number(idMedico) <= 0) {
+            throw new BadRequestError("El id del médico no es válido")
+        }
+    }
+}

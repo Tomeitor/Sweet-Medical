@@ -1,4 +1,4 @@
-import DisponibilidadesService from "../services/disponibilidades.service.js";
+import { DisponibilidadesService } from "../services/disponibilidades.service.js";
 import z from "zod";
 
 const service = new DisponibilidadesService();
