@@ -4,7 +4,7 @@ import DisponibilidadController from '../controllers/disponibilidades.controller
 const controller = new DisponibilidadController();
 const router = Router({mergeParams: true});
 
-router.get('/', controller.getDisponibilidadByIdMedico);
+router.get('/', controller.getDisponibilidades);
 router.get('/:id', controller.getDisponibilidadById);
 router.post('/', controller.createDisponibilidad);
 router.put('/:id', controller.updateDisponibilidad);

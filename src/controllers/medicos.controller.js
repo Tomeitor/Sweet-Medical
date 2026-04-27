@@ -1,71 +1,76 @@
+import { BadRequestError } from "../errors/AppError.js";
 import MedicoService from "../services/medicos.service.js";
 import z from "zod";
 
 const service = new MedicoService();
+
+export const medicoSchema = z.object({
+  usuario: z.string().min(1, "El usuario es requerido"),
+  matricula: z
+    .string()
+    .min(3, "La matrícula debe tener al menos 3 caracteres")
+    .max(50),
+  nombre: z
+    .string()
+    .min(3, "El nombre debe tener al menos 3 caracteres")
+    .max(50),
+  especialidades: z.array(z.string()).optional(),
+  practicas: z.array(z.string()).optional(),
+  sedes: z.array(z.string()).optional()
+});
+
+
 export default class MedicoController {
-  async getMedicos(_req, res) {
+  async getMedicos(_req, res, next) {
     try {
       const medicos = await service.getAll();
       res.status(200).json(medicos);
     } catch (error) {
-      res.status(500).json({
-        message: "Error al obtener los médicos",
-        error: error.message,
-      });
+      next(error);
     }
   }
 
-  async getMedicoById(req, res) {
+  async getMedicoById(req, res, next) {
     try {
       const { id } = req.params;
       const medico = await service.getById(id);
       res.status(200).json(medico);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  medicoSchema = z.object({
-    nombre: z.string().min(3).max(50),
-    apellido: z.string().min(3).max(50),
-    matricula: z.string().min(3).max(50),
-    especialidad: z.string().min(3).max(50),
-  });
-
-  async createMedico(req, res) {
+  createMedico = async (req, res, next) => {
     try {
-      const result = this.medicoSchema.safeParse(req.body);
+      const result = medicoSchema.safeParse(req.body);
       if (!result.success) {
-        return res
-          .status(400)
-          .json({ message: "Datos inválidos", error: result.error.issues });
+        console.log(result.error);
+        throw new BadRequestError("Datos invalidos");
       }
       const nuevoMedico = await service.create(req.body);
       res.status(201).json(nuevoMedico);
     } catch (error) {
-      res
-        .status(500)
-        .json({ message: "Error al crear el médico", error: error.message });
+      next(error);
     }
-  }
+  };
 
-  async updateMedico(req, res) {
+  updateMedico = async (req, res, next) => {
     try {
       const { id } = req.params;
       const medicoActualizado = await service.update(id, req.body);
       res.status(200).json(medicoActualizado);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
-  }
+  };
 
-  async deleteMedico(req, res) {
+  deleteMedico = async (req, res, next) => {
     try {
       const { id } = req.params;
       await service.delete(id);
       res.status(200).json({ message: "Médico eliminado correctamente" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
-  }
+  };
 }
