@@ -16,7 +16,7 @@ export default class MedicoService {
   }
 
   async create(medicoData) {
-    return repository.add(new Medico(medicoData));
+    return medicoRepository.add(new Medico(medicoData));
   }
 
   async update(id, medicoData) {

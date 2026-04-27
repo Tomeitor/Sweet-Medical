@@ -1,7 +1,6 @@
-import { es } from "zod/locales"
-import { EstadoTurno } from "./estadoTurno.js";
+import { EstadoTurno } from "./EstadoTurno.js";
 
-export class TurnoDomain {
+export class Turno {
 
     constructor(id, medico, paciente, fechaHora, sede, practica, costo) {
         this.id = id;

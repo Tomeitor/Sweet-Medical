@@ -1,8 +1,9 @@
-import { TurnoDomain } from '../domain/turnos.domain.js';
-import * as TurnosRepo from '../repositories/turnos.repository.js';
-import * as MedicosRepo from '../repositories/medicos.repository.js';
+import { Turno } from '../domain/Turno.js';
+import { turnosRepository } from '../repositories/turnos.repository.js';
+import { medicoRepository } from '../repositories/medicos.repository.js';
+import { disponibilidadesRepository } from '../repositories/disponibilidades.repository.js';
 import { DiaSemana } from '../domain/diaSemana.js';
-import { EstadoTurno } from '../domain/estadoTurno.js';
+import { EstadoTurno } from '../domain/EstadoTurno.js';
 
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween.js';
@@ -14,71 +15,80 @@ dayjs.extend(customParseFormat);
 export class TurnoService {
 
     async darDeAlta(medicoId, pacienteId, fechaHora, sede, practica, costo) {
-    const fechaTurno = new Date(fechaHora);
+        const fechaTurno = new Date(fechaHora);
 
-    const medico = await MedicosRepo.findById(medicoId);
-    if (!medico) throw new Error("El médico no existe");
+        const medico = medicoRepository.getById(medicoId);
+        if (!medico) throw new Error("El médico no existe");
 
-    const atiende = this.validarAgendaMedico(medico, fechaTurno);
-    if (!atiende) throw new Error("El médico no atiende en ese horario");
+        const atiende = await this.validarAgendaMedico(medicoId, fechaTurno);
+        if (!atiende) throw new Error("El médico no atiende en ese horario");
 
-    const ocupado = await TurnosRepo.findByMedicoYFecha(medicoId, fechaTurno);
-    if (ocupado) throw new Error("Horario ya reservado");
+        const ocupado = turnosRepository.findByMedicoYFecha(medicoId, fechaTurno);
+        if (ocupado) throw new Error("Horario ya reservado");
 
-    const nuevoTurno = new TurnoDomain(
-      Date.now().toString(),
-      medico, 
-      pacienteId, 
-      fechaTurno,
-      sede, 
-      practica, 
-      costo
-    );
+        const nuevoTurno = new Turno(
+            Date.now().toString(),
+            medico, 
+            pacienteId, 
+            fechaTurno,
+            sede, 
+            practica, 
+            costo
+        );
 
-    return TurnosRepo.save(nuevoTurno);
-  }
-
-  validarAgendaMedico(medico, fecha) {
-    const fechaDayjs = dayjs(fecha);
-    
-    //mapea el número de día de day.js (0 a 6) con el Enum
-    const mapeoDias = [
-      DiaSemana.DOMINGO, DiaSemana.LUNES, DiaSemana.MARTES, 
-      DiaSemana.MIERCOLES, DiaSemana.JUEVES, DiaSemana.VIERNES, DiaSemana.SABADO
-    ];
-    const diaDelTurno = mapeoDias[fechaDayjs.day()];
-    
-    const horaPedido = fechaDayjs.format('HH:mm');
-
-    //verifica la disponibilidad en la agenda del medico 
-    const disponibilidadEncontrada = medico.disponibilidades.find(disp => {
-      return disp.diaSemana === diaDelTurno && 
-      horaPedido >= disp.horaDesde && 
-      horaPedido < disp.horaHasta;
-    });
-
-    return !!disponibilidadEncontrada;
-  }
-
-  async darDeBaja(turnoId) {
-    //busca el turno en memoria
-    const turno = await TurnosRepo.findById(turnoId);
-    if (!turno) {
-      throw new Error("El turno que querés cancelar no existe");
-    }
-    
-    const ahora = dayjs();
-    const horaDelTurno = dayjs(turno.fechaHora);
-    const diferenciaHoras = horaDelTurno.diff(ahora, 'hour', true);
-
-    if (diferenciaHoras < 1) {
-      throw new Error("No podés dar de baja: falta menos de una hora para el turno");
+        return turnosRepository.add(nuevoTurno);
     }
 
-    turno.actualizarEstado(EstadoTurno.CANCELADO, "SISTEMA", "Cancelación por el usuario");
-    
-    return await TurnosRepo.update(turno);
-  }
+    async validarAgendaMedico(medicoId, fecha) {
+        const fechaDayjs = dayjs(fecha);
+        
+        const mapeoDias = [
+            DiaSemana.DOMINGO, DiaSemana.LUNES, DiaSemana.MARTES, 
+            DiaSemana.MIERCOLES, DiaSemana.JUEVES, DiaSemana.VIERNES, DiaSemana.SABADO
+        ];
+        const diaDelTurno = mapeoDias[fechaDayjs.day()];
+        
+        const horaPedido = fechaDayjs.format('HH:mm');
 
+        const disponibilidades = disponibilidadesRepository.getByMedico(medicoId);
 
+        const disponibilidadEncontrada = disponibilidades.find(disp => {
+            return disp.diaSemana === diaDelTurno && 
+            horaPedido >= disp.desde && 
+            horaPedido < disp.hasta;
+        });
+
+        return !!disponibilidadEncontrada;
+    }
+
+    async darDeBaja(turnoId) {
+        const turno = turnosRepository.findById(turnoId);
+        if (!turno) {
+            throw new Error("El turno que querés cancelar no existe");
+        }
+        
+        const ahora = dayjs();
+        const horaDelTurno = dayjs(turno.fechaHora);
+        const diferenciaHoras = horaDelTurno.diff(ahora, 'hour', true);
+
+        if (diferenciaHoras < 1) {
+            throw new Error("No podés dar de baja: falta menos de una hora para el turno");
+        }
+
+        turno.actualizarEstado(EstadoTurno.CANCELADO, "SISTEMA", "Cancelación por el usuario");
+        
+        return turnosRepository.update(turno);
+    }
+
+    async getAll() {
+        return turnosRepository.getAll();
+    }
+
+    async getById(id) {
+        return turnosRepository.findById(id);
+    }
+
+    async getByPaciente(pacienteId) {
+        return turnosRepository.getByPaciente(pacienteId);
+    }
 }
