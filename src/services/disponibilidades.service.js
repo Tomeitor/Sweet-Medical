@@ -1,70 +1,42 @@
-import { disponibilidadesDB } from "../repositories/disponibilidades.repository.js";
-import { MedicoRepository } from "../repositories/medicos.repository.js";
+import { NotFoundError } from "../errors/AppError.js";
+import DisponibilidadesRepository from "../repositories/disponibilidades.repository.js";
 
-
-const medicoRepository = new MedicoRepository();
+const disponibilidadesRepository = new DisponibilidadesRepository();
 
 export default class DisponibilidadesService {
+  
+  async getAll() {
+    const disponibilidades = await disponibilidadesRepository.getAll();
+    return disponibilidades;
+  }
+  
   async getByMedico(idMedico) {
-
-    const medico = medicoRepository.getById(idMedico);
-
-    if (!medico) throw new Error("Médico no encontrado");
-
-    return disponibilidadesDB.filter(d => d.idMedico == idMedico);
-  }
-
-  async getById(idMedico, id) {
-
-    const medico = medicoRepository.getById(idMedico);
-
-    if (!medico) throw new Error("Médico no encontrado");
-
-    const disponibilidad = disponibilidadesDB.find((m) => m.id == id);
-    if (!disponibilidad) throw new Error("Disponibilidad no encontrada");
+    const disponibilidad = await disponibilidadesRepository.getByMedico(idMedico);
     return disponibilidad;
   }
 
-  async create(idMedico, nuevaDisponibilidad) {
-
-    const medico = medicoRepository.getById(idMedico);
-
-    if (!medico) throw new Error("Médico no encontrado");
-
-    const disponibilidad = {
-      id: disponibilidadesDB.length + 1,
-      idMedico,
-      ...nuevaDisponibilidad
-    };
-    disponibilidadesDB.push(disponibilidad);
+  async getById(id) {
+    const disponibilidad = await disponibilidadesRepository.getById(id);
+    if (!disponibilidad) throw new NotFoundError("La disponibilidad no fue encontrada");
     return disponibilidad;
   }
 
-
-  async update(idMedico, id, disponibilidadActualizada) {
-
-    const medico = medicoRepository.getById(idMedico);
-
-    if (!medico) throw new Error("Médico no encontrado");
-
-    const index = disponibilidadesDB.findIndex((m) => m.id === parseInt(id));
-    if (index === -1) throw new Error("Disponibilidad no encontrada");
-
-    disponibilidadesDB[index] = { ...disponibilidadesDB[index], ...disponibilidadActualizada };
-    return disponibilidadesDB[index];
+  async create(nuevaDisponibilidad) {
+    const disponibilidad = await disponibilidadesRepository.create(nuevaDisponibilidad);
+    return disponibilidad;
   }
 
+  async update(idDisp, disponibilidadActualizada) {
+    const dispoExist = await this.getById(idDisp);
 
-  async delete(idMedico, id) {
+    const disponibilidad = await disponibilidadesRepository.update({...dispoExist, ...disponibilidadActualizada});
+    return disponibilidad;
+  }
 
-    const medico = medicoRepository.getById(idMedico);
+  async delete(idDisp) {
+    const dispoExist = await this.getById(idDisp);
 
-    if (!medico) throw new Error("Médico no encontrado");
-
-    const index = disponibilidadesDB.findIndex((m) => m.id === parseInt(id));
-    if (index === -1) throw new Error("Disponibilidad no encontrada");
-
-    const disponibilidadEliminada = disponibilidadesDB.splice(index, 1);
-    return disponibilidadEliminada[0];
+    const disponibilidad = await disponibilidadesRepository.delete(idDisp);
+    return disponibilidad;
   }
 }
