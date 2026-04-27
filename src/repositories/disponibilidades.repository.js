@@ -108,3 +108,5 @@ export default class DisponibilidadesRepository {
     }
   }
 }
+
+export const disponibilidadesRepository = new DisponibilidadesRepository();
