@@ -35,47 +35,7 @@ const medicosMock = [
     practicas: [],
     sedes: [],
     eliminado: false,
-  }),
-  new Medico({
-    id: 4,
-    usuario: "pedrolopez",
-    matricula: "98765",
-    nombre: "Dr. Pedro Lopez",
-    especialidades: [],
-    practicas: [],
-    sedes: [],
-    eliminado: false,
-  }),
-  new Medico({
-    id: 5,
-    usuario: "mariajimenez",
-    matricula: "24680",
-    nombre: "Dra. Maria Jimenez",
-    especialidades: [],
-    practicas: [],
-    sedes: [],
-    eliminado: false,
-  }),
-  new Medico({
-    id: 6,
-    usuario: "josemartinez",
-    matricula: "13579",
-    nombre: "Dr. Jose Martinez",
-    especialidades: [],
-    practicas: [],
-    sedes: [],
-    eliminado: false,
-  }),
-  new Medico({
-    id: 7,
-    usuario: "anaalvarez",
-    matricula: "86420",
-    nombre: "Dra. Ana Alvarez",
-    especialidades: [],
-    practicas: [],
-    sedes: [],
-    eliminado: false,
-  }),
+  })
 ];
 const disponibilidadesRepository = new DisponibilidadesRepository();
 
@@ -92,16 +52,13 @@ export class MedicoRepository {
 
   getAll = async () => {
     const medicos = Object.values(this.medicos).filter((m) => !m.eliminado);
-    const medicosConDisponibilidades = await Promise.all(
-      medicos.map(async (medico) => {
-        medico.disponibilidad = await disponibilidadesRepository.getByMedico(
-          medico.id,
-        );
-        return medico;
-      }),
-    );
-    console.log(medicosConDisponibilidades);
-    return medicosConDisponibilidades;
+    // const medicosConDisponibilidades = await Promise.all(
+    //   medicos.map(async (medico) => {
+    //     medico.disponibilidad = await disponibilidadesRepository.getByMedico(medico.id);
+    //     return medico;
+    //   }),
+    // );
+    return medicos;
   };
 
   getById = async (id) => {
@@ -109,7 +66,7 @@ export class MedicoRepository {
 
     const medico =
       this.medicos[id] && !this.medicos[id].eliminado ? this.medicos[id] : null;
-    medico.disponibilidad = await disponibilidadesRepository.getByMedico(id);
+    // medico.disponibilidad = await disponibilidadesRepository.getByMedico(id);
 
     return medico;
   };

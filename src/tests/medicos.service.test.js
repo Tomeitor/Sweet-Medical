@@ -1,5 +1,5 @@
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
-import { Medico } from "../domain/Medico.js";
+import Medico from "../domain/Medico.js";
 import { medicoRepository } from "../repositories/medicos.repository.js";
 import MedicoService from "../services/medicos.service.js";
 
@@ -29,8 +29,36 @@ describe("MedicoService", () => {
   describe("getAll", () => {
     it("debe retornar todos los medicos", async () => {
       const medicos = [
-        new Medico({ id: 1, nombre: "Dra. Ana Gómez", especialidad: "Pediatría", matricula: "12345" }),
-        new Medico({ id: 2, nombre: "Dr. Luis Pérez", especialidad: "Cardiología", matricula: "67890" }),
+        new Medico({
+          id: 1,
+          usuario: "anagomez",
+          matricula: "12345",
+          nombre: "Dra. Ana Gómez",
+          especialidades: [],
+          practicas: [],
+          sedes: [],
+          eliminado: false,
+        }),
+        new Medico({
+          id: 2,
+          usuario: "joseperez",
+          matricula: "54321",
+          nombre: "Dr. José Perez",
+          especialidades: [],
+          practicas: [],
+          sedes: [],
+          eliminado: false,
+        }),
+        new Medico({
+          id: 3,
+          usuario: "mariafernandez",
+          matricula: "67890",
+          nombre: "Dra. Maria Fernandez",
+          especialidades: [],
+          practicas: [],
+          sedes: [],
+          eliminado: false,
+        }),
       ];
       mockGetAll.mockResolvedValue(medicos);
 
@@ -43,7 +71,16 @@ describe("MedicoService", () => {
 
   describe("getById", () => {
     it("debe retornar el medico cuando existe", async () => {
-      const medico = new Medico({ id: 1, nombre: "Dra. Ana Gómez", especialidad: "Pediatría", matricula: "12345" });
+      const medico = new Medico({
+        id: 1,
+        usuario: "anagomez",
+        matricula: "12345",
+        nombre: "Dra. Ana Gómez",
+        especialidades: [],
+        practicas: [],
+        sedes: [],
+        eliminado: false,
+      });
       mockGetById.mockReturnValue(medico);
 
       const result = await service.getById(1);
@@ -55,13 +92,23 @@ describe("MedicoService", () => {
     it("debe lanzar error cuando el medico no existe", async () => {
       mockGetById.mockReturnValue(null);
 
-      await expect(service.getById(999)).rejects.toThrow("Médico no encontrado");
+      await expect(service.getById(999)).rejects.toThrow(
+        "El medico no fue encontrado",
+      );
     });
   });
 
   describe("create", () => {
     it("debe crear un nuevo medico", async () => {
-      const medicoData = { nombre: "Dr. Nuevo", especialidad: "Clínica", matricula: "11111" };
+      const medicoData = {
+        usuario: "slopez",
+        matricula: "12345",
+        nombre: "Dr. Lautaro Lopez",
+        especialidades: [],
+        practicas: [],
+        sedes: [],
+        eliminado: false,
+      };
       const medico = new Medico({ id: 21, ...medicoData });
       mockAdd.mockReturnValue(medico);
 
@@ -74,11 +121,22 @@ describe("MedicoService", () => {
 
   describe("update", () => {
     it("debe actualizar un medico existente", async () => {
-      const medico = new Medico({ id: 1, nombre: "Dra. Ana Gómez", especialidad: "Pediatría", matricula: "12345" });
+      const medico = new Medico({
+        id: 1,
+        usuario: "anagomez",
+        matricula: "12345",
+        nombre: "Dra. Ana Gómez",
+        especialidades: [],
+        practicas: [],
+        sedes: [],
+        eliminado: false,
+      });
       mockGetById.mockReturnValue(medico);
       mockUpdate.mockReturnValue({ ...medico, nombre: "Dra. Ana Actualizada" });
 
-      const result = await service.update(1, { nombre: "Dra. Ana Actualizada" });
+      const result = await service.update(1, {
+        nombre: "Dra. Ana Actualizada",
+      });
 
       expect(result.nombre).toBe("Dra. Ana Actualizada");
       expect(mockUpdate).toHaveBeenCalled();
@@ -87,13 +145,24 @@ describe("MedicoService", () => {
     it("debe lanzar error al actualizar medico inexistente", async () => {
       mockGetById.mockReturnValue(null);
 
-      await expect(service.update(999, { nombre: "Test" })).rejects.toThrow("Médico no encontrado");
+      await expect(service.update(999, { nombre: "Test" })).rejects.toThrow(
+        "El medico no fue encontrado",
+      );
     });
   });
 
   describe("delete", () => {
     it("debe eliminar un medico existente", async () => {
-      const medico = new Medico({ id: 1, nombre: "Dra. Ana Gómez", especialidad: "Pediatría", matricula: "12345" });
+      const medico = new Medico({
+        id: 1,
+        usuario: "anagomez",
+        matricula: "12345",
+        nombre: "Dra. Ana Gómez",
+        especialidades: [],
+        practicas: [],
+        sedes: [],
+        eliminado: false,
+      });
       mockGetById.mockReturnValue(medico);
       mockDelete.mockReturnValue(medico);
 
@@ -106,7 +175,9 @@ describe("MedicoService", () => {
     it("debe lanzar error al eliminar medico inexistente", async () => {
       mockGetById.mockReturnValue(null);
 
-      await expect(service.delete(999)).rejects.toThrow("Médico no encontrado");
+      await expect(service.delete(999)).rejects.toThrow(
+        "El medico no fue encontrado",
+      );
     });
   });
 });

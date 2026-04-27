@@ -22,29 +22,13 @@ const disponibilidadesMock = [
     eliminado: false,
   }),
   new Disponibilidad({
-    id: 3,
-    idMedico: 1,
-    diaSemana: "JUEVES",
-    desde: "08:00",
-    hasta: "12:00",
-    eliminado: false,
-  }),
-  new Disponibilidad({
     id: 4,
     idMedico: 2,
     diaSemana: "LUNES",
     desde: "08:00",
     hasta: "12:00",
     eliminado: false,
-  }),
-  new Disponibilidad({
-    id: 5,
-    idMedico: 2,
-    diaSemana: "MARTES",
-    desde: "08:00",
-    hasta: "12:00",
-    eliminado: false,
-  }),
+  })
 ];
 
 export default class DisponibilidadesRepository {
