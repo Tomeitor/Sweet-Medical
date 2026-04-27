@@ -1,7 +1,5 @@
 import { NotFoundError } from "../errors/AppError.js";
-import DisponibilidadesRepository from "../repositories/disponibilidades.repository.js";
-
-const disponibilidadesRepository = new DisponibilidadesRepository();
+import { disponibilidadesRepository } from "../repositories/disponibilidades.repository.js";
 
 export default class DisponibilidadesService {
   
