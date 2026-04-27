@@ -1,5 +1,5 @@
 const axios = require('axios');
-const router = require('../routers/medicos.routes.js');
+import router from '../routers/medicos.routes.js';
 
 jest.mock('axios');
 
