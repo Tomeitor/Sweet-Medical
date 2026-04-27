@@ -18,4 +18,4 @@ En cuanto a la organizacion de las carpetas, vamos a usar una arquitectura de ca
 
 ### Diagrama de Clase (entrega 1)
 
-![diagrama de clase de la primera entrega](.\docs\SweetMedicalDC.svg)
+![diagrama de clase de la primera entrega](/docs/SweetMedicalDC.svg)
