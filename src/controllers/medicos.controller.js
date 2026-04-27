@@ -1,7 +1,6 @@
 import { BadRequestError } from "../errors/AppError.js";
 import MedicoService from "../services/medicos.service.js";
 import z from "zod";
-import { disponibilidadSchema } from "./disponibilidades.controller.js";
 
 const service = new MedicoService();
 
@@ -15,11 +14,9 @@ export const medicoSchema = z.object({
     .string()
     .min(3, "El nombre debe tener al menos 3 caracteres")
     .max(50),
-  especialidades: z.array(z.string()).default([]),
-  practicas: z.array(z.string()).default([]),
-  sedes: z.array(z.string()).default([]),
-  disponibilidad: z.array(disponibilidadSchema).default([]),
-  eliminado: z.boolean().default(false),
+  especialidades: z.array(z.string()).optional(),
+  practicas: z.array(z.string()).optional(),
+  sedes: z.array(z.string()).optional()
 });
 
 

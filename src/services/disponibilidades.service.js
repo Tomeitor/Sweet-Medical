@@ -1,47 +1,42 @@
 import { NotFoundError } from "../errors/AppError.js";
-import { disponibilidadesDB } from "../repositories/disponibilidades.repository.js";
-import { MedicoRepository } from "../repositories/medicos.repository.js";
-import MedicoService from "./medicos.service.js";
+import DisponibilidadesRepository from "../repositories/disponibilidades.repository.js";
 
-const medicoService = new MedicoService();
+const disponibilidadesRepository = new DisponibilidadesRepository();
 
 export default class DisponibilidadesService {
+  
+  async getAll() {
+    const disponibilidades = await disponibilidadesRepository.getAll();
+    return disponibilidades;
+  }
+  
   async getByMedico(idMedico) {
-    const medico = await medicoService.getById(idMedico);
-    return medico.disponibilidad;
+    const disponibilidad = await disponibilidadesRepository.getByMedico(idMedico);
+    return disponibilidad;
   }
 
-  async getById(idMedico, id) {
-    const medico = await medicoService.getById(idMedico);
-    const disp = await medico.disponibilidad.find((disp) => disp.id == id);
-    if (!disp) throw new NotFoundError("Disponibilidad no encontrada");
-    return disp;
+  async getById(id) {
+    const disponibilidad = await disponibilidadesRepository.getById(id);
+    if (!disponibilidad) throw new NotFoundError("La disponibilidad no fue encontrada");
+    return disponibilidad;
   }
 
-  async create(idMedico, nuevaDisponibilidad) {
-    const medico = await medicoService.getById(idMedico);
-
-    const newMedico = await medicoService.update(idMedico, {
-      disponibilidad: [...medico.disponibilidad, nuevaDisponibilidad],
-    });
-    return newMedico.disponibilidad;
+  async create(nuevaDisponibilidad) {
+    const disponibilidad = await disponibilidadesRepository.create(nuevaDisponibilidad);
+    return disponibilidad;
   }
 
-  async update(idMedico, idDisp, disponibilidadActualizada) {
-    const medico = await medicoService.getById(idMedico);
-    const newMedico = await medicoService.update(idMedico, {
-      disponibilidad: medico.disponibilidad.map((disp) =>
-        disp.id == idDisp ? disponibilidadActualizada : disp,
-      ),
-    });
-    return newMedico.disponibilidad;
+  async update(idDisp, disponibilidadActualizada) {
+    const dispoExist = await this.getById(idDisp);
+
+    const disponibilidad = await disponibilidadesRepository.update({...dispoExist, ...disponibilidadActualizada});
+    return disponibilidad;
   }
 
-  async delete(idMedico, idDisp) {
-    const medico = await medicoService.getById(idMedico);
-    const newMedico = await medicoService.update(idMedico, {
-      disponibilidad: medico.disponibilidad.filter((disp) => disp.id != idDisp),
-    });
-    return newMedico.disponibilidad;
+  async delete(idDisp) {
+    const dispoExist = await this.getById(idDisp);
+
+    const disponibilidad = await disponibilidadesRepository.delete(idDisp);
+    return disponibilidad;
   }
 }

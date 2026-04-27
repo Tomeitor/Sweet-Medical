@@ -6,7 +6,7 @@ const repository = new MedicoRepository();
 
 export default class MedicoService {
   async getAll() {
-    return repository.getAll();
+    return await repository.getAll();
   }
 
   async getById(id) {

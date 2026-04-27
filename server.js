@@ -18,7 +18,7 @@ app.get(PATH_APP + '/healthcheck', (req, res) => {
     res.status(200).json({status: 'ok'})
 })
 app.use(PATH_APP + '/medicos', medicosRouter);
-app.use(PATH_APP + '/medicos/:idMedico/disponibilidades', disponibilidadRouter);
+app.use(PATH_APP + '/disponibilidades', disponibilidadRouter);
 app.use(PATH_APP + '/turnos', turnosRouter);
 
 app.use(notFoundHandler)

@@ -7,7 +7,6 @@ export default class Medico {
         this.especialidades = especialidades;
         this.practicas = practicas;
         this.sedes = sedes;
-        this.disponibilidad = disponibilidad;
         this.eliminado = false;
     }
 }
