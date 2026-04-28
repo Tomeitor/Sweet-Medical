@@ -4,11 +4,14 @@ import { medicoRepository } from '../repositories/medicos.repository.js';
 import { disponibilidadesRepository } from '../repositories/disponibilidades.repository.js';
 import { DiaSemana } from '../domain/diaSemana.js';
 import { EstadoTurno } from '../domain/EstadoTurno.js';
+import { obtenerBloqueTurnoDate } from '../utils/bloquesTurno.js';
 
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween.js';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import { ConflictError, NotFoundError } from '../errors/AppError.js';
+
+const DURACION_BLOQUE_MINUTOS = 15;
 
 dayjs.extend(isBetween);
 dayjs.extend(customParseFormat);
@@ -17,21 +20,22 @@ export class TurnoService {
 
     async darDeAlta(medicoId, pacienteId, fechaHora, sede, practica, costo) {
         const fechaTurno = new Date(fechaHora);
+        const { inicio: fechaBloque } = obtenerBloqueTurnoDate(fechaTurno, DURACION_BLOQUE_MINUTOS);
 
-        const medico = medicoRepository.getById(medicoId);
+        const medico = await medicoRepository.getById(medicoId);
         if (!medico) throw new NotFoundError("El médico no existe");
 
         const atiende = await this.validarAgendaMedico(medicoId, fechaTurno);
-        if (!atiende) throw new ConflictError("El médico no atiende en ese horario");
+        if (!atiende) throw new ConflictError("El médico no atende en ese horario");
 
-        const ocupado = turnosRepository.findByMedicoYFecha(medicoId, fechaTurno);
+        const ocupado = turnosRepository.findByMedicoYBloque(medicoId, fechaBloque);
         if (ocupado) throw new ConflictError("Horario ya reservado");
 
         const nuevoTurno = new Turno(
             Date.now().toString(),
             medico, 
             pacienteId, 
-            fechaTurno,
+            fechaBloque,
             sede, 
             practica, 
             costo

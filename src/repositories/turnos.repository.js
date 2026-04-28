@@ -36,6 +36,19 @@ export class TurnosRepository {
         ) ?? null
     }
 
+    findByMedicoYBloque(medicoId, fechaBloque) {
+        this.validateId(medicoId)
+        if (!(fechaBloque instanceof Date)) {
+            throw new BadRequestError("La fecha del bloque es obligatoria")
+        }
+
+        return Object.values(this.turnos).find(t =>
+            t.medico.id == medicoId &&
+            t.fechaHora.getTime() == fechaBloque.getTime() &&
+            t.estado !== 'CANCELADO'
+        ) ?? null
+    }
+
     update(turno) {
         this.validateTurno(turno)
         this.validateId(turno.id)
