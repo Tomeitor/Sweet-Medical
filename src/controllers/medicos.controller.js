@@ -44,7 +44,6 @@ export default class MedicoController {
     try {
       const result = medicoSchema.safeParse(req.body);
       if (!result.success) {
-        console.log(result.error);
         throw new BadRequestError("Datos invalidos");
       }
       const nuevoMedico = await service.create(req.body);

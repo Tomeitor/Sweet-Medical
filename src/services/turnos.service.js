@@ -8,6 +8,7 @@ import { EstadoTurno } from '../domain/EstadoTurno.js';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween.js';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
+import { ConflictError, NotFoundError } from '../errors/AppError.js';
 
 dayjs.extend(isBetween);
 dayjs.extend(customParseFormat);
@@ -18,13 +19,13 @@ export class TurnoService {
         const fechaTurno = new Date(fechaHora);
 
         const medico = medicoRepository.getById(medicoId);
-        if (!medico) throw new Error("El médico no existe");
+        if (!medico) throw new NotFoundError("El médico no existe");
 
         const atiende = await this.validarAgendaMedico(medicoId, fechaTurno);
-        if (!atiende) throw new Error("El médico no atiende en ese horario");
+        if (!atiende) throw new ConflictError("El médico no atiende en ese horario");
 
         const ocupado = turnosRepository.findByMedicoYFecha(medicoId, fechaTurno);
-        if (ocupado) throw new Error("Horario ya reservado");
+        if (ocupado) throw new ConflictError("Horario ya reservado");
 
         const nuevoTurno = new Turno(
             Date.now().toString(),
@@ -50,6 +51,8 @@ export class TurnoService {
         
         const horaPedido = fechaDayjs.format('HH:mm');
 
+        console.log(`Validando disponibilidad para el día ${diaDelTurno} a las ${horaPedido}`);
+
         const disponibilidades = disponibilidadesRepository.getByMedico(medicoId);
 
         const disponibilidadEncontrada = disponibilidades.find(disp => {
@@ -64,15 +67,15 @@ export class TurnoService {
     async darDeBaja(turnoId) {
         const turno = turnosRepository.findById(turnoId);
         if (!turno) {
-            throw new Error("El turno que querés cancelar no existe");
+            throw new NotFoundError("El turno que querés cancelar no existe");
         }
         
         const ahora = dayjs();
         const horaDelTurno = dayjs(turno.fechaHora);
-        const diferenciaHoras = horaDelTurno.diff(ahora, 'hour', true);
+        const diferenciaHoras = horaDelTurno.diff(ahora, 'hour', true).toFixed();
 
         if (diferenciaHoras < 1) {
-            throw new Error("No podés dar de baja: falta menos de una hora para el turno");
+            throw new ConflictError("No podés dar de baja: el turno ya pasó o falta menos de una hora para el turno");
         }
 
         turno.actualizarEstado(EstadoTurno.CANCELADO, "SISTEMA", "Cancelación por el usuario");
