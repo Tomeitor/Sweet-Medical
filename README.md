@@ -1,4 +1,4 @@
-## Docentacion del proyecto Sweet Medical - Grupo 2 
+## Documentación del proyecto Sweet Medical - Grupo 2 
 
 ### Links utiles
 
@@ -15,3 +15,7 @@ Todas las tareas a realizar se encuentran en el apartado de **[Issues](https://g
 Al finalizar las features haremos un merge a la rama dev, y al finalizar la entrega hariamos una pull request a la rama main para la correción.
 
 En cuanto a la organizacion de las carpetas, vamos a usar una arquitectura de capas, donde tendremos un archivo controller, route, service y repository.
+
+### Diagrama de Clase (entrega 1)
+
+![diagrama de clase de la primera entrega](/docs/SweetMedicalDC.svg)
