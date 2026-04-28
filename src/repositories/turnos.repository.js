@@ -30,7 +30,7 @@ export class TurnosRepository {
         }
 
         return Object.values(this.turnos).find(t =>
-            t.medico.id === medicoId &&
+            t.medico.id == medicoId &&
             t.fechaHora.getTime() === fecha.getTime() &&
             t.estado !== 'CANCELADO'
         ) ?? null

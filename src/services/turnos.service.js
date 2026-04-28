@@ -18,7 +18,7 @@ export class TurnoService {
     async darDeAlta(medicoId, pacienteId, fechaHora, sede, practica, costo) {
         const fechaTurno = new Date(fechaHora);
 
-        const medico = medicoRepository.getById(medicoId);
+        const medico = await medicoRepository.getById(medicoId);
         if (!medico) throw new NotFoundError("El médico no existe");
 
         const atiende = await this.validarAgendaMedico(medicoId, fechaTurno);
