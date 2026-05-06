@@ -1,4 +1,5 @@
 import Medico from "../domain/Medico.js";
+import Disponibilidad from "../domain/Disponibilidad.js";
 import DisponibilidadesRepository from "./disponibilidades.repository.js";
 import {
   BadRequestError,
