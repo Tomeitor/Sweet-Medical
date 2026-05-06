@@ -2,7 +2,7 @@ import { Turno } from '../domain/Turno.js';
 import { turnosRepository } from '../repositories/turnos.repository.js';
 import { medicoRepository } from '../repositories/medicos.repository.js';
 import { disponibilidadesRepository } from '../repositories/disponibilidades.repository.js';
-import { DiaSemana } from '../domain/diaSemana.js';
+import { DiaSemana } from '../domain/DiaSemana.js';
 import { EstadoTurno } from '../domain/EstadoTurno.js';
 
 import dayjs from 'dayjs';
