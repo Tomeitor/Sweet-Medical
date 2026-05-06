@@ -1,4 +1,47 @@
-## Docentacion del proyecto Sweet Medical - Grupo 2 
+# Docentacion del proyecto Sweet Medical - Grupo 2 
+
+## 🚀 ¿Cómo levantar la aplicación?
+
+Siga estos pasos para configurar y ejecutar el entorno de desarrollo local:
+
+### 1. Instalación de dependencias
+Es necesario descargar los módulos de Node.js antes de iniciar. Ejecute en la terminal:
+```bash
+npm install
+```
+
+### 2. Configuración de variables de entorno
+Cree un archivo llamado .env en la raíz del proyecto (donde se encuentra el package.json) y configure las siguientes variables:
+
+Fragmento de código
+```bash
+PORT=3000
+PATH_APP=/api/v1
+```
+
+### 3. Ejecución del servidor
+
+Inicia el servidor con Node directamente.
+```bash
+npm start
+```
+## Uso y Endpoints
+Una vez que el servidor esté corriendo (por defecto en http://localhost:3000), puede verificar el estado de la API mediante el Healthcheck:
+
+```bas
+GET http://localhost:3000/api/v1/healthcheck
+```
+
+Para probar la lógica de negocio (Turnos, Médicos, Disponibilidades), se recomienda importar la colección de Postman y utilizar los prefijos configurados en el router.
+
+## 🧪 Pruebas Automatizadas (Tests)
+El proyecto incluye una suite de tests unitarios y de integración desarrollados con Jest. Para ejecutarlos, asegúrese de que la carpeta node_modules esté presente y corra:
+
+```bash
+npm test
+```
+
+
 
 ### Links utiles
 
