@@ -1,4 +1,4 @@
-# Docentacion del proyecto Sweet Medical - Grupo 2 
+# Documentación del proyecto Sweet Medical - Grupo 2 
 
 ## 🚀 ¿Cómo levantar la aplicación?
 
