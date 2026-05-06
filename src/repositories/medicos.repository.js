@@ -42,7 +42,7 @@ const disponibilidadesRepository = new DisponibilidadesRepository();
 
 export class MedicoRepository {
   constructor() {
-    this.medicos = new Set();
+    this.medicos = {};
 
     medicosMock.forEach((medico) => {
       this.medicos[medico.id] = medico;
@@ -91,7 +91,7 @@ export class MedicoRepository {
   delete = async (id) => {
     this.validateId(id);
 
-    this.medicos[id] = { eliminado: true };
+    this.medicos[id] = { ...this.medicos[id], eliminado: true };
     return this.medicos[id];
   };
 

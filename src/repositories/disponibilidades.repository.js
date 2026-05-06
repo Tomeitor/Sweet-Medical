@@ -33,7 +33,7 @@ const disponibilidadesMock = [
 
 export default class DisponibilidadesRepository {
   constructor() {
-    this.disponibilidades = new Set();
+    this.disponibilidades = {};
 
     disponibilidadesMock.forEach((disp) => {
       this.disponibilidades[disp.id] = disp;
