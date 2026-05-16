@@ -53,12 +53,6 @@ export class MedicoRepository {
 
   getAll = async () => {
     const medicos = Object.values(this.medicos).filter((m) => !m.eliminado);
-    // const medicosConDisponibilidades = await Promise.all(
-    //   medicos.map(async (medico) => {
-    //     medico.disponibilidad = await disponibilidadesRepository.getByMedico(medico.id);
-    //     return medico;
-    //   }),
-    // );
     return medicos;
   };
 

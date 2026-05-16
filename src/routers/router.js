@@ -1,5 +1,4 @@
 import express from "express"
-import dotenv from 'dotenv'
 
 import medicosRouter from './medicos.routes.js'
 import disponibilidadRouter from './disponibilidades.routes.js'

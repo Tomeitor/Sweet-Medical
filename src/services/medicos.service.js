@@ -26,10 +26,10 @@ export default class MedicoService {
   }
 
   async delete(id) {
-    const medico = await this.getById(id);
+    const medicoExist = await this.getById(id);
 
-    medicoRepository.delete(id);
+    const newMedico = await medicoRepository.delete(id);
 
-    return medico;
+    return newMedico;
   }
 }

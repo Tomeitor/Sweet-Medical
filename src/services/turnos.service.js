@@ -90,8 +90,4 @@ export class TurnoService {
     async getById(id) {
         return turnosRepository.findById(id);
     }
-
-    async getByPaciente(pacienteId) {
-        return turnosRepository.getByPaciente(pacienteId);
-    }
 }

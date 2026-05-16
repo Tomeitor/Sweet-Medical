@@ -34,8 +34,9 @@ export default class DisponibilidadesService {
   async delete(idDisp) {
     const dispoExist = await this.getById(idDisp);
 
-    const disponibilidad = await disponibilidadesRepository.delete(idDisp);
-    return disponibilidad;
+    const newDisponibilidad = await disponibilidadesRepository.delete(idDisp);
+    
+    return newDisponibilidad;
   }
 }
 

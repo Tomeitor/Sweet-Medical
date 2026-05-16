@@ -80,10 +80,9 @@ export default class DisponibilidadesRepository {
 
   delete(id){
     this.validateId(id);
-    const disponibilidadAEliminar = this.getById(id); // Se verifica que existe en el service
 
-    this.disponibilidades[id] = { ...disponibilidadAEliminar, eliminado: true };
-    return disponibilidadAEliminar;
+    this.disponibilidades[id] = { ...this.disponibilidades[id], eliminado: true };
+    return this.disponibilidades[id];
   }
 
   validateId(id) {
