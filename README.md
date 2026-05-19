@@ -1,3 +1,4 @@
+
 # Documentación del proyecto Sweet Medical - Grupo 2 
 
 ## 🚀 ¿Cómo levantar la aplicación?
@@ -41,8 +42,6 @@ El proyecto incluye una suite de tests unitarios y de integración desarrollados
 npm test
 ```
 
-
-
 ### Links utiles
 
 * [Link enunciado (Entrega 1)](https://docs.google.com/document/d/1rWljImX3OHWDQuxLNox3pQCseW1LBoNFpuH7n3U_FWA/edit?tab=t.0)
@@ -58,3 +57,7 @@ Todas las tareas a realizar se encuentran en el apartado de **[Issues](https://g
 Al finalizar las features haremos un merge a la rama dev, y al finalizar la entrega hariamos una pull request a la rama main para la correción.
 
 En cuanto a la organizacion de las carpetas, vamos a usar una arquitectura de capas, donde tendremos un archivo controller, route, service y repository.
+
+### Diagrama de Clase (entrega 1)
+
+![diagrama de clase de la primera entrega](/docs/SweetMedicalDC.svg)
