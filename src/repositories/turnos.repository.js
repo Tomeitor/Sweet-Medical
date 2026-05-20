@@ -28,7 +28,7 @@ export class TurnosRepository {
         if (!(fecha instanceof Date)) {
             throw new BadRequestError("La fecha es obligatoria")
         }
-
+        
         return Object.values(this.turnos).find(t =>
             t.medico.id == medicoId &&
             t.fechaHora.getTime() === fecha.getTime() &&

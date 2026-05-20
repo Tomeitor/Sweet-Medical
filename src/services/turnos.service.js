@@ -18,6 +18,11 @@ export class TurnoService {
     async darDeAlta(medicoId, pacienteId, fechaHora, sede, practica, costo) {
         const fechaTurno = new Date(fechaHora);
 
+        // Validar que el horario sea en punto, y 15, y 30 o y 45
+        if(fechaHora.getTime() % (15 * 60 * 1000) !== 0){
+            throw new ConflictError("Los turnos solo pueden ser a horarios en punto, y 15, y 30 o y 45");
+        }
+
         const medico = await medicoRepository.getById(medicoId);
         if (!medico) throw new NotFoundError("El médico no existe");
 

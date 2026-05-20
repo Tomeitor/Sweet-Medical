@@ -6,7 +6,8 @@ const crearTurnoSchema = z.object({
   pacienteId: z.string().min(1, "El ID del paciente no puede estar vacío"),
   fechaHora: z
     .string()
-    .datetime({ message: "Formato de fecha inválido (debe ser ISO)" }),
+    .datetime({offset: true, message: "Formato de fecha inválido (debe ser ISO)" })
+    .transform(str => new Date(str)),
   sede: z.string().min(1, "La sede es obligatoria"),
   practica: z.string().min(1, "La práctica es obligatoria"),
   costo: z.number().positive("El costo debe ser un valor mayor a cero"),
