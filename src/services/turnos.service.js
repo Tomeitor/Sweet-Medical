@@ -25,6 +25,10 @@ export class TurnoService {
     async darDeAlta(medicoId, pacienteId, fechaHora, sede, practica, costo) {
         const fechaTurno = new Date(fechaHora);
 
+        if (!dayjs(fechaTurno).isAfter(dayjs())) {
+            throw new ConflictError("No se puede reservar un turno en el pasado");
+        }
+
         // Validar que el horario sea en punto, y 15, y 30 o y 45
         if (!this.esHorarioValidoParaTurno(fechaTurno)) {
             throw new ConflictError("Los turnos solo pueden ser a horarios en punto, y 15, y 30 o y 45");
@@ -76,18 +80,58 @@ export class TurnoService {
         if (!turno) {
             throw new NotFoundError("El turno que querés cancelar no existe");
         }
-        
+
+        this.validarTurnoPuedeModificarse(turno, "dar de baja");
+
+        turno.actualizarEstado(EstadoTurno.CANCELADO, "SISTEMA", motivo);
+
+        return turnosRepository.update(turno);
+    }
+
+    async cambiarTurno(turnoId, nuevaFechaHora, motivo) {
+        const turno = turnosRepository.findById(turnoId);
+        if (!turno) {
+            throw new NotFoundError("El turno que querés cambiar no existe");
+        }
+
+        const fechaTurnoNueva = new Date(nuevaFechaHora);
+        this.validarTurnoPuedeModificarse(turno, "cambiar");
+
+        if (!dayjs(fechaTurnoNueva).isAfter(dayjs())) {
+            throw new ConflictError("No se puede cambiar a un turno en el pasado");
+        }
+
+        if (!this.esHorarioValidoParaTurno(fechaTurnoNueva)) {
+            throw new ConflictError("Los turnos solo pueden ser a horarios en punto, y 15, y 30 o y 45");
+        }
+
+        const atiende = await this.validarAgendaMedico(turno.medico.id, fechaTurnoNueva);
+        if (!atiende) throw new ConflictError("El médico no atiende en ese horario");
+
+        const ocupado = turnosRepository.findByMedicoYFecha(turno.medico.id, fechaTurnoNueva);
+        if (ocupado) throw new ConflictError("Horario ya reservado");
+
+        turno.cambiarFechaHora(fechaTurnoNueva, "SISTEMA", motivo);
+
+        return turnosRepository.update(turno);
+    }
+
+    validarTurnoPuedeModificarse(turno, accion) {
+        if (turno.estado === EstadoTurno.CANCELADO) {
+            throw new ConflictError(`No se puede ${accion}: el turno ya está cancelado`);
+        }
+
+        if (turno.estado === EstadoTurno.REALIZADO) {
+            throw new ConflictError(`No se puede ${accion}: el turno ya está realizado`);
+        }
+
         const ahora = dayjs();
         const horaDelTurno = dayjs(turno.fechaHora);
         const diferenciaHoras = horaDelTurno.diff(ahora, 'hour', true);
 
         if (diferenciaHoras < 1) {
-            throw new ConflictError("No podés dar de baja: el turno ya pasó o falta menos de una hora para el turno");
+            throw new ConflictError(`No podés ${accion}: el turno ya pasó o falta menos de una hora para el turno`);
         }
-
-        turno.actualizarEstado(EstadoTurno.CANCELADO, "SISTEMA", motivo);
-        
-        return turnosRepository.update(turno);
     }
 
     async marcarComoRealizado(turnoId) {
