@@ -27,6 +27,12 @@ export class ConflictError extends AppError {
     }
 }
 
+export class TurnoFuturoError extends AppError {
+    constructor(message = 'No se puede marcar como realizado un turno futuro') {
+        super(409, message);
+    }
+}
+
 export class UnprocessableEntityError extends AppError {
     constructor(message = 'Unprocessable Entity - Error de validación') {
         super(422, message);

@@ -1,9 +1,15 @@
 import { Turno } from "../domain/Turno.js"
+import { EstadoTurno } from "../domain/EstadoTurno.js"
 import {
     BadRequestError,
-    NotFoundError,
-    ConflictError
+    NotFoundError
 } from "../errors/AppError.js"
+
+const ESTADOS_QUE_OCUPAN_TURNO = [
+    EstadoTurno.RESERVADO,
+    EstadoTurno.CONFIRMADO,
+    EstadoTurno.REALIZADO,
+]
 
 export class TurnosRepository {
     constructor() {
@@ -32,8 +38,14 @@ export class TurnosRepository {
         return Object.values(this.turnos).find(t =>
             t.medico.id == medicoId &&
             t.fechaHora.getTime() === fecha.getTime() &&
-            t.estado !== 'CANCELADO'
-        ) ?? null
+            ESTADOS_QUE_OCUPAN_TURNO.includes(t.estado)
+        ) ?? {}
+    }
+
+    findByPaciente(pacienteId) {
+        this.validateId(pacienteId)
+
+        return Object.values(this.turnos).filter(t => t.paciente === pacienteId)
     }
 
     update(turno) {
