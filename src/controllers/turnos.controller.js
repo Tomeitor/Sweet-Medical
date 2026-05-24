@@ -2,8 +2,8 @@ import { TurnoService } from "../services/turnos.service.js";
 import z from "zod";
 
 const crearTurnoSchema = z.object({
-  medicoId: z.string({ required_error: "El ID del médico es obligatorio" }),
-  pacienteId: z.string().min(1, "El ID del paciente no puede estar vacío"),
+  medicoId: z.string({ required_error: "El ID del médico es obligatorio" }).trim().regex(/^\d+$/, "El ID del médico debe ser numérico"),
+  pacienteId: z.string().trim().regex(/^\d+$/, "El ID del paciente debe ser numérico"),
   fechaHora: z
     .string()
     .datetime({offset: true, message: "Formato de fecha inválido (debe ser ISO)" })
@@ -17,8 +17,16 @@ const cancelarTurnoSchema = z.object({
   motivo: z.string().trim().min(1, "El motivo de cancelación es obligatorio"),
 });
 
+const cambiarTurnoSchema = z.object({
+  fechaHora: z
+    .string()
+    .datetime({offset: true, message: "Formato de fecha inválido (debe ser ISO)" })
+    .transform(str => new Date(str)),
+  motivo: z.string().trim().min(1, "El motivo del cambio es obligatorio"),
+});
+
 const historialPacienteParamsSchema = z.object({
-  pacienteId: z.string().trim().min(1, "El ID del paciente no puede estar vacío"),
+  pacienteId: z.string().trim().regex(/^\d+$/, "El ID del paciente debe ser numérico"),
 });
 
 const turnosDisponiblesQuerySchema = z.object({
@@ -71,6 +79,18 @@ export class TurnosController {
       const historial = await service.getHistorialPaciente(datosValidados.pacienteId);
 
       res.status(200).json(historial);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async cambiar(req, res, next) {
+    try {
+      const { id } = req.params;
+      const datosValidados = cambiarTurnoSchema.parse(req.body);
+      const turno = await service.cambiarTurno(id, datosValidados.fechaHora, datosValidados.motivo);
+
+      res.status(200).json(turno);
     } catch (error) {
       next(error);
     }

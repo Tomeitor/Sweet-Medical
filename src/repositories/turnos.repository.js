@@ -39,7 +39,7 @@ export class TurnosRepository {
             t.medico.id == medicoId &&
             t.fechaHora.getTime() === fecha.getTime() &&
             ESTADOS_QUE_OCUPAN_TURNO.includes(t.estado)
-        ) ?? {}
+        ) ?? null
     }
 
     findByPaciente(pacienteId) {

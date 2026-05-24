@@ -28,4 +28,18 @@ export class Turno {
         this.historialEstados.push(cambio);
         this.estado = nuevoEstado;
     }
+
+    cambiarFechaHora(nuevaFechaHora, quien, motivo) {
+        const cambio = {
+            fechaHora: new Date(),
+            estado: this.estado,
+            quien: quien,
+            motivo: motivo,
+            fechaHoraAnterior: this.fechaHora,
+            fechaHoraNueva: nuevaFechaHora
+        };
+
+        this.historialEstados.push(cambio);
+        this.fechaHora = nuevaFechaHora;
+    }
 }

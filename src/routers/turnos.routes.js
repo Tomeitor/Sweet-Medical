@@ -100,6 +100,20 @@ const controller = new TurnosController();
  *           type: string
  *           minLength: 1
  *           example: No puedo asistir
+ *     CambioTurnoInput:
+ *       type: object
+ *       required:
+ *         - fechaHora
+ *         - motivo
+ *       properties:
+ *         fechaHora:
+ *           type: string
+ *           format: date-time
+ *           example: '2026-06-01T12:30:00.000Z'
+ *         motivo:
+ *           type: string
+ *           minLength: 1
+ *           example: Necesito cambiar el horario
  *     TurnoDisponible:
  *       type: object
  *       properties:
@@ -244,6 +258,55 @@ router.get('/disponibles', controller.disponibles);
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/historial/:pacienteId/', controller.historialPaciente);
+
+/**
+ * @swagger
+ * /turnos/{id}/cambio:
+ *   patch:
+ *     summary: Cambiar un turno a otro slot disponible del mismo medico
+ *     tags: [Turnos]
+ *     description: El cambio requiere motivo, al menos una hora de anticipacion y mantiene el mismo profesional.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Id del turno actual
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CambioTurnoInput'
+ *     responses:
+ *       200:
+ *         description: Turno cambiado correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Turno'
+ *       400:
+ *         description: Datos invalidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Turno no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: El turno no puede cambiarse
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.patch('/:id/cambio', controller.cambiar);
 
 /**
  * @swagger
