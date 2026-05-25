@@ -1,10 +1,10 @@
 import { BadRequestError } from "../errors/AppError.js";
 
 export class Notificacion {
-    constructor ({id, destinatario, remitente, mensaje, fechaHoraCreacion, fechaHoraLeida}) {
+    constructor ({id, destinatarioId, remitenteId, mensaje, fechaHoraCreacion, fechaHoraLeida}) {
         this.id = id;
-        this.destinatario = destinatario;
-        this.remitente = remitente;
+        this.destinatarioId = destinatarioId;
+        this.remitenteId = remitenteId;
         this.mensaje = mensaje;
         this.fechaHoraCreacion = fechaHoraCreacion || new Date();
         this.leida = fechaHoraLeida ? true : false;

@@ -17,6 +17,9 @@ const router = Router();
  *         id:
  *           type: integer
  *           example: 1
+ *         usuarioId:
+ *           type: integer
+ *           example: 101
  *         usuario:
  *           type: string
  *           example: anagomez
@@ -47,10 +50,15 @@ const router = Router();
  *     MedicoInput:
  *       type: object
  *       required:
+ *         - usuarioId
  *         - usuario
  *         - matricula
  *         - nombre
  *       properties:
+ *         usuarioId:
+ *           type: integer
+ *           minimum: 1
+ *           example: 101
  *         usuario:
  *           type: string
  *           minLength: 1

@@ -2,27 +2,34 @@ import { Notificacion } from "../domain/Notificacion.js";
 
 export class NotificacionRepository {
     constructor() {
-
-        const usuarioMock = { id: "123" };
-
+        this.nextId = 1;
         this.notificacionesDB = [
             new Notificacion({ 
                 id: "notif-1", 
-                destinatario: usuarioMock,
+                destinatarioId: "123",
                 mensaje: "Su turno de Odontología fue confirmado", 
             }),
             new Notificacion({ 
                 id: "notif-2", 
-                destinatario: usuarioMock, 
+                destinatarioId: "123", 
                 mensaje: "Bienvenido a Sweet Medical", 
                 fechaHoraLeida: new Date()
             })
         ]; 
     }
 
+    async add(notificacion) {
+        if (!notificacion.id) {
+            notificacion.id = this.nextId++;
+        }
+
+        this.notificacionesDB.push(notificacion);
+        return notificacion;
+    }
+
     async findByDestinatarioYEstado(usuarioId, estaLeida) {
         return this.notificacionesDB.filter(n => 
-            String(n.destinatario.id) === String(usuarioId) && 
+            String(n.destinatarioId) === String(usuarioId) && 
             n.leida === estaLeida
         );
     }

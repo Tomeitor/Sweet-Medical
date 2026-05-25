@@ -31,6 +31,7 @@ describe("MedicoService", () => {
       const medicos = [
         new Medico({
           id: 1,
+          usuarioId: 101,
           usuario: "anagomez",
           matricula: "12345",
           nombre: "Dra. Ana Gómez",
@@ -41,6 +42,7 @@ describe("MedicoService", () => {
         }),
         new Medico({
           id: 2,
+          usuarioId: 102,
           usuario: "joseperez",
           matricula: "54321",
           nombre: "Dr. José Perez",
@@ -51,6 +53,7 @@ describe("MedicoService", () => {
         }),
         new Medico({
           id: 3,
+          usuarioId: 103,
           usuario: "mariafernandez",
           matricula: "67890",
           nombre: "Dra. Maria Fernandez",
@@ -73,6 +76,7 @@ describe("MedicoService", () => {
     it("debe retornar el medico cuando existe", async () => {
       const medico = new Medico({
         id: 1,
+        usuarioId: 101,
         usuario: "anagomez",
         matricula: "12345",
         nombre: "Dra. Ana Gómez",
@@ -101,6 +105,7 @@ describe("MedicoService", () => {
   describe("create", () => {
     it("debe crear un nuevo medico", async () => {
       const medicoData = {
+        usuarioId: 104,
         usuario: "slopez",
         matricula: "12345",
         nombre: "Dr. Lautaro Lopez",
@@ -115,7 +120,7 @@ describe("MedicoService", () => {
       const result = await service.create(medicoData);
 
       expect(result).toEqual(medico);
-      expect(mockAdd).toHaveBeenCalledWith(expect.any(Medico));
+      expect(mockAdd).toHaveBeenCalledWith(expect.objectContaining({ usuarioId: 104 }));
     });
   });
 
@@ -123,6 +128,7 @@ describe("MedicoService", () => {
     it("debe actualizar un medico existente", async () => {
       const medico = new Medico({
         id: 1,
+        usuarioId: 101,
         usuario: "anagomez",
         matricula: "12345",
         nombre: "Dra. Ana Gómez",
@@ -139,7 +145,7 @@ describe("MedicoService", () => {
       });
 
       expect(result.nombre).toBe("Dra. Ana Actualizada");
-      expect(mockUpdate).toHaveBeenCalled();
+      expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ usuarioId: 101 }));
     });
 
     it("debe lanzar error al actualizar medico inexistente", async () => {
@@ -155,6 +161,7 @@ describe("MedicoService", () => {
     it("debe eliminar un medico existente", async () => {
       const medico = new Medico({
         id: 1,
+        usuarioId: 101,
         usuario: "anagomez",
         matricula: "12345",
         nombre: "Dra. Ana Gómez",

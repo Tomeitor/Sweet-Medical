@@ -1,4 +1,3 @@
-import { Turno } from "../domain/Turno.js"
 import { Notificacion } from "../domain/Notificacion.js"
 
 export class factoryNotificacionService {
@@ -11,18 +10,41 @@ export class factoryNotificacionService {
 
         const hoy = new Date()
 
-        let mensaje = `El turno con el médico ${turno.medico} cambió su estado a ${turno.estado}.`;
+        let mensaje = `El turno con el médico ${turno.medico.nombre} cambió su estado a ${turno.estado}.`;
 
-        let nuevaNotificacion = new Notificacion(
-            this.proximoId,
-            turno.paciente,
-            turno.medico,
+        let nuevaNotificacion = new Notificacion({
+            id: this.proximoId,
+            destinatarioId: turno.paciente,
+            remitenteId: turno.medico.id,
             mensaje,
-            hoy);
+            fechaHoraCreacion: hoy
+        });
 
         this.proximoId += 1;
         
         return nuevaNotificacion;
     }
 
+    crearPorCambioTurno(turno, paciente) {
+        const fechaTurno = new Intl.DateTimeFormat("es-AR", {
+            dateStyle: "short",
+            timeStyle: "short",
+        }).format(turno.fechaHora);
+        const mensaje = `Tu turno con ${turno.medico.nombre} fue reprogramado para el ${fechaTurno}.`;
+
+        const nuevaNotificacion = new Notificacion({
+            id: this.proximoId,
+            destinatarioId: paciente.usuarioId,
+            remitenteId: turno.medico.usuarioId,
+            mensaje,
+            fechaHoraCreacion: new Date()
+        });
+
+        this.proximoId += 1;
+
+        return nuevaNotificacion;
+    }
+
 }
+
+export const factoryNotificacion = new factoryNotificacionService();

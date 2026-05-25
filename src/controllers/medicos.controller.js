@@ -5,6 +5,7 @@ import z from "zod";
 const service = new MedicoService();
 
 export const medicoSchema = z.object({
+  usuarioId: z.number().int().positive("El ID del usuario debe ser un entero positivo"),
   usuario: z.string().min(1, "El usuario es requerido"),
   matricula: z
     .string()
@@ -18,6 +19,8 @@ export const medicoSchema = z.object({
   practicas: z.array(z.string()).optional(),
   sedes: z.array(z.string()).optional()
 });
+
+const medicoUpdateSchema = medicoSchema.partial();
 
 
 export default class MedicoController {
@@ -46,7 +49,7 @@ export default class MedicoController {
       if (!result.success) {
         throw new BadRequestError("Datos invalidos");
       }
-      const nuevoMedico = await service.create(req.body);
+      const nuevoMedico = await service.create(result.data);
       res.status(201).json(nuevoMedico);
     } catch (error) {
       next(error);
@@ -56,7 +59,11 @@ export default class MedicoController {
   updateMedico = async (req, res, next) => {
     try {
       const { id } = req.params;
-      const medicoActualizado = await service.update(id, req.body);
+      const result = medicoUpdateSchema.safeParse(req.body);
+      if (!result.success) {
+        throw new BadRequestError("Datos invalidos");
+      }
+      const medicoActualizado = await service.update(id, result.data);
       res.status(200).json(medicoActualizado);
     } catch (error) {
       next(error);

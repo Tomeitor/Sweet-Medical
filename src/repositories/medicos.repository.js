@@ -1,6 +1,4 @@
 import Medico from "../domain/Medico.js";
-import Disponibilidad from "../domain/Disponibilidad.js";
-import DisponibilidadesRepository from "./disponibilidades.repository.js";
 import {
   BadRequestError,
   UnprocessableEntityError,
@@ -9,6 +7,7 @@ import {
 const medicosMock = [
   new Medico({
     id: 1,
+    usuarioId: 101,
     usuario: "anagomez",
     matricula: "12345",
     nombre: "Dra. Ana Gómez",
@@ -19,6 +18,7 @@ const medicosMock = [
   }),
   new Medico({
     id: 2,
+    usuarioId: 102,
     usuario: "joseperez",
     matricula: "54321",
     nombre: "Dr. José Perez",
@@ -29,6 +29,7 @@ const medicosMock = [
   }),
   new Medico({
     id: 3,
+    usuarioId: 103,
     usuario: "mariafernandez",
     matricula: "67890",
     nombre: "Dra. Maria Fernandez",
@@ -38,8 +39,6 @@ const medicosMock = [
     eliminado: false,
   })
 ];
-const disponibilidadesRepository = new DisponibilidadesRepository();
-
 export class MedicoRepository {
   constructor() {
     this.medicos = {};
@@ -92,11 +91,6 @@ export class MedicoRepository {
   validateMedico(medico) {
     if (!(medico instanceof Medico)) {
       throw new UnprocessableEntityError("El médico es inválido");
-    }
-  }
-  validateDisponibilidad(disp) {
-    if (!(disp instanceof Disponibilidad)) {
-      throw new UnprocessableEntityError("La disponibilidad es inválido");
     }
   }
 

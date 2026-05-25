@@ -2,6 +2,8 @@ import { Turno } from '../domain/Turno.js';
 import { turnosRepository } from '../repositories/turnos.repository.js';
 import { medicoRepository } from '../repositories/medicos.repository.js';
 import { disponibilidadesRepository } from '../repositories/disponibilidades.repository.js';
+import { notificacionRepository } from '../repositories/notificacion.repository.js';
+import { factoryNotificacion } from './factoryNotificacion.service.js';
 import { DiaSemana } from '../domain/DiaSemana.js';
 import { EstadoTurno } from '../domain/EstadoTurno.js';
 
@@ -113,7 +115,46 @@ export class TurnoService {
 
         turno.cambiarFechaHora(fechaTurnoNueva, "SISTEMA", motivo);
 
-        return turnosRepository.update(turno);
+        const turnoActualizado = turnosRepository.update(turno);
+        await this.notificarPacientePorCambioTurno(turnoActualizado);
+
+        return turnoActualizado;
+    }
+
+    async notificarPacientePorCambioTurno(turno) {
+        const paciente = await this.getPacienteById(turno.paciente);
+        if (!paciente?.usuarioId) return;
+
+        const notificacion = factoryNotificacion.crearPorCambioTurno(turno, paciente);
+        await notificacionRepository.add(notificacion);
+    }
+
+    async getPacienteById(pacienteId) {
+        const pacientesRepository = await this.getPacientesRepository();
+        if (!pacientesRepository) return null;
+
+        if (typeof pacientesRepository.getById === "function") {
+            return pacientesRepository.getById(pacienteId);
+        }
+
+        if (typeof pacientesRepository.findById === "function") {
+            return pacientesRepository.findById(pacienteId);
+        }
+
+        return null;
+    }
+
+    async getPacientesRepository() {
+        try {
+            const modulo = await import('../repositories/pacientes.repository.js');
+            return modulo.pacientesRepository ?? modulo.pacienteRepository ?? modulo.default ?? null;
+        } catch (error) {
+            if (error.code === 'ERR_MODULE_NOT_FOUND' && error.message.includes('pacientes.repository.js')) {
+                return null;
+            }
+
+            throw error;
+        }
     }
 
     validarTurnoPuedeModificarse(turno, accion) {
