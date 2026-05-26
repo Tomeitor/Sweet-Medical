@@ -27,7 +27,7 @@ export default class DisponibilidadesRepository {
   }
 
   async create(disponibilidad) {
-    return await this.model.create({id : this.nextId++});
+    return await this.model.create(disponibilidad);
   }
 
   async update(disponibilidad){
