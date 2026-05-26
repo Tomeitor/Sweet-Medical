@@ -1,6 +1,5 @@
 import Medico from "../domain/Medico.js";
 import Disponibilidad from "../domain/Disponibilidad.js";
-import DisponibilidadesRepository from "./disponibilidades.repository.js";
 import {
   BadRequestError,
   UnprocessableEntityError,
@@ -12,9 +11,9 @@ const medicosMock = [
     usuario: "anagomez",
     matricula: "12345",
     nombre: "Dra. Ana Gómez",
-    especialidades: [],
-    practicas: [],
-    sedes: [],
+    especialidades: ["Cardiologia"],
+    practicas: ["Electrocardiograma"],
+    sedes: ["Sede Centro", "Sede Norte"],
     eliminado: false,
   }),
   new Medico({
@@ -22,9 +21,9 @@ const medicosMock = [
     usuario: "joseperez",
     matricula: "54321",
     nombre: "Dr. José Perez",
-    especialidades: [],
-    practicas: [],
-    sedes: [],
+    especialidades: ["Dermatologia"],
+    practicas: ["Biopsia de piel"],
+    sedes: ["Sede Sur"],
     eliminado: false,
   }),
   new Medico({
@@ -32,14 +31,12 @@ const medicosMock = [
     usuario: "mariafernandez",
     matricula: "67890",
     nombre: "Dra. Maria Fernandez",
-    especialidades: [],
-    practicas: [],
-    sedes: [],
+    especialidades: ["Clinica Medica"],
+    practicas: ["Consulta General"],
+    sedes: ["Sede Centro"],
     eliminado: false,
   })
 ];
-const disponibilidadesRepository = new DisponibilidadesRepository();
-
 export class MedicoRepository {
   constructor() {
     this.medicos = {};
