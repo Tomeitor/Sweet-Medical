@@ -1,88 +1,60 @@
-import Disponibilidad from "../domain/Disponibilidad.js";
+import { DisponibilidadModel } from "../schemas/disponibilidadesSchema.js";
 import {
   BadRequestError,
   UnprocessableEntityError,
 } from "../errors/AppError.js";
 
-const disponibilidadesMock = [
-  new Disponibilidad({
-    id: 1,
-    idMedico: 1,
-    diaSemana: "MARTES",
-    desde: "08:00",
-    hasta: "12:00",
-    eliminado: false,
-  }),
-  new Disponibilidad({
-    id: 2,
-    idMedico: 1,
-    diaSemana: "MIERCOLES",
-    desde: "08:00",
-    hasta: "12:00",
-    eliminado: false,
-  }),
-  new Disponibilidad({
-    id: 4,
-    idMedico: 2,
-    diaSemana: "LUNES",
-    desde: "08:00",
-    hasta: "12:00",
-    eliminado: false,
-  })
-];
-
 export default class DisponibilidadesRepository {
   constructor() {
     this.disponibilidades = {};
 
-    disponibilidadesMock.forEach((disp) => {
-      this.disponibilidades[disp.id] = disp;
-    });
+    this.nexId = 1;
 
-    this.nextId = disponibilidadesMock.length + 1;
-  }
-  getByMedico(idMedico) {
-    const disponibilidad = Object.values(this.disponibilidades).filter(
-      (m) => !m.eliminado && m.idMedico == idMedico,
-    );
-    if(!disponibilidad) return [];
-    return disponibilidad;
+    this.model = DisponibilidadModel;
+
   }
 
-  getById(id) {
-    this.validateId(id);
-
-    return this.disponibilidades[id] && !this.disponibilidades[id].eliminado
-      ? this.disponibilidades[id]
-      : null;
+  async getByMedico(idMedico) {
+    return await this.model.find({idMedico: idMedico, eliminado: false});
   }
 
-  getAll() {
-    return Object.values(this.disponibilidades).filter((m) => !m.eliminado);
+  async getById(id) {
+    return await this.model.findById(id);
   }
 
-  create(disponibilidad) {
-    disponibilidad.id = this.nextId++;
-    this.disponibilidades[disponibilidad.id] = disponibilidad;
-    return disponibilidad;
+  async getAll() {
+    return await this.model.find({eliminado: false});
   }
 
-  update(disponibilidad){
+  async create(disponibilidad) {
+    return await this.model.create({id : this.nextId++});
+  }
+
+  async update(disponibilidad){
+
     this.validateId(disponibilidad.id);
-    const dispActual = this.getById(disponibilidad.id);
 
-    this.disponibilidades[disponibilidad.id] = {
-      ...dispActual,
-      ...disponibilidad,
-    };
-    return disponibilidad;
+    const query = {_id: disponibilidad.id}
+
+    return await this.model.findOneAndUpdate(
+        query,
+        disponibilidad,
+        {
+          new: true
+        }
+    );
   }
 
-  delete(id){
+  async delete(id){
     this.validateId(id);
 
-    this.disponibilidades[id] = { ...this.disponibilidades[id], eliminado: true };
-    return this.disponibilidades[id];
+    return await this.model.findByIdAndUpdate(id,
+        {
+          eliminado: true
+        },
+        {
+          new: true
+        });
   }
 
   validateId(id) {

@@ -1,68 +1,61 @@
 import { Turno } from "../domain/Turno.js"
-import { EstadoTurno } from "../domain/EstadoTurno.js"
+import { TurnosModel } from "../schemas/turnosSchema.js";
 import {
     BadRequestError,
     NotFoundError
 } from "../errors/AppError.js"
 
-const ESTADOS_QUE_OCUPAN_TURNO = [
-    EstadoTurno.RESERVADO,
-    EstadoTurno.CONFIRMADO,
-    EstadoTurno.REALIZADO,
-]
-
 export class TurnosRepository {
     constructor() {
         this.turnos = {}
         this.nextId = 1
+        this.model = TurnosModel;
     }
 
-    add(turno) {
+    async add(turno) {
         this.validateTurno(turno)
         turno.id = this.nextId++
-        this.turnos[turno.id] = turno
-        return turno
+
+        return await this.model.create(turno);
     }
 
-    findById(id) {
+    async findById(id) {
         this.validateId(id)
-        return this.turnos[id] ?? null
+
+        return await this.model.findById(id);
     }
 
-    findByMedicoYFecha(medicoId, fecha) {
+    async findByMedicoYFecha(medicoId, fecha) {
         this.validateId(medicoId)
+
         if (!(fecha instanceof Date)) {
             throw new BadRequestError("La fecha es obligatoria")
         }
 
-        return Object.values(this.turnos).find(t =>
-            t.medico.id == medicoId &&
-            t.fechaHora.getTime() === fecha.getTime() &&
-            ESTADOS_QUE_OCUPAN_TURNO.includes(t.estado)
-        ) ?? null
+        return await this.model.findOne({medico: medicoId, fechaHora: fecha});
     }
 
-    findByPaciente(pacienteId) {
+    async findByPaciente(pacienteId) {
         this.validateId(pacienteId)
 
-        return Object.values(this.turnos).filter(t => t.paciente === pacienteId)
+        return await this.model.findOne({paciente: pacienteId});
     }
 
-    update(turno) {
+    async update(turno) {
         this.validateTurno(turno)
         this.validateId(turno.id)
 
-        const turnoExistente = this.turnos[turno.id]
+        const turnoExistente = await this.model.findById(turno.id);
+
         if (!turnoExistente) {
             throw new NotFoundError("El turno no existe")
         }
 
-        this.turnos[turno.id] = turno
-        return turno
+        return await this.model.findByIdAndUpdate(turno.id, turno);
     }
 
-    getAll() {
-        return Object.values(this.turnos)
+    async getAll() {
+        return await this.model.find({});
     }
 
     validateTurno(turno) {

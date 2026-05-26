@@ -18,9 +18,16 @@ Fragmento de código
 ```bash
 PORT=3000
 PATH_APP=/api/v1
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB_NAME=backend-grupo-02
 ```
 
 ### 3. Ejecución del servidor
+
+Inicia el servicio de MongoDB.
+```bash
+mongod
+```
 
 Inicia el servidor con Node directamente.
 ```bash
@@ -44,7 +51,7 @@ npm test
 
 ### Links utiles
 
-* [Link enunciado (Entrega 1)](https://docs.google.com/document/d/1rWljImX3OHWDQuxLNox3pQCseW1LBoNFpuH7n3U_FWA/edit?tab=t.0)
+* [Link enunciado](https://docs.google.com/document/d/1rWljImX3OHWDQuxLNox3pQCseW1LBoNFpuH7n3U_FWA/edit?tab=t.0)
 * [Documentacion de Zod (Validador de datos de entrada)](https://zod.dev/)
 * [Documentacion JavaScript](https://developer.mozilla.org/es/docs/Web/JavaScript)
 * [Documentacion Express](https://expressjs.com/es/)
