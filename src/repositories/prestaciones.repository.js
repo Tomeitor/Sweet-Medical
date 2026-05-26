@@ -2,7 +2,7 @@ const especialidadesMock = [
   {
     nombre: "Cardiologia",
     costo: 15000,
-    duracionTurnoMinutos: 30,
+    duracionTurnoMinutos: 15,
   },
   {
     nombre: "Dermatologia",
@@ -20,12 +20,12 @@ const practicasMock = [
   {
     nombre: "Electrocardiograma",
     costo: 25000,
-    duracionTurnoMinutos: 45,
+    duracionTurnoMinutos: 15,
   },
   {
     nombre: "Biopsia de piel",
     costo: 30000,
-    duracionTurnoMinutos: 30,
+    duracionTurnoMinutos: 15,
   },
   {
     nombre: "Consulta General",
