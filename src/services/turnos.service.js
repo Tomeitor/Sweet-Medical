@@ -10,10 +10,16 @@ import { EstadoTurno } from '../domain/EstadoTurno.js';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween.js';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
 import { BadRequestError, ConflictError, NotFoundError, TurnoFuturoError } from '../errors/AppError.js';
 
 dayjs.extend(isBetween);
 dayjs.extend(customParseFormat);
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const ARGENTINA_TZ = 'America/Argentina/Buenos_Aires';
 
 const DIAS_SEMANA = [
     DiaSemana.DOMINGO, DiaSemana.LUNES, DiaSemana.MARTES,
@@ -24,6 +30,29 @@ const DURACION_TURNO_MINUTOS = 15;
 const CANTIDAD_DIAS_BUSQUEDA_DEFAULT = 7;
 
 export class TurnoService {
+
+    formatearFechaArgentina(fecha) {
+        if (!fecha) return fecha;
+        return dayjs(fecha).tz(ARGENTINA_TZ).format();
+    }
+
+    normalizarTurnoParaRespuesta(turno) {
+        const t = turno?.toObject ? turno.toObject() : { ...turno };
+        if (!t) return t;
+
+        t.fechaHora = this.formatearFechaArgentina(t.fechaHora);
+
+        if (Array.isArray(t.historialEstados)) {
+            t.historialEstados = t.historialEstados.map((cambio) => ({
+                ...cambio,
+                fechaHora: this.formatearFechaArgentina(cambio.fechaHora),
+                fechaHoraAnterior: this.formatearFechaArgentina(cambio.fechaHoraAnterior),
+                fechaHoraNueva: this.formatearFechaArgentina(cambio.fechaHoraNueva),
+            }));
+        }
+
+        return t;
+    }
 
     async darDeAlta(medicoId, pacienteId, fechaHora, sede, practica, costo) {
         const fechaTurno = new Date(fechaHora);
@@ -49,14 +78,15 @@ export class TurnoService {
         const nuevoTurno = new Turno(
             Date.now().toString(),
             medico, 
-            pacienteId, 
+            { id: pacienteId }, 
             fechaTurno,
             sede, 
             practica, 
             costo
         );
 
-        return await turnosRepository.add(nuevoTurno);
+        const turnoCreado = await turnosRepository.add(nuevoTurno);
+        return this.normalizarTurnoParaRespuesta(turnoCreado);
     }
 
     async validarAgendaMedico(medicoId, fecha) {
@@ -88,7 +118,8 @@ export class TurnoService {
 
         turno.actualizarEstado(EstadoTurno.CANCELADO, "SISTEMA", motivo);
 
-        return await turnosRepository.update(turno);
+        const turnoActualizado = await turnosRepository.update(turno);
+        return this.normalizarTurnoParaRespuesta(turnoActualizado);
     }
 
     async cambiarTurno(turnoId, nuevaFechaHora, motivo) {
@@ -116,7 +147,8 @@ export class TurnoService {
 
         turno.cambiarFechaHora(fechaTurnoNueva, "SISTEMA", motivo);
 
-        return await turnosRepository.update(turno);
+        const turnoActualizado = await turnosRepository.update(turno);
+        return this.normalizarTurnoParaRespuesta(turnoActualizado);
     }
 
     validarTurnoPuedeModificarse(turno, accion) {
@@ -143,6 +175,10 @@ export class TurnoService {
             throw new NotFoundError("El turno no existe");
         }
 
+        if (turno.estado === EstadoTurno.REALIZADO) {
+            throw new ConflictError("El turno ya está marcado como realizado");
+        }
+
         if (turno.estado === EstadoTurno.CANCELADO) {
             throw new ConflictError("No se puede marcar como realizado un turno cancelado");
         }
@@ -153,7 +189,8 @@ export class TurnoService {
 
         turno.actualizarEstado(EstadoTurno.REALIZADO, "SISTEMA", "Turno marcado como realizado");
 
-        return await turnosRepository.update(turno);
+        const turnoActualizado = await turnosRepository.update(turno);
+        return this.normalizarTurnoParaRespuesta(turnoActualizado);
     }
 
     async getAll() {
@@ -161,12 +198,15 @@ export class TurnoService {
     }
 
     async getById(id) {
-        return await turnosRepository.findById(id);
+        const turno = await turnosRepository.findById(id);
+        return this.normalizarTurnoParaRespuesta(turno);
     }
 
     async getHistorialPaciente(pacienteId) {
         const turnos = await turnosRepository.findByPaciente(pacienteId);
-        return turnos.sort((turnoA, turnoB) => turnoA.fechaHora.getTime() - turnoB.fechaHora.getTime());
+        return turnos
+            .sort((turnoA, turnoB) => turnoA.fechaHora.getTime() - turnoB.fechaHora.getTime())
+            .map((turno) => this.normalizarTurnoParaRespuesta(turno));
     }
 
     async getTurnosDisponibles(filtros) {

@@ -19,7 +19,8 @@ export default class DisponibilidadesRepository {
   }
 
   async getById(id) {
-    return await this.model.findById(id);
+    this.validateId(id);
+    return await this.model.findOne({_id: id, eliminado: false});
   }
 
   async getAll() {
@@ -34,7 +35,7 @@ export default class DisponibilidadesRepository {
 
     this.validateId(disponibilidad.id);
 
-    const query = {_id: disponibilidad.id}
+    const query = {_id: disponibilidad.id, eliminado: false}
 
     return await this.model.findOneAndUpdate(
         query,
@@ -48,7 +49,7 @@ export default class DisponibilidadesRepository {
   async delete(id){
     this.validateId(id);
 
-    return await this.model.findByIdAndUpdate(id,
+    return await this.model.findOneAndUpdate({_id: id, eliminado: false},
         {
           eliminado: true
         },

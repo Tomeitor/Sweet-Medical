@@ -38,7 +38,12 @@ export class TurnosRepository {
     async findByPaciente(pacienteId) {
         this.validateId(pacienteId)
 
-        return await this.model.find({"paciente.id": pacienteId});
+        return await this.model.find({
+            $or: [
+                {"paciente.id": pacienteId},
+                {paciente: pacienteId},
+            ],
+        });
     }
 
     async update(turno) {
@@ -59,7 +64,10 @@ export class TurnosRepository {
     }
 
     validateTurno(turno) {
-        if (!(turno instanceof Turno)) {
+        const esTurnoDeDominio = turno instanceof Turno;
+        const esDocumentoMongoose = turno instanceof this.model;
+
+        if (!esTurnoDeDominio && !esDocumentoMongoose) {
             throw new BadRequestError("El turno es inválido")
         }
     }

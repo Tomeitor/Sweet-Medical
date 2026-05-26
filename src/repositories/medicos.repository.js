@@ -25,7 +25,7 @@ export class MedicoRepository {
   getById = async (id) => {
     this.validateId(id);
 
-    return await this.model.findById(id).populate('disponibilidades');
+    return await this.model.findOne({_id: id, eliminado: false}).populate('disponibilidades');
   };
 
   async add(medico) {
@@ -40,13 +40,13 @@ export class MedicoRepository {
     this.validateMedico(medico);
     this.validateId(medico.id);
 
-    return await this.model.findByIdAndUpdate(medico.id, medico, {new: true});
+    return await this.model.findOneAndUpdate({_id: medico.id, eliminado: false}, medico, {new: true});
   }
 
   delete = async (id) => {
     this.validateId(id);
 
-    return await this.model.findByIdAndUpdate(id,
+    return await this.model.findOneAndUpdate({_id: id, eliminado: false},
         {
           eliminado: true
         },
