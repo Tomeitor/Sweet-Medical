@@ -1,6 +1,12 @@
 import { TurnoService } from "../services/turnos.service.js";
 import z from "zod";
 
+const optionalDateTimeSchema = z
+  .string()
+  .datetime({ offset: true, message: "Formato de fecha inválido (debe ser ISO)" })
+  .transform((str) => new Date(str))
+  .optional();
+
 const crearTurnoSchema = z.object({
   medicoId: z.string({ required_error: "El ID del médico es obligatorio" }).trim().regex(/^\d+$/, "El ID del médico debe ser numérico"),
   pacienteId: z.string().trim().regex(/^\d+$/, "El ID del paciente debe ser numérico"),
@@ -30,8 +36,17 @@ const historialPacienteParamsSchema = z.object({
 });
 
 const turnosDisponiblesQuerySchema = z.object({
+  pacienteId: z.string().trim().regex(/^\d+$/, "El ID del paciente debe ser numérico"),
+  medicoId: z.string().trim().regex(/^\d+$/, "El ID del médico debe ser numérico").optional(),
   especialidad: z.string().trim().min(1).optional(),
   practica: z.string().trim().min(1).optional(),
+  sede: z.string().trim().min(1).optional(),
+  fechaDesde: optionalDateTimeSchema,
+  fechaHasta: optionalDateTimeSchema,
+  page: z.coerce.number().int().min(1, "La página debe ser mayor o igual a 1").default(1),
+  limit: z.coerce.number().int().min(1, "El límite debe ser mayor o igual a 1").max(100, "El límite no puede ser mayor a 100").default(10),
+  ordenarPor: z.enum(["fecha", "costo"]).default("fecha"),
+  orden: z.enum(["asc", "desc"]).default("asc"),
 }).refine(data => data.especialidad || data.practica, {
   message: "Debe indicar una especialidad o una práctica",
 });

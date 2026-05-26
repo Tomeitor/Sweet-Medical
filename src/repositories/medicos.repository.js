@@ -1,5 +1,3 @@
-import Medico from "../domain/Medico.js";
-import Disponibilidad from "../domain/Disponibilidad.js";
 import DisponibilidadesRepository from "./disponibilidades.repository.js";
 import { MedicosModel } from "../schemas/medicosSchema.js";
 import {
@@ -7,7 +5,6 @@ import {
   UnprocessableEntityError,
 } from "../errors/AppError.js";
 
-const disponibilidadesRepository = new DisponibilidadesRepository();
 
 export class MedicoRepository {
   constructor() {

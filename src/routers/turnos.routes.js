@@ -140,16 +140,64 @@ const controller = new TurnosController();
  *         hora:
  *           type: string
  *           example: '12:00'
- *         especialidades:
+ *         sede:
+ *           type: string
+ *           example: Sede Centro
+ *         especialidad:
+ *           type: string
+ *           nullable: true
+ *           example: Cardiologia
+ *         practica:
+ *           type: string
+ *           nullable: true
+ *           example: Electrocardiograma
+ *         cobertura:
+ *           type: string
+ *           enum: [TOTAL, PARCIAL, NO_CUBIERTA]
+ *           example: PARCIAL
+ *         costoBase:
+ *           type: number
+ *           example: 15000
+ *         costoPaciente:
+ *           type: number
+ *           example: 7500
+ *     PaginacionTurnosDisponibles:
+ *       type: object
+ *       properties:
+ *         page:
+ *           type: integer
+ *           example: 1
+ *         limit:
+ *           type: integer
+ *           example: 10
+ *         total:
+ *           type: integer
+ *           example: 24
+ *         totalPages:
+ *           type: integer
+ *           example: 3
+ *     OrdenTurnosDisponibles:
+ *       type: object
+ *       properties:
+ *         ordenarPor:
+ *           type: string
+ *           enum: [fecha, costo]
+ *           example: fecha
+ *         orden:
+ *           type: string
+ *           enum: [asc, desc]
+ *           example: asc
+ *     TurnosDisponiblesResponse:
+ *       type: object
+ *       properties:
+ *         items:
  *           type: array
  *           items:
- *             type: string
- *           example: [Cardiologia]
- *         practicas:
- *           type: array
- *           items:
- *             type: string
- *           example: [Consulta]
+ *             $ref: '#/components/schemas/TurnoDisponible'
+ *         pagination:
+ *           $ref: '#/components/schemas/PaginacionTurnosDisponibles'
+ *         sort:
+ *           $ref: '#/components/schemas/OrdenTurnosDisponibles'
  */
 
 /**
@@ -198,8 +246,19 @@ router.post('/', controller.alta);
  *   get:
  *     summary: Obtener turnos disponibles
  *     tags: [Turnos]
- *     description: Debe indicarse al menos una especialidad o una practica.
+ *     description: Debe indicarse el paciente y al menos una especialidad o una practica.
  *     parameters:
+ *       - in: query
+ *         name: pacienteId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Id del paciente para calcular cobertura y costo
+ *       - in: query
+ *         name: medicoId
+ *         schema:
+ *           type: string
+ *         description: Id del medico para filtrar la busqueda
  *       - in: query
  *         name: especialidad
  *         schema:
@@ -210,17 +269,67 @@ router.post('/', controller.alta);
  *         schema:
  *           type: string
  *         description: Practica medica para filtrar turnos
+ *       - in: query
+ *         name: sede
+ *         schema:
+ *           type: string
+ *         description: Sede de atencion
+ *       - in: query
+ *         name: fechaDesde
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Fecha desde inclusive
+ *       - in: query
+ *         name: fechaHasta
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Fecha hasta inclusive
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Pagina solicitada
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Cantidad de resultados por pagina
+ *       - in: query
+ *         name: ordenarPor
+ *         schema:
+ *           type: string
+ *           enum: [fecha, costo]
+ *           default: fecha
+ *         description: Campo de ordenamiento
+ *       - in: query
+ *         name: orden
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Direccion del ordenamiento
  *     responses:
  *       200:
- *         description: Lista de turnos disponibles
+ *         description: Lista paginada de turnos disponibles
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/TurnoDisponible'
+ *               $ref: '#/components/schemas/TurnosDisponiblesResponse'
  *       400:
  *         description: Filtros invalidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Paciente no encontrado
  *         content:
  *           application/json:
  *             schema:
