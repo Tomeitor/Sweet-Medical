@@ -2,10 +2,6 @@ import mongoose from 'mongoose';
 import Disponibilidad from '../domain/Disponibilidad.js';
 
 const disponibilidadesSchema = new mongoose.Schema({
-    id: {
-        type: String,
-        required: true
-    },
     idMedico: {
         type: String,
         required: true

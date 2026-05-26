@@ -2,10 +2,6 @@ import mongoose from 'mongoose';
 import { Notificacion } from "../domain/Notificacion.js";
 
 const notificacionSchema = new mongoose.Schema({
-    id: {
-        type: String,
-        required: true
-    },
     destinatario: {
         id: String
     },

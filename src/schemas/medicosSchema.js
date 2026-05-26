@@ -2,10 +2,6 @@ import mongoose from 'mongoose';
 import Medico from '../domain/Medico.js';
 
 const medicosSchema = new mongoose.Schema({
-    id: {
-        type: String,
-        required: true
-    },
     usuario: {
         type: String,
         required:true

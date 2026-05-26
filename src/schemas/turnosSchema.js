@@ -2,10 +2,6 @@ import mongoose from "mongoose";
 import { Turno } from "../domain/Turno.js";
 
 const turnosSchema = new mongoose.Schema({
-    id: {
-        type: String,
-        required: true
-    },
     medico: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Medico',
