@@ -7,10 +7,10 @@ const notificacionSchema = new mongoose.Schema({
         required: true
     },
     destinatario: {
-
+        id: String
     },
     remitente: {
-
+        id: String
     },
     mensaje: {
         type: String,
@@ -28,7 +28,9 @@ const notificacionSchema = new mongoose.Schema({
         type: Boolean
     }
 },{
-
+    timestamps: true,
+    //versionKey: false,
+    collection: 'notificaciones'
 });
 
 notificacionSchema.loadClass(Notificacion);

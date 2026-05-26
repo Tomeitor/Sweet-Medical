@@ -1,10 +1,14 @@
 import mongoose from 'mongoose';
-import { Medico } from '../domain/Medico.js';
+import Medico from '../domain/Medico.js';
 
 const medicosSchema = new mongoose.Schema({
     id: {
         type: String,
         required: true
+    },
+    usuario: {
+        type: String,
+        required:true
     },
     matricula: {
         type: String,
@@ -22,20 +26,24 @@ const medicosSchema = new mongoose.Schema({
         type: [String],
         required: true
     },
-    sedes: {
-
-    },
-    disponibilidades: {
+    sedes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Sede',
+        required: true
+    }],
+    disponibilidades: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Disponibilidad',
         required: true
-    },
+    }],
     eliminado: {
         type: Boolean,
         default: false
     }
 },{
-    timestamps: true
+    timestamps: true,
+    //versionKey: false,
+    collection: 'medicos'
 });
 
 medicosSchema.loadClass(Medico);

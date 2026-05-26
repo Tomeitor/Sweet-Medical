@@ -12,31 +12,37 @@ const turnosSchema = new mongoose.Schema({
         required: true
     },
     paciente: {
-
+        id: String
     },
     fechaHora: {
         type: Date,
         required: true
     },
     sede: {
-
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Sede',
+        required: true
     },
     practica: {
-
+        type: String,
+        required: true
     },
     costo: {
         type: Number,
         required: true
     },
     estado: {
-
+        type: String,
+        enum: ["RESERVADO", "CONFIRMADO", "REALIZADO"]
     },
     historialEstados: {
         type: [],
         required: false
     }
 },{
-
+    timestamps: true,
+    //versionKey: false,
+    collection: 'turnos'
 });
 
 turnosSchema.loadClass(Turno);

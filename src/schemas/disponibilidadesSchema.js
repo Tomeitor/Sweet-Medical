@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Disponibilidad } from '../domain/Disponibilidad.js';
+import Disponibilidad from '../domain/Disponibilidad.js';
 
 const disponibilidadesSchema = new mongoose.Schema({
     id: {
@@ -11,7 +11,8 @@ const disponibilidadesSchema = new mongoose.Schema({
         required: true
     },
     diaSemana: {
-
+        type: String,
+        enum: ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"]
     },
     desde: {
         type: String,
@@ -27,6 +28,7 @@ const disponibilidadesSchema = new mongoose.Schema({
     }
 },{
     timestamps: true,
+    //versionKey: false,
     collection: 'disponibilidades'
 });
 
