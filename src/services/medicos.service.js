@@ -20,16 +20,14 @@ export default class MedicoService {
   async update(id, medicoData) {
     const medico = await this.getById(id);
 
-    const updatedMedico = { ...medico, ...medicoData, id };
+    const updatedMedico = new Medico({ ...medico.toObject?.(), ...medicoData, _id: medico._id });
 
-    return medicoRepository.update(new Medico(updatedMedico));
+    return medicoRepository.update(id, updatedMedico);
   }
 
   async delete(id) {
-    const medicoExist = await this.getById(id);
+    await this.getById(id);
 
-    const newMedico = await medicoRepository.delete(id);
-
-    return newMedico;
+    return await medicoRepository.delete(id);
   }
 }

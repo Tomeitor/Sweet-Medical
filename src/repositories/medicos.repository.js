@@ -1,48 +1,41 @@
-import DisponibilidadesRepository from "./disponibilidades.repository.js";
 import { MedicosModel } from "../schemas/medicosSchema.js";
 import {
-  BadRequestError,
   UnprocessableEntityError,
 } from "../errors/AppError.js";
+import { ensureObjectId } from "../utils/objectId.js";
+import Medico from "../domain/Medico.js";
 
 
 export class MedicoRepository {
   constructor() {
-    this.medicos = {};
-
-    this.nextId = 1;
-
     this.model = MedicosModel;
-
   }
 
   getAll = async () => {
-    return await this.model.find({eliminado: false});
+    return await this.model.find({eliminado: false}).populate('sedes');
   };
 
   getById = async (id) => {
-    this.validateId(id);
+    ensureObjectId(id);
 
-    return await this.model.findById(id).populate('sedes').populate('disponibilidades');
+    return await this.model.findById(id).populate('sedes');
   };
 
   async add(medico) {
     this.validateMedico(medico);
 
-    medico.id = this.nextId++;
-
     return await this.model.create(medico);
   }
 
-  async update(medico) {
+  async update(id, medico) {
     this.validateMedico(medico);
-    this.validateId(medico.id);
+    ensureObjectId(id);
 
-    return await this.model.findByIdAndUpdate(medico.id, medico, {new: true});
+    return await this.model.findByIdAndUpdate(id, medico, {new: true, runValidators: true}).populate('sedes');
   }
 
   delete = async (id) => {
-    this.validateId(id);
+    ensureObjectId(id);
 
     return await this.model.findByIdAndUpdate(id,
         {
@@ -56,17 +49,6 @@ export class MedicoRepository {
   validateMedico(medico) {
     if (!(medico instanceof Medico)) {
       throw new UnprocessableEntityError("El médico es inválido");
-    }
-  }
-  validateDisponibilidad(disp) {
-    if (!(disp instanceof Disponibilidad)) {
-      throw new UnprocessableEntityError("La disponibilidad es inválido");
-    }
-  }
-
-  validateId(id) {
-    if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
-      throw new BadRequestError("El id no es válido");
     }
   }
 }

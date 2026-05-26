@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import Sede from "../domain/Sede.js";
 
 const sedesSchema = new mongoose.Schema({
     nombre: {
@@ -14,10 +13,8 @@ const sedesSchema = new mongoose.Schema({
     }
 },{
     timestamps: true,
-    //versionKey: false,
+    versionKey: false,
     collection: 'sedes'
 });
 
-sedesSchema.loadClass(Sede);
-
-export const SedesModel = mongoose.model('Sede', sedesSchema);
+export const SedesModel = mongoose.models.Sede || mongoose.model('Sede', sedesSchema);

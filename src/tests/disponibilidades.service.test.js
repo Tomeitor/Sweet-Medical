@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import mongoose from "mongoose";
 
 import Disponibilidad from "../domain/Disponibilidad.js";
 import { disponibilidadesRepository } from "../repositories/disponibilidades.repository.js";
 import DisponibilidadesService from "../services/disponibilidades.service.js";
+
+const objectId = () => new mongoose.Types.ObjectId().toString();
 
 const mockGetAll = jest.fn();
 const mockGetByMedico = jest.fn();
@@ -29,8 +32,8 @@ describe("DisponibilidadesService", () => {
   it("debe retornar todas las disponibilidades", async () => {
     const disponibilidades = [
       new Disponibilidad({
-        id: 1,
-        idMedico: 1,
+        _id: objectId(),
+        medico: objectId(),
         diaSemana: "LUNES",
         desde: "08:00",
         hasta: "12:00",
@@ -45,10 +48,11 @@ describe("DisponibilidadesService", () => {
   });
 
   it("debe retornar disponibilidades por medico", async () => {
+    const medicoId = objectId();
     const disponibilidades = [
       new Disponibilidad({
-        id: 2,
-        idMedico: 2,
+        _id: objectId(),
+        medico: medicoId,
         diaSemana: "MARTES",
         desde: "09:00",
         hasta: "13:00",
@@ -56,24 +60,24 @@ describe("DisponibilidadesService", () => {
     ];
     mockGetByMedico.mockResolvedValue(disponibilidades);
 
-    const result = await service.getByMedico(2);
+    const result = await service.getByMedico(medicoId);
 
     expect(result).toEqual(disponibilidades);
-    expect(mockGetByMedico).toHaveBeenCalledWith(2);
+    expect(mockGetByMedico).toHaveBeenCalledWith(medicoId);
   });
 
   it("debe lanzar error cuando la disponibilidad no existe", async () => {
     mockGetById.mockResolvedValue(null);
 
-    await expect(service.getById(999)).rejects.toThrow(
+    await expect(service.getById(objectId())).rejects.toThrow(
       "La disponibilidad no fue encontrada",
     );
   });
 
   it("debe actualizar una disponibilidad existente mergeando los cambios", async () => {
     const disponibilidadExistente = new Disponibilidad({
-      id: 1,
-      idMedico: 1,
+      _id: objectId(),
+      medico: objectId(),
       diaSemana: "LUNES",
       desde: "08:00",
       hasta: "12:00",
@@ -86,19 +90,19 @@ describe("DisponibilidadesService", () => {
     mockGetById.mockResolvedValue(disponibilidadExistente);
     mockUpdate.mockResolvedValue(disponibilidadActualizada);
 
-    const result = await service.update(1, { hasta: "14:00" });
+    const result = await service.update(disponibilidadExistente._id, { hasta: "14:00" });
 
     expect(result).toEqual(disponibilidadActualizada);
-    expect(mockUpdate).toHaveBeenCalledWith({
-      ...disponibilidadExistente,
+    expect(mockUpdate).toHaveBeenCalledWith(disponibilidadExistente._id, {
+      _id: disponibilidadExistente._id,
       hasta: "14:00",
     });
   });
 
   it("debe eliminar una disponibilidad existente", async () => {
     const disponibilidad = {
-      id: 1,
-      idMedico: 1,
+      _id: objectId(),
+      medico: objectId(),
       diaSemana: "LUNES",
       desde: "08:00",
       hasta: "12:00",
@@ -108,9 +112,9 @@ describe("DisponibilidadesService", () => {
     mockGetById.mockResolvedValue({ ...disponibilidad, eliminado: false });
     mockDelete.mockResolvedValue(disponibilidad);
 
-    const result = await service.delete(1);
+    const result = await service.delete(disponibilidad._id);
 
     expect(result).toEqual(disponibilidad);
-    expect(mockDelete).toHaveBeenCalledWith(1);
+    expect(mockDelete).toHaveBeenCalledWith(disponibilidad._id);
   });
 });

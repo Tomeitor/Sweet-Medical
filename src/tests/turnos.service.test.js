@@ -1,10 +1,34 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import dayjs from "dayjs";
+import mongoose from "mongoose";
 
 import { TurnoService } from "../services/turnos.service.js";
 import { EstadoTurno } from "../domain/EstadoTurno.js";
 import { Turno } from "../domain/Turno.js";
 import { turnosRepository } from "../repositories/turnos.repository.js";
+import { medicoRepository } from "../repositories/medicos.repository.js";
+import { disponibilidadesRepository } from "../repositories/disponibilidades.repository.js";
+
+const objectId = () => new mongoose.Types.ObjectId().toString();
+
+const crearMedico = ({ medicoId = objectId(), sedeId = objectId(), especialidades = ["Cardiologia"], practicas = ["Electrocardiograma"] } = {}) => ({
+  _id: medicoId,
+  nombre: "Dra. Ana Gómez",
+  matricula: "12345",
+  especialidades,
+  practicas,
+  sedes: [{ _id: sedeId, nombre: "Sede Centro", direccion: "Av. Siempre Viva 123" }],
+});
+
+const mockAgendaDisponible = ({ medicoId, desde = "08:00", hasta = "09:00" } = {}) => {
+  jest.spyOn(disponibilidadesRepository, "getByMedico").mockImplementation(async (id) => {
+    if (String(id) !== String(medicoId)) {
+      return [];
+    }
+
+    return [{ diaSemana: "MARTES", desde, hasta }];
+  });
+};
 
 const obtenerProximoDia = (diaSemana, hora, minuto = 0) => {
   let fecha = dayjs()
@@ -29,6 +53,11 @@ describe("TurnoService", () => {
   describe("getTurnosDisponibles", () => {
     it("debe retornar turnos disponibles con cobertura, costo y paginacion", async () => {
       const service = new TurnoService();
+      const medicoId = objectId();
+
+      jest.spyOn(medicoRepository, "getAll").mockResolvedValue([crearMedico({ medicoId })]);
+      mockAgendaDisponible({ medicoId });
+      jest.spyOn(turnosRepository, "findByMedicoYFecha").mockResolvedValue(null);
 
       const resultado = await service.getTurnosDisponibles({
         pacienteId: "1",
@@ -57,6 +86,7 @@ describe("TurnoService", () => {
 
     it("debe lanzar error si fechaHasta es anterior a fechaDesde", async () => {
       const service = new TurnoService();
+      jest.spyOn(medicoRepository, "getAll").mockResolvedValue([]);
 
       await expect(
         service.getTurnosDisponibles({
@@ -74,6 +104,7 @@ describe("TurnoService", () => {
 
     it("debe lanzar error si el paciente no existe", async () => {
       const service = new TurnoService();
+      jest.spyOn(medicoRepository, "getAll").mockResolvedValue([]);
 
       await expect(
         service.getTurnosDisponibles({
@@ -91,6 +122,13 @@ describe("TurnoService", () => {
 
     it("debe calcular cobertura parcial para practicas", async () => {
       const service = new TurnoService();
+      const medicoId = objectId();
+
+      jest.spyOn(medicoRepository, "getAll").mockResolvedValue([
+        crearMedico({ medicoId, especialidades: ["Cardiologia"], practicas: ["Electrocardiograma"] }),
+      ]);
+      mockAgendaDisponible({ medicoId });
+      jest.spyOn(turnosRepository, "findByMedicoYFecha").mockResolvedValue(null);
 
       const resultado = await service.getTurnosDisponibles({
         pacienteId: "1",
@@ -117,23 +155,30 @@ describe("TurnoService", () => {
 
     it("debe excluir slots ya reservados", async () => {
       const service = new TurnoService();
+      const medicoId = objectId();
+      const sedeId = objectId();
       const fechaReservada = obtenerProximoDia(2, 8, 0).toDate();
 
+      jest.spyOn(medicoRepository, "getAll").mockResolvedValue([
+        crearMedico({ medicoId, sedeId }),
+      ]);
+      mockAgendaDisponible({ medicoId });
+
       jest.spyOn(turnosRepository, "findByMedicoYFecha").mockImplementation(
-        (medicoId, fecha) => {
+        async (medicoIdBuscado, fecha) => {
           if (
-            String(medicoId) === "1" &&
+            String(medicoIdBuscado) === String(medicoId) &&
             fecha.getTime() === fechaReservada.getTime()
           ) {
-            const turno = new Turno(
-              "1",
-              { id: 1, nombre: "Dra. Ana Gómez", matricula: "12345" },
-              "1",
-              fechaReservada,
-              "Sede Centro",
-              null,
-              15000,
-            );
+            const turno = new Turno({
+              _id: objectId(),
+              medico: medicoId,
+              pacienteId: "1",
+              fechaHora: fechaReservada,
+              sede: sedeId,
+              practica: "Consulta",
+              costo: 15000,
+            });
             turno.estado = EstadoTurno.RESERVADO;
             return turno;
           }
@@ -156,7 +201,7 @@ describe("TurnoService", () => {
       expect(
         resultado.items.some(
           (item) =>
-            item.medico.id === 1 &&
+            item.medico.id === medicoId &&
             item.fechaHora.getTime() === fechaReservada.getTime(),
         ),
       ).toBe(false);
@@ -166,10 +211,13 @@ describe("TurnoService", () => {
   describe("darDeAlta", () => {
     it("debe rechazar horarios fuera de bloques de 15 minutos", async () => {
       const service = new TurnoService();
+      const medicoId = objectId();
       const fechaInvalida = obtenerProximoDia(2, 8, 10).toDate();
 
+      jest.spyOn(medicoRepository, "getById").mockResolvedValue(crearMedico({ medicoId }));
+
       await expect(
-        service.darDeAlta(1, "1", fechaInvalida, "Sede Centro", null, 15000),
+        service.darDeAlta(medicoId, "1", fechaInvalida, objectId(), null, 15000),
       ).rejects.toThrow(
         "Los turnos solo pueden ser a horarios en punto, y 15, y 30 o y 45",
       );

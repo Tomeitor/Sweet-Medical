@@ -1,6 +1,8 @@
 import { TurnoService } from "../services/turnos.service.js";
 import z from "zod";
 
+const objectIdSchema = z.string().trim().regex(/^[a-f\d]{24}$/i, "El id no es válido");
+
 const optionalDateTimeSchema = z
   .string()
   .datetime({ offset: true, message: "Formato de fecha inválido (debe ser ISO)" })
@@ -8,13 +10,13 @@ const optionalDateTimeSchema = z
   .optional();
 
 const crearTurnoSchema = z.object({
-  medicoId: z.string({ required_error: "El ID del médico es obligatorio" }).trim().regex(/^\d+$/, "El ID del médico debe ser numérico"),
+  medicoId: objectIdSchema,
   pacienteId: z.string().trim().regex(/^\d+$/, "El ID del paciente debe ser numérico"),
   fechaHora: z
     .string()
     .datetime({offset: true, message: "Formato de fecha inválido (debe ser ISO)" })
     .transform(str => new Date(str)),
-  sede: z.string().min(1, "La sede es obligatoria"),
+  sedeId: objectIdSchema,
   practica: z.string().min(1, "La práctica es obligatoria"),
   costo: z.number().positive("El costo debe ser un valor mayor a cero"),
 });
@@ -37,10 +39,10 @@ const historialPacienteParamsSchema = z.object({
 
 const turnosDisponiblesQuerySchema = z.object({
   pacienteId: z.string().trim().regex(/^\d+$/, "El ID del paciente debe ser numérico"),
-  medicoId: z.string().trim().regex(/^\d+$/, "El ID del médico debe ser numérico").optional(),
+  medicoId: objectIdSchema.optional(),
   especialidad: z.string().trim().min(1).optional(),
   practica: z.string().trim().min(1).optional(),
-  sede: z.string().trim().min(1).optional(),
+  sedeId: objectIdSchema.optional(),
   fechaDesde: optionalDateTimeSchema,
   fechaHasta: optionalDateTimeSchema,
   page: z.coerce.number().int().min(1, "La página debe ser mayor o igual a 1").default(1),
@@ -63,7 +65,7 @@ export class TurnosController {
         datosValidados.medicoId,
         datosValidados.pacienteId,
         datosValidados.fechaHora,
-        datosValidados.sede,
+        datosValidados.sedeId,
         datosValidados.practica,
         datosValidados.costo,
       );
@@ -78,6 +80,7 @@ export class TurnosController {
   async baja(req, res, next) {
     try {
       const id = req.params.id;
+      objectIdSchema.parse(id);
       const datosValidados = cancelarTurnoSchema.parse(req.body);
 
       await service.darDeBaja(id, datosValidados.motivo);
@@ -102,6 +105,7 @@ export class TurnosController {
   async cambiar(req, res, next) {
     try {
       const { id } = req.params;
+      objectIdSchema.parse(id);
       const datosValidados = cambiarTurnoSchema.parse(req.body);
       const turno = await service.cambiarTurno(id, datosValidados.fechaHora, datosValidados.motivo);
 
@@ -114,6 +118,7 @@ export class TurnosController {
   async marcarComoRealizado(req, res, next) {
     try {
       const { id } = req.params;
+      objectIdSchema.parse(id);
       const turno = await service.marcarComoRealizado(id);
 
       res.status(200).json(turno);

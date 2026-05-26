@@ -2,6 +2,8 @@ import { BadRequestError } from "../errors/AppError.js";
 import MedicoService from "../services/medicos.service.js";
 import z from "zod";
 
+const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i, "El id no es válido");
+
 const service = new MedicoService();
 
 export const medicoSchema = z.object({
@@ -16,7 +18,7 @@ export const medicoSchema = z.object({
     .max(50),
   especialidades: z.array(z.string()).optional(),
   practicas: z.array(z.string()).optional(),
-  sedes: z.array(z.string()).optional()
+  sedes: z.array(objectIdSchema).optional()
 });
 
 
@@ -33,6 +35,7 @@ export default class MedicoController {
   async getMedicoById(req, res, next) {
     try {
       const { id } = req.params;
+      objectIdSchema.parse(id);
       const medico = await service.getById(id);
       res.status(200).json(medico);
     } catch (error) {
@@ -56,6 +59,7 @@ export default class MedicoController {
   updateMedico = async (req, res, next) => {
     try {
       const { id } = req.params;
+      objectIdSchema.parse(id);
       const medicoActualizado = await service.update(id, req.body);
       res.status(200).json(medicoActualizado);
     } catch (error) {
@@ -66,6 +70,7 @@ export default class MedicoController {
   deleteMedico = async (req, res, next) => {
     try {
       const { id } = req.params;
+      objectIdSchema.parse(id);
       await service.delete(id);
       res.status(200).json({ message: "Médico eliminado correctamente" });
     } catch (error) {

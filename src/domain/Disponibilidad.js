@@ -1,10 +1,10 @@
 export default class Disponibilidad {
-    constructor({id, idMedico, diaSemana, desde, hasta}) {
-        this.id = id;
-        this.idMedico = idMedico;
+    constructor({_id, id, medico, medicoId, diaSemana, desde, hasta, eliminado = false}) {
+        this._id = _id ?? id ?? null;
+        this.medico = medico ?? medicoId;
         this.diaSemana = diaSemana;
         this.desde = desde;
         this.hasta = hasta;
-        this.eliminado = false;
+        this.eliminado = eliminado;
     }
 }

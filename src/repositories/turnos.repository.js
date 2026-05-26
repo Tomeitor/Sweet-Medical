@@ -1,72 +1,62 @@
 import { Turno } from "../domain/Turno.js"
 import { TurnosModel } from "../schemas/turnosSchema.js";
 import {
-    BadRequestError,
+    UnprocessableEntityError,
     NotFoundError
 } from "../errors/AppError.js"
+import { ensureObjectId } from "../utils/objectId.js";
 
 export class TurnosRepository {
     constructor() {
-        this.turnos = {}
-        this.nextId = 1
         this.model = TurnosModel;
     }
 
     async add(turno) {
         this.validateTurno(turno)
-        turno.id = this.nextId++
 
         return await this.model.create(turno);
     }
 
     async findById(id) {
-        this.validateId(id)
+        ensureObjectId(id)
 
-        return await this.model.findById(id);
+        return await this.model.findById(id).populate('medico').populate('sede');
     }
 
     async findByMedicoYFecha(medicoId, fecha) {
-        this.validateId(medicoId)
+        ensureObjectId(medicoId, "El id del médico no es válido")
 
         if (!(fecha instanceof Date)) {
-            throw new BadRequestError("La fecha es obligatoria")
+            throw new UnprocessableEntityError("La fecha es obligatoria")
         }
 
         return await this.model.findOne({medico: medicoId, fechaHora: fecha});
     }
 
     async findByPaciente(pacienteId) {
-        this.validateId(pacienteId)
-
-        return await this.model.findOne({paciente: pacienteId});
+        return await this.model.find({pacienteId}).populate('medico').populate('sede');
     }
 
-    async update(turno) {
+    async update(id, turno) {
         this.validateTurno(turno)
-        this.validateId(turno.id)
+        ensureObjectId(id)
 
-        const turnoExistente = await this.model.findById(turno.id);
+        const turnoExistente = await this.model.findById(id);
 
         if (!turnoExistente) {
             throw new NotFoundError("El turno no existe")
         }
 
-        return await this.model.findByIdAndUpdate(turno.id, turno);
+        return await this.model.findByIdAndUpdate(id, turno, { new: true, runValidators: true }).populate('medico').populate('sede');
     }
 
     async getAll() {
-        return await this.model.find({});
+        return await this.model.find({}).populate('medico').populate('sede');
     }
 
     validateTurno(turno) {
         if (!(turno instanceof Turno)) {
-            throw new BadRequestError("El turno es inválido")
-        }
-    }
-
-    validateId(id) {
-        if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
-            throw new BadRequestError("El id no es válido")
+            throw new UnprocessableEntityError("El turno es inválido")
         }
     }
 }

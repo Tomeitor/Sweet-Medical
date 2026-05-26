@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import Medico from '../domain/Medico.js';
 
 const medicosSchema = new mongoose.Schema({
     usuario: {
@@ -27,21 +26,14 @@ const medicosSchema = new mongoose.Schema({
         ref: 'Sede',
         required: true
     }],
-    disponibilidades: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Disponibilidad',
-        required: true
-    }],
     eliminado: {
         type: Boolean,
         default: false
     }
 },{
     timestamps: true,
-    //versionKey: false,
+    versionKey: false,
     collection: 'medicos'
 });
 
-medicosSchema.loadClass(Medico);
-
-export const MedicosModel = mongoose.model('Medico', medicosSchema);
+export const MedicosModel = mongoose.models.Medico || mongoose.model('Medico', medicosSchema);

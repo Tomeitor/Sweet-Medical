@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-import Disponibilidad from '../domain/Disponibilidad.js';
 
 const disponibilidadesSchema = new mongoose.Schema({
-    idMedico: {
-        type: String,
+    medico: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Medico',
         required: true
     },
     diaSemana: {
@@ -24,10 +24,8 @@ const disponibilidadesSchema = new mongoose.Schema({
     }
 },{
     timestamps: true,
-    //versionKey: false,
+    versionKey: false,
     collection: 'disponibilidades'
 });
 
-disponibilidadesSchema.loadClass(Disponibilidad)
-
-export const DisponibilidadModel = mongoose.model('Disponibilidad', disponibilidadesSchema);
+export const DisponibilidadModel = mongoose.models.Disponibilidad || mongoose.model('Disponibilidad', disponibilidadesSchema);

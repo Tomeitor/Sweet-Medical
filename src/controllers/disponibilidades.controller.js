@@ -2,9 +2,12 @@ import { BadRequestError } from "../errors/AppError.js";
 import DisponibilidadesService from "../services/disponibilidades.service.js";
 import z from "zod";
 
+const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i, "El id no es válido");
+
 const service = new DisponibilidadesService();
 
 export const disponibilidadSchema = z.object({
+  medico: objectIdSchema,
   diaSemana: z.enum(
     ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"],
     {
@@ -33,6 +36,7 @@ export default class DisponibilidadController {
   getDisponibilidadByIdMedico = async (req, res, next) => {
     try {
       const { idMedico } = req.params;
+      objectIdSchema.parse(idMedico);
       const disponibilidades = await service.getByMedico(idMedico);
       res.status(200).json(disponibilidades);
     } catch (error) {
@@ -43,6 +47,7 @@ export default class DisponibilidadController {
   getDisponibilidadById = async (req, res, next) => {
     try {
       const { id } = req.params;
+      objectIdSchema.parse(id);
       const disponibilidad = await service.getById(id);
       res.status(200).json(disponibilidad);
     } catch (error) {
@@ -67,6 +72,7 @@ export default class DisponibilidadController {
   updateDisponibilidad = async (req, res, next) => {
     try {
       const { id } = req.params;
+      objectIdSchema.parse(id);
 
       const disponibilidad = await service.update(id, req.body);
       res.status(200).json(disponibilidad);
@@ -78,6 +84,7 @@ export default class DisponibilidadController {
   deleteDisponibilidad = async (req, res, next) => {
     try {
       const { id } = req.params;
+      objectIdSchema.parse(id);
       const disponibilidad = await service.delete(id);
       res.status(200).json(disponibilidad);
     } catch (error) {

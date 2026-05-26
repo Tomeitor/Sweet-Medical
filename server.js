@@ -1,6 +1,7 @@
 import express from 'express'
 
 import { MongoDBClient } from "./src/config/database.js";
+import './src/schemas/index.js';
 
 import app from './app.js'
 

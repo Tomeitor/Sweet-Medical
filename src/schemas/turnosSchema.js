@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Turno } from "../domain/Turno.js";
+import { EstadoTurno } from "../domain/EstadoTurno.js";
 
 const turnosSchema = new mongoose.Schema({
     medico: {
@@ -7,8 +8,9 @@ const turnosSchema = new mongoose.Schema({
         ref: 'Medico',
         required: true
     },
-    paciente: {
-        id: String
+    pacienteId: {
+        type: String,
+        required: true
     },
     fechaHora: {
         type: Date,
@@ -29,18 +31,19 @@ const turnosSchema = new mongoose.Schema({
     },
     estado: {
         type: String,
-        enum: ["RESERVADO", "CONFIRMADO", "REALIZADO"]
+        enum: Object.values(EstadoTurno),
+        default: EstadoTurno.RESERVADO
     },
     historialEstados: {
-        type: [],
-        required: false
+        type: [mongoose.Schema.Types.Mixed],
+        default: []
     }
 },{
     timestamps: true,
-    //versionKey: false,
+    versionKey: false,
     collection: 'turnos'
 });
 
 turnosSchema.loadClass(Turno);
 
-export const TurnosModel = mongoose.model('Turno', turnosSchema);
+export const TurnosModel = mongoose.models.Turno || mongoose.model('Turno', turnosSchema);

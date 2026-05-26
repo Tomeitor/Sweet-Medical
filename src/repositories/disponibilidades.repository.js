@@ -1,24 +1,18 @@
 import { DisponibilidadModel } from "../schemas/disponibilidadesSchema.js";
-import {
-  BadRequestError,
-  UnprocessableEntityError,
-} from "../errors/AppError.js";
+import { ensureObjectId } from "../utils/objectId.js";
 
 export default class DisponibilidadesRepository {
   constructor() {
-    this.disponibilidades = {};
-
-    this.nexId = 1;
-
     this.model = DisponibilidadModel;
-
   }
 
-  async getByMedico(idMedico) {
-    return await this.model.find({idMedico: idMedico, eliminado: false});
+  async getByMedico(medicoId) {
+    ensureObjectId(medicoId, "El id del médico no es válido");
+    return await this.model.find({medico: medicoId, eliminado: false});
   }
 
   async getById(id) {
+    ensureObjectId(id);
     return await this.model.findById(id);
   }
 
@@ -30,23 +24,16 @@ export default class DisponibilidadesRepository {
     return await this.model.create(disponibilidad);
   }
 
-  async update(disponibilidad){
-
-    this.validateId(disponibilidad.id);
-
-    const query = {_id: disponibilidad.id}
-
-    return await this.model.findOneAndUpdate(
-        query,
-        disponibilidad,
-        {
-          new: true
-        }
-    );
+  async update(id, disponibilidad){
+    ensureObjectId(id);
+    return await this.model.findByIdAndUpdate(id, disponibilidad, {
+      new: true,
+      runValidators: true,
+    });
   }
 
   async delete(id){
-    this.validateId(id);
+    ensureObjectId(id);
 
     return await this.model.findByIdAndUpdate(id,
         {
@@ -57,11 +44,6 @@ export default class DisponibilidadesRepository {
         });
   }
 
-  validateId(id) {
-    if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
-      throw new BadRequestError("El id no es válido");
-    }
-  }
 }
 
 export const disponibilidadesRepository = new DisponibilidadesRepository();

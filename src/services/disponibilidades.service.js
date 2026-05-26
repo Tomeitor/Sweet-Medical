@@ -27,16 +27,18 @@ export default class DisponibilidadesService {
   async update(idDisp, disponibilidadActualizada) {
     const dispoExist = await this.getById(idDisp);
 
-    const disponibilidad = await disponibilidadesRepository.update({...dispoExist, ...disponibilidadActualizada});
+    const disponibilidad = await disponibilidadesRepository.update(idDisp, {
+      ...dispoExist.toObject?.(),
+      ...disponibilidadActualizada,
+      _id: dispoExist._id,
+    });
     return disponibilidad;
   }
 
   async delete(idDisp) {
-    const dispoExist = await this.getById(idDisp);
+    await this.getById(idDisp);
 
-    const newDisponibilidad = await disponibilidadesRepository.delete(idDisp);
-    
-    return newDisponibilidad;
+    return await disponibilidadesRepository.delete(idDisp);
   }
 }
 

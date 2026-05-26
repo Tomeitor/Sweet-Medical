@@ -2,16 +2,16 @@ import { EstadoTurno } from "./EstadoTurno.js";
 
 export class Turno {
 
-    constructor(id, medico, paciente, fechaHora, sede, practica, costo) {
-        this.id = id;
+    constructor({ _id = null, medico, pacienteId, fechaHora, sede, practica, costo, estado = EstadoTurno.RESERVADO, historialEstados = [] }) {
+        this._id = _id;
         this.medico = medico;
-        this.paciente = paciente;
+        this.pacienteId = pacienteId;
         this.fechaHora = fechaHora;
         this.sede = sede;
         this.practica = practica;
         this.costo = costo;
-        this.estado = EstadoTurno.RESERVADO;
-        this.historialEstados = []
+        this.estado = estado;
+        this.historialEstados = historialEstados;
     }
 
     actualizarEstado(nuevoEstado, quien, motivo) {

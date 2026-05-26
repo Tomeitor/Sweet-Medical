@@ -1,4 +1,5 @@
 import { NotificacionModel } from "../schemas/notificacionSchema.js";
+import { ensureObjectId } from "../utils/objectId.js";
 
 export class NotificacionRepository {
     constructor() {
@@ -6,15 +7,18 @@ export class NotificacionRepository {
     }
 
     async findByDestinatarioYEstado(usuarioId, estaLeida) {
-        return await this.model.find({ destinatario: usuarioId, leida: estaLeida });
+        return await this.model.find({ destinatarioId: usuarioId, leida: estaLeida });
     }
 
     async findById(id) {
+        ensureObjectId(id);
         return await this.model.findById(id);
     }
 
     async update(notificacionActualizada) {
-        return await this.model.findByIdAndUpdate(notificacionActualizada.id, notificacionActualizada, {new: true});
+        const id = notificacionActualizada._id ?? notificacionActualizada.id;
+        ensureObjectId(id);
+        return await this.model.findByIdAndUpdate(id, notificacionActualizada, {new: true, runValidators: true});
     }
 }
 
