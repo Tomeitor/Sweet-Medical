@@ -18,6 +18,8 @@ Fragmento de código
 ```bash
 PORT=3000
 PATH_APP=/api/v1
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB_NAME=backend-grupo-02
 ```
 
 ### 3. Ejecución del servidor

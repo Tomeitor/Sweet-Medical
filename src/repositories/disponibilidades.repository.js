@@ -1,4 +1,5 @@
 import Disponibilidad from "../domain/Disponibilidad.js";
+import { DisponibilidadModel } from "../schemas/disponibilidadesSchema.js";
 import {
   BadRequestError,
   UnprocessableEntityError,
@@ -33,56 +34,90 @@ const disponibilidadesMock = [
 
 export default class DisponibilidadesRepository {
   constructor() {
-    this.disponibilidades = {};
-
+    /*
     disponibilidadesMock.forEach((disp) => {
       this.disponibilidades[disp.id] = disp;
     });
 
     this.nextId = disponibilidadesMock.length + 1;
+    */
+
+    this.disponibilidades = {};
+
+    this.nexId = 1;
+
+    this.model = DisponibilidadModel;
+
   }
-  getByMedico(idMedico) {
+
+  async getByMedico(idMedico) {
+    /*
     const disponibilidad = Object.values(this.disponibilidades).filter(
       (m) => !m.eliminado && m.idMedico == idMedico,
     );
     if(!disponibilidad) return [];
-    return disponibilidad;
+     */
+    return await this.model.findOne({ idMedico: idMedico });
   }
 
-  getById(id) {
+  async getById(id) {
+    /*
     this.validateId(id);
 
     return this.disponibilidades[id] && !this.disponibilidades[id].eliminado
       ? this.disponibilidades[id]
       : null;
+    */
+    return await this.model.findById(id);
   }
 
-  getAll() {
-    return Object.values(this.disponibilidades).filter((m) => !m.eliminado);
+  async getAll() {
+    // return Object.values(this.disponibilidades).filter((m) => !m.eliminado);
+    return await this.model.find({eliminado: false});
   }
 
-  create(disponibilidad) {
+  async create(disponibilidad) {
+    /*
     disponibilidad.id = this.nextId++;
     this.disponibilidades[disponibilidad.id] = disponibilidad;
-    return disponibilidad;
+     */
+
+    return await this.model.create({id : this.nextId++});
   }
 
-  update(disponibilidad){
-    this.validateId(disponibilidad.id);
+  async update(disponibilidad){
+    /*
+
     const dispActual = this.getById(disponibilidad.id);
 
     this.disponibilidades[disponibilidad.id] = {
       ...dispActual,
       ...disponibilidad,
     };
-    return disponibilidad;
+     */
+
+    this.validateId(disponibilidad.id);
+
+    const query = {_id: disponibilidad.id}
+
+    return await this.model.findOneAndUpdate(
+        query,
+        disponibilidad
+    );
   }
 
-  delete(id){
+  async delete(id){
     this.validateId(id);
 
-    this.disponibilidades[id] = { ...this.disponibilidades[id], eliminado: true };
-    return this.disponibilidades[id];
+    // this.disponibilidades[id] = { ...this.disponibilidades[id], eliminado: true };
+
+    return await this.model.findByIdAndUpdate(id,
+        {
+          eliminado: true
+        },
+        {
+          new: true
+        });
   }
 
   validateId(id) {

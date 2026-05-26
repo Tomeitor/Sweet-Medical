@@ -1,6 +1,7 @@
 import Medico from "../domain/Medico.js";
 import Disponibilidad from "../domain/Disponibilidad.js";
 import DisponibilidadesRepository from "./disponibilidades.repository.js";
+import { MedicosModel } from "../schemas/medicosSchema.js";
 import {
   BadRequestError,
   UnprocessableEntityError,
@@ -44,49 +45,65 @@ export class MedicoRepository {
   constructor() {
     this.medicos = {};
 
+    /*
     medicosMock.forEach((medico) => {
       this.medicos[medico.id] = medico;
     });
 
     this.nextId = medicosMock.length + 1;
+     */
+
+    this.nextId = 1;
+
+    this.model = MedicosModel;
+
   }
 
   getAll = async () => {
-    const medicos = Object.values(this.medicos).filter((m) => !m.eliminado);
-    return medicos;
+    //const medicos = Object.values(this.medicos).filter((m) => !m.eliminado);
+    return await this.model.find({eliminado: false});
   };
 
   getById = async (id) => {
     this.validateId(id);
 
-    const medico =
-      this.medicos[id] && !this.medicos[id].eliminado ? this.medicos[id] : null;
+    //const medico =
+    //  this.medicos[id] && !this.medicos[id].eliminado ? this.medicos[id] : null;
     // medico.disponibilidad = await disponibilidadesRepository.getByMedico(id);
 
-    return medico;
+    return await this.model.findById(id);
   };
 
-  add(medico) {
+  async add(medico) {
     this.validateMedico(medico);
 
     medico.id = this.nextId++;
-    this.medicos[medico.id] = medico;
-    return medico;
+
+    //this.medicos[medico.id] = medico;
+
+    return await this.model.create(medico);
   }
 
-  update(medico) {
+  async update(medico) {
     this.validateMedico(medico);
     this.validateId(medico.id);
 
-    this.medicos[medico.id] = medico;
-    return medico;
+    //this.medicos[medico.id] = medico;
+
+    return await this.model.findByIdAndUpdate(medico.id, medico, {new: true});
   }
 
   delete = async (id) => {
     this.validateId(id);
 
-    this.medicos[id] = { ...this.medicos[id], eliminado: true };
-    return this.medicos[id];
+    // this.medicos[id] = { ...this.medicos[id], eliminado: true };
+    return await this.model.findByIdAndUpdate(id,
+        {
+          eliminado: true
+        },
+        {
+          new: true
+        });
   };
 
   validateMedico(medico) {
