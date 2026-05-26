@@ -43,7 +43,7 @@ export class TurnoService {
         const atiende = await this.validarAgendaMedico(medicoId, fechaTurno);
         if (!atiende) throw new ConflictError("El médico no atiende en ese horario");
 
-        const ocupado = turnosRepository.findByMedicoYFecha(medicoId, fechaTurno);
+        const ocupado = await turnosRepository.findByMedicoYFecha(medicoId, fechaTurno);
         if (ocupado) throw new ConflictError("Horario ya reservado");
 
         const nuevoTurno = new Turno(
@@ -56,7 +56,7 @@ export class TurnoService {
             costo
         );
 
-        return turnosRepository.add(nuevoTurno);
+        return await turnosRepository.add(nuevoTurno);
     }
 
     async validarAgendaMedico(medicoId, fecha) {
@@ -67,7 +67,7 @@ export class TurnoService {
 
         console.log(`Validando disponibilidad para el día ${diaDelTurno} a las ${horaPedido}`);
 
-        const disponibilidades = disponibilidadesRepository.getByMedico(medicoId);
+        const disponibilidades = await disponibilidadesRepository.getByMedico(medicoId);
 
         const disponibilidadEncontrada = disponibilidades.find(disp => {
             return disp.diaSemana === diaDelTurno && 
@@ -79,7 +79,7 @@ export class TurnoService {
     }
 
     async darDeBaja(turnoId, motivo) {
-        const turno = turnosRepository.findById(turnoId);
+        const turno = await turnosRepository.findById(turnoId);
         if (!turno) {
             throw new NotFoundError("El turno que querés cancelar no existe");
         }
@@ -88,11 +88,11 @@ export class TurnoService {
 
         turno.actualizarEstado(EstadoTurno.CANCELADO, "SISTEMA", motivo);
 
-        return turnosRepository.update(turno);
+        return await turnosRepository.update(turno);
     }
 
     async cambiarTurno(turnoId, nuevaFechaHora, motivo) {
-        const turno = turnosRepository.findById(turnoId);
+        const turno = await turnosRepository.findById(turnoId);
         if (!turno) {
             throw new NotFoundError("El turno que querés cambiar no existe");
         }
@@ -108,15 +108,15 @@ export class TurnoService {
             throw new ConflictError("Los turnos solo pueden ser a horarios en punto, y 15, y 30 o y 45");
         }
 
-        const atiende = await this.validarAgendaMedico(turno.medico.id, fechaTurnoNueva);
+        const atiende = await this.validarAgendaMedico(turno.medico.toString(), fechaTurnoNueva);
         if (!atiende) throw new ConflictError("El médico no atiende en ese horario");
 
-        const ocupado = turnosRepository.findByMedicoYFecha(turno.medico.id, fechaTurnoNueva);
+        const ocupado = await turnosRepository.findByMedicoYFecha(turno.medico.toString(), fechaTurnoNueva);
         if (ocupado) throw new ConflictError("Horario ya reservado");
 
         turno.cambiarFechaHora(fechaTurnoNueva, "SISTEMA", motivo);
 
-        return turnosRepository.update(turno);
+        return await turnosRepository.update(turno);
     }
 
     validarTurnoPuedeModificarse(turno, accion) {
@@ -138,7 +138,7 @@ export class TurnoService {
     }
 
     async marcarComoRealizado(turnoId) {
-        const turno = turnosRepository.findById(turnoId);
+        const turno = await turnosRepository.findById(turnoId);
         if (!turno) {
             throw new NotFoundError("El turno no existe");
         }
@@ -153,21 +153,20 @@ export class TurnoService {
 
         turno.actualizarEstado(EstadoTurno.REALIZADO, "SISTEMA", "Turno marcado como realizado");
 
-        return turnosRepository.update(turno);
+        return await turnosRepository.update(turno);
     }
 
     async getAll() {
-        return turnosRepository.getAll();
+        return await turnosRepository.getAll();
     }
 
     async getById(id) {
-        return turnosRepository.findById(id);
+        return await turnosRepository.findById(id);
     }
 
     async getHistorialPaciente(pacienteId) {
-        return turnosRepository
-            .findByPaciente(pacienteId)
-            .sort((turnoA, turnoB) => turnoA.fechaHora.getTime() - turnoB.fechaHora.getTime());
+        const turnos = await turnosRepository.findByPaciente(pacienteId);
+        return turnos.sort((turnoA, turnoB) => turnoA.fechaHora.getTime() - turnoB.fechaHora.getTime());
     }
 
     async getTurnosDisponibles(filtros) {
@@ -181,8 +180,10 @@ export class TurnoService {
         const medicos = await medicoRepository.getAll();
         const medicosFiltrados = medicos.filter(medico => this.medicoCoincideConFiltro(medico, filtros));
 
-        const items = medicosFiltrados
-            .flatMap(medico => this.generarTurnosDisponiblesParaMedico(medico, filtros, paciente, prestacion, rangoFechas))
+        const resultados = await Promise.all(medicosFiltrados.map(
+            medico => this.generarTurnosDisponiblesParaMedico(medico, filtros, paciente, prestacion, rangoFechas)
+        ));
+        const items = resultados.flat()
             .sort((turnoA, turnoB) => this.compararTurnosDisponibles(turnoA, turnoB, filtros.ordenarPor, filtros.orden));
 
         return this.paginarTurnosDisponibles(items, filtros.page, filtros.limit, filtros.ordenarPor, filtros.orden);
@@ -195,13 +196,13 @@ export class TurnoService {
         const coincidePractica = !practica || medico.practicas
             .some(prac => prac.toLowerCase() === practica.toLowerCase());
         const coincideSede = !sede || medico.sedes
-            .some(sedeMedico => sedeMedico.toLowerCase() === sede.toLowerCase());
+            .some(sedeMedico => String(sedeMedico).toLowerCase() === sede.toLowerCase());
 
         return coincideMedico && coincideEspecialidad && coincidePractica && coincideSede;
     }
 
-    generarTurnosDisponiblesParaMedico(medico, filtros, paciente, prestacion, rangoFechas) {
-        const disponibilidades = disponibilidadesRepository.getByMedico(medico.id);
+    async generarTurnosDisponiblesParaMedico(medico, filtros, paciente, prestacion, rangoFechas) {
+        const disponibilidades = await disponibilidadesRepository.getByMedico(medico.id);
         const turnosDisponibles = [];
         const sedes = this.obtenerSedesAplicables(medico, filtros.sede);
         const duracionTurno = this.obtenerDuracionTurnoMedico(medico);
@@ -217,11 +218,10 @@ export class TurnoService {
             const diaSemana = DIAS_SEMANA[fecha.day()];
             const disponibilidadesDelDia = disponibilidades.filter(disp => disp.diaSemana === diaSemana);
 
-            disponibilidadesDelDia.forEach(disponibilidad => {
-                turnosDisponibles.push(
-                    ...this.generarSlotsDisponibles(medico, disponibilidad, fecha, rangoFechas, sedes, paciente, prestacion, filtros, duracionTurno),
-                );
-            });
+            for (const disponibilidad of disponibilidadesDelDia) {
+                const slots = await this.generarSlotsDisponibles(medico, disponibilidad, fecha, rangoFechas, sedes, paciente, prestacion, filtros, duracionTurno);
+                turnosDisponibles.push(...slots);
+            }
 
             fecha = fecha.add(1, 'day');
         }
@@ -229,7 +229,7 @@ export class TurnoService {
         return turnosDisponibles;
     }
 
-    generarSlotsDisponibles(medico, disponibilidad, fecha, rangoFechas, sedes, paciente, prestacion, filtros, duracionTurno) {
+    async generarSlotsDisponibles(medico, disponibilidad, fecha, rangoFechas, sedes, paciente, prestacion, filtros, duracionTurno) {
         const [horaDesde, minutoDesde] = disponibilidad.desde.split(':').map(Number);
         const [horaHasta, minutoHasta] = disponibilidad.hasta.split(':').map(Number);
         let slot = fecha.hour(horaDesde).minute(minutoDesde).second(0).millisecond(0);
@@ -248,7 +248,7 @@ export class TurnoService {
             if (
                 !slot.isBefore(rangoFechas.desde)
                 && !slot.isAfter(rangoFechas.hasta)
-                && !turnosRepository.findByMedicoYFecha(medico.id, slot.toDate())
+                && !await turnosRepository.findByMedicoYFecha(medico.id, slot.toDate())
             ) {
                 sedes.forEach(sede => {
                     slots.push({
@@ -327,7 +327,7 @@ export class TurnoService {
             return medico.sedes;
         }
 
-        return medico.sedes.filter(sedeMedico => sedeMedico.toLowerCase() === sede.toLowerCase());
+        return medico.sedes.filter(sedeMedico => String(sedeMedico).toLowerCase() === sede.toLowerCase());
     }
 
     obtenerDuracionTurnoMedico(medico) {

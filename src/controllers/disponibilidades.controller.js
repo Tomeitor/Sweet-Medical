@@ -66,6 +66,10 @@ export default class DisponibilidadController {
 
   updateDisponibilidad = async (req, res, next) => {
     try {
+      const result = disponibilidadSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        throw new BadRequestError("Datos invalidos");
+      }
       const { id } = req.params;
 
       const disponibilidad = await service.update(id, req.body);

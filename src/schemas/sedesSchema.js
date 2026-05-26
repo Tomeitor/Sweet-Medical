@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Sede from "../domain/Sede.js";
+import { Sede } from "../domain/Sede.js";
 
 const sedesSchema = new mongoose.Schema({
     nombre: {

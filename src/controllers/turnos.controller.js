@@ -8,7 +8,7 @@ const optionalDateTimeSchema = z
   .optional();
 
 const crearTurnoSchema = z.object({
-  medicoId: z.string({ required_error: "El ID del médico es obligatorio" }).trim().regex(/^\d+$/, "El ID del médico debe ser numérico"),
+  medicoId: z.string({ required_error: "El ID del médico es obligatorio" }).trim().regex(/^[0-9a-fA-F]{24}$/, "El ID del médico no es válido"),
   pacienteId: z.string().trim().regex(/^\d+$/, "El ID del paciente debe ser numérico"),
   fechaHora: z
     .string()
@@ -37,7 +37,7 @@ const historialPacienteParamsSchema = z.object({
 
 const turnosDisponiblesQuerySchema = z.object({
   pacienteId: z.string().trim().regex(/^\d+$/, "El ID del paciente debe ser numérico"),
-  medicoId: z.string().trim().regex(/^\d+$/, "El ID del médico debe ser numérico").optional(),
+  medicoId: z.string().trim().regex(/^[0-9a-fA-F]{24}$/, "El ID del médico no es válido").optional(),
   especialidad: z.string().trim().min(1).optional(),
   practica: z.string().trim().min(1).optional(),
   sede: z.string().trim().min(1).optional(),

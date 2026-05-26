@@ -15,8 +15,7 @@ const turnosSchema = new mongoose.Schema({
         required: true
     },
     sede: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Sede',
+        type: String,
         required: true
     },
     practica: {

@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import Medico from '../domain/Medico.js';
+import './sedesSchema.js';
+import './disponibilidadesSchema.js';
 
 const medicosSchema = new mongoose.Schema({
     usuario: {
@@ -23,8 +25,7 @@ const medicosSchema = new mongoose.Schema({
         required: true
     },
     sedes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Sede',
+        type: String,
         required: true
     }],
     disponibilidades: [{

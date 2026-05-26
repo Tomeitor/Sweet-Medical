@@ -18,7 +18,7 @@ const notificacionSchema = new mongoose.Schema({
     },
     fechaHoraLeida: {
         type: Date,
-        required: true
+        default: null
     },
     leida: {
         type: Boolean

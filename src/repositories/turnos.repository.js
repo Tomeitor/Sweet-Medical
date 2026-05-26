@@ -38,7 +38,7 @@ export class TurnosRepository {
     async findByPaciente(pacienteId) {
         this.validateId(pacienteId)
 
-        return await this.model.findOne({paciente: pacienteId});
+        return await this.model.find({"paciente.id": pacienteId});
     }
 
     async update(turno) {
@@ -51,7 +51,7 @@ export class TurnosRepository {
             throw new NotFoundError("El turno no existe")
         }
 
-        return await this.model.findByIdAndUpdate(turno.id, turno);
+        return await this.model.findByIdAndUpdate(turno.id, turno, { new: true });
     }
 
     async getAll() {
@@ -65,7 +65,9 @@ export class TurnosRepository {
     }
 
     validateId(id) {
-        if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+        const esObjectId = typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id);
+        const esNumerico = !Number.isNaN(Number(id)) && Number(id) > 0;
+        if (!esObjectId && !esNumerico) {
             throw new BadRequestError("El id no es válido")
         }
     }

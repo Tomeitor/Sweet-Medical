@@ -58,7 +58,9 @@ export default class DisponibilidadesRepository {
   }
 
   validateId(id) {
-    if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+    const esObjectId = typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id);
+    const esNumerico = !Number.isNaN(Number(id)) && Number(id) > 0;
+    if (!esObjectId && !esNumerico) {
       throw new BadRequestError("El id no es válido");
     }
   }

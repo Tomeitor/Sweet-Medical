@@ -1,5 +1,7 @@
 import DisponibilidadesRepository from "./disponibilidades.repository.js";
 import { MedicosModel } from "../schemas/medicosSchema.js";
+import Medico from "../domain/Medico.js";
+import Disponibilidad from "../domain/Disponibilidad.js";
 import {
   BadRequestError,
   UnprocessableEntityError,
@@ -23,7 +25,7 @@ export class MedicoRepository {
   getById = async (id) => {
     this.validateId(id);
 
-    return await this.model.findById(id).populate('sedes').populate('disponibilidades');
+    return await this.model.findById(id).populate('disponibilidades');
   };
 
   async add(medico) {
@@ -65,7 +67,9 @@ export class MedicoRepository {
   }
 
   validateId(id) {
-    if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+    const esObjectId = typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id);
+    const esNumerico = !Number.isNaN(Number(id)) && Number(id) > 0;
+    if (!esObjectId && !esNumerico) {
       throw new BadRequestError("El id no es válido");
     }
   }
