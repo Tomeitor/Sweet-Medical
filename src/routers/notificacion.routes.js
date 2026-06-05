@@ -3,13 +3,10 @@ import { notificacionController } from "../controllers/notificacion.controller.j
 
 const router = Router();
 
-//obtener la lista de notificaciones sin leer de un usuario
-router.get('/usuario/:usuarioId/sin-leer', notificacionController.getSinLeer);
+// Endpoint unificado para obtener notificaciones (usa req.query internamente)
+router.get('/usuarios/:usuarioId/notificaciones', notificacionController.getNotificaciones);
 
-//obtener la lista de notificaciones leídas de un usuario
-router.get('/usuario/:usuarioId/leidas', notificacionController.getLeidas);
-
-//marcar una notificación específica como leída
-router.patch('/:id/marcar-leida', notificacionController.patchMarcarLeida);
+// Endpoint para marcar una notificación específica
+router.patch('/usuarios/:usuarioId/notificaciones/:notificacionId', notificacionController.patchEstadoLectura);
 
 export default router;

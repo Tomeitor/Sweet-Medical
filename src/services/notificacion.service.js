@@ -7,22 +7,22 @@ export class NotificacionService {
         this.repo = notificacionRepository; 
     }
 
-    async obtenerSinLeer(usuarioId) {
-        return await this.repo.findByDestinatarioYEstado(usuarioId, false);
+    async obtenerPorEstado(usuarioId, estaLeida) {
+        return await this.repo.findByDestinatarioYEstado(usuarioId, estaLeida);
     }
 
-    async obtenerLeidas(usuarioId) {
-        return await this.repo.findByDestinatarioYEstado(usuarioId, true);
-    }
-
-    async marcarComoLeida(idNotificacion) {
+    async actualizarEstadoLectura(idNotificacion, nuevoEstadoLeida) {
         const notificacion = await this.repo.findById(idNotificacion);
         
         if (!notificacion) {
             throw new NotFoundError(`No se encontró la notificación con ID ${idNotificacion}`);
         }
 
-        notificacion.marcarComoLeida(); 
+        if (nuevoEstadoLeida === true) {
+            notificacion.marcarComoLeida();
+        } else {
+            notificacion.desmarcarComoLeida();
+        }
 
         await this.repo.update(notificacion);
 

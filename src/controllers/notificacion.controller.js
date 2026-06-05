@@ -1,34 +1,44 @@
 import { notificacionService } from "../services/notificacion.service.js";
+import { BadRequestError } from "../errors/AppError.js";
 
 export class NotificacionController {
     constructor() {
         this.service = notificacionService;
     }
 
-    getSinLeer = async (req, res, next) => {
+   getNotificaciones = async (req, res, next) => {
         try {
             const { usuarioId } = req.params;
-            const notificaciones = await this.service.obtenerSinLeer(usuarioId);
+            const leidaQuery = req.query.leida; 
+
+            if (leidaQuery === undefined) {
+                 throw new BadRequestError("Falta el parámetro de búsqueda. Debes especificar '?leida=true' o '?leida=false' en la URL.");
+            }
+
+            if (leidaQuery !== 'true' && leidaQuery !== 'false') {
+                throw new BadRequestError("Valor inválido. El parámetro 'leida' debe ser 'true' o 'false'.");
+            }
+            
+            const estaLeida = leidaQuery === 'true'; 
+    
+            const notificaciones = await this.service.obtenerPorEstado(usuarioId, estaLeida);
+
             res.status(200).json({ status: "success", data: notificaciones });
         } catch (error) {
             next(error);
         }
     }
-
-    getLeidas = async (req, res, next) => {
+    patchEstadoLectura = async (req, res, next) => {
         try {
-            const { usuarioId } = req.params;
-            const notificaciones = await this.service.obtenerLeidas(usuarioId);
-            res.status(200).json({ status: "success", data: notificaciones });
-        } catch (error) {
-            next(error);
-        }
-    }
+            const { notificacionId } = req.params;
+            const { leida } = req.body;
 
-    patchMarcarLeida = async (req, res, next) => {
-        try {
-            const { id } = req.params;
-            const notificacionActualizada = await this.service.marcarComoLeida(id);
+            if (typeof leida !== 'boolean') {
+                throw new BadRequestError("El body debe contener la propiedad 'leida' con un valor booleano (true o false)");
+            }
+
+            const notificacionActualizada = await this.service.actualizarEstadoLectura(notificacionId, leida);
+            
             res.status(200).json({ status: "success", data: notificacionActualizada });
         } catch (error) {
             next(error); 
