@@ -62,6 +62,7 @@ export class TurnoService {
         }
 
         // Validar que el horario sea en punto, y 15, y 30 o y 45
+        //if(fechaHora.getTime() % (15 * 60 * 1000) !== 0){
         if (!this.esHorarioValidoParaTurno(fechaTurno)) {
             throw new ConflictError("Los turnos solo pueden ser a horarios en punto, y 15, y 30 o y 45");
         }

@@ -33,6 +33,12 @@ export class TurnosRepository {
         }
 
         return await this.model.findOne({medico: medicoId, fechaHora: fecha});
+        
+//         return Object.values(this.turnos).find(t =>
+//             t.medico.id == medicoId &&
+//             t.fechaHora.getTime() === fecha.getTime() &&
+//             t.estado !== 'CANCELADO'
+//         ) ?? null
     }
 
     async findByPaciente(pacienteId) {
@@ -44,6 +50,7 @@ export class TurnosRepository {
                 {paciente: pacienteId},
             ],
         });
+      
     }
 
     async update(turno) {
