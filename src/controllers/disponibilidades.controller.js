@@ -5,10 +5,11 @@ import z from "zod";
 const service = new DisponibilidadesService();
 
 export const disponibilidadSchema = z.object({
+  idMedico: z.string({ required_error: "El ID del médico es obligatorio" }).trim().min(1, "El ID del médico no puede estar vacío"),
   diaSemana: z.enum(
     ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"],
     {
-      errorMap: () => ({ message: "Día de la semana inválido" }),
+      errorMap: () => ({ message: "Día de la semana inválido. Debe ser: LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO o DOMINGO" }),
     },
   ),
   desde: z
@@ -54,10 +55,11 @@ export default class DisponibilidadController {
     try {
       const result = disponibilidadSchema.safeParse(req.body);
       if (!result.success) {
-        throw new BadRequestError("Datos invalidos");
+        const errores = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+        throw new BadRequestError(`Datos inválidos: ${errores}`);
       }
 
-      const nuevaDisponibilidad = await service.create(req.body);
+      const nuevaDisponibilidad = await service.create(result.data);
       res.status(201).json(nuevaDisponibilidad);
     } catch (error) {
       next(error);
@@ -66,6 +68,10 @@ export default class DisponibilidadController {
 
   updateDisponibilidad = async (req, res, next) => {
     try {
+      const result = disponibilidadSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        throw new BadRequestError("Datos invalidos");
+      }
       const { id } = req.params;
 
       const disponibilidad = await service.update(id, req.body);

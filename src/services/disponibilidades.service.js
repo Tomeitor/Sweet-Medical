@@ -27,7 +27,7 @@ export default class DisponibilidadesService {
   async update(idDisp, disponibilidadActualizada) {
     const dispoExist = await this.getById(idDisp);
 
-    const disponibilidad = await disponibilidadesRepository.update({...dispoExist, ...disponibilidadActualizada});
+    const disponibilidad = await disponibilidadesRepository.update({...dispoExist, ...disponibilidadActualizada, id: idDisp});
     return disponibilidad;
   }
 

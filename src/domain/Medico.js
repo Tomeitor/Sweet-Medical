@@ -1,5 +1,5 @@
 export default class Medico {
-    constructor({id, usuario, matricula, nombre, especialidades = [], practicas = [], sedes = [], disponibilidad = []}) {
+    constructor({id, usuario, matricula, nombre, especialidades = [], practicas = [], sedes = [], disponibilidades = []}) {
         this.id = id;
         this.usuario = usuario;
         this.matricula = matricula;
@@ -7,6 +7,7 @@ export default class Medico {
         this.especialidades = especialidades;
         this.practicas = practicas;
         this.sedes = sedes;
+        this.disponibilidades = disponibilidades;
         this.eliminado = false;
     }
 }

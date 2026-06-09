@@ -55,6 +55,10 @@ export default class MedicoController {
 
   updateMedico = async (req, res, next) => {
     try {
+      const result = medicoSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        throw new BadRequestError("Datos invalidos");
+      }
       const { id } = req.params;
       const medicoActualizado = await service.update(id, req.body);
       res.status(200).json(medicoActualizado);

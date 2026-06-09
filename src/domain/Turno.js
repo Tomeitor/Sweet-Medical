@@ -19,13 +19,27 @@ export class Turno {
         if (this.estado === EstadoTurno.CANCELADO) return;
 
         const cambio = {
-      fechaHoraIngreso: new Date(),
-      estado: nuevoEstado,
-      usuario: quien,
-      motivo: motivo
-    };
+            fechaHora: new Date(),
+            estado: nuevoEstado,
+            quien: quien,
+            motivo: motivo
+        };
 
-    this.historialEstados.push(cambio);
-    this.estado = nuevoEstado;
+        this.historialEstados.push(cambio);
+        this.estado = nuevoEstado;
+    }
+
+    cambiarFechaHora(nuevaFechaHora, quien, motivo) {
+        const cambio = {
+            fechaHora: new Date(),
+            estado: this.estado,
+            quien: quien,
+            motivo: motivo,
+            fechaHoraAnterior: this.fechaHora,
+            fechaHoraNueva: nuevaFechaHora
+        };
+
+        this.historialEstados.push(cambio);
+        this.fechaHora = nuevaFechaHora;
     }
 }
