@@ -1,0 +1,30 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import './index.css'
+import { PreselectionProvider } from './context/PreselectionContext.jsx'
+import { AppShell } from './components/AppShell.jsx'
+import { HomePage } from './pages/HomePage.jsx'
+import { SearchPage } from './pages/SearchPage.jsx'
+import { PreselectionPage } from './pages/PreselectionPage.jsx'
+import { GuidancePage } from './pages/GuidancePage.jsx'
+import { NotFoundPage } from './pages/NotFoundPage.jsx'
+
+function App() {
+  return (
+    <BrowserRouter>
+      <PreselectionProvider>
+        <Routes>
+          <Route element={<AppShell />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/buscar" element={<SearchPage />} />
+            <Route path="/preseleccion" element={<PreselectionPage />} />
+            <Route path="/como-funciona" element={<GuidancePage />} />
+            <Route path="/inicio" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </PreselectionProvider>
+    </BrowserRouter>
+  )
+}
+
+export default App
