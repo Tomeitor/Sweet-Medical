@@ -1,15 +1,16 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { usePreselection } from '../hooks/usePreselection.jsx'
+import { NavLink, Outlet } from "react-router-dom";
+import { usePreselection } from "../hooks/usePreselection.jsx";
+import { Footer } from "./Footer.jsx";
 
 const navItems = [
-  { to: '/', label: 'Inicio' },
-  { to: '/buscar', label: 'Buscar turnos' },
-  { to: '/preseleccion', label: 'Preselección' },
-  { to: '/como-funciona', label: 'Cómo funciona' },
-]
+  { to: "/", label: "Inicio" },
+  { to: "/buscar", label: "Buscar turnos" },
+  { to: "/preseleccion", label: "Preselección" },
+  { to: "/como-funciona", label: "Cómo funciona" },
+];
 
 export function AppShell() {
-  const { total } = usePreselection()
+  const { total } = usePreselection();
 
   return (
     <div className="app-shell">
@@ -19,7 +20,14 @@ export function AppShell() {
 
       <header className="topbar">
         <div>
-          <p className="eyebrow">Sweet Medical</p>
+          <div className="brand-heading">
+            <img
+              src="/faviconSweetMedical.png"
+              alt="Sweet Medical"
+              className="brand-icon"
+            />
+            <p className="eyebrow" id="titulo-unico">Sweet Medical</p>
+          </div>
           <h1 className="brand-title">Reserva médica simple, clara y rápida</h1>
         </div>
 
@@ -28,14 +36,20 @@ export function AppShell() {
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) => (isActive ? 'nav-link is-active' : 'nav-link')}
+              className={({ isActive }) =>
+                isActive ? "nav-link is-active" : "nav-link"
+              }
             >
               {item.label}
             </NavLink>
           ))}
         </nav>
 
-        <NavLink to="/preseleccion" className="cart-chip" aria-label={`Turnos preseleccionados: ${total}`}>
+        <NavLink
+          to="/preseleccion"
+          className="cart-chip"
+          aria-label={`Turnos preseleccionados: ${total}`}
+        >
           Preselección
           <span>{total}</span>
         </NavLink>
@@ -44,6 +58,8 @@ export function AppShell() {
       <main id="main-content" className="page-content">
         <Outlet />
       </main>
+
+      <Footer />
     </div>
-  )
+  );
 }
