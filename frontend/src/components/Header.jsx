@@ -1,9 +1,9 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { usePreselection } from "../hooks/usePreselection.jsx";
+import { usePreseleccion } from "../hooks/usePreseleccion.jsx";
 import { Footer } from "./Footer.jsx";
 
-export function AppShell() {
-  const { total } = usePreselection();
+export function Header() {
+  const { total } = usePreseleccion();
 
   return (
     <div className="app-shell">

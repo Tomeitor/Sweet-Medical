@@ -30,8 +30,8 @@ const serviceAreas = [
 
 export function HomePage() {
   return (
-    <div className="stack-xl">
-      <section className="hero-panel">
+    <div className="stack-xl home-page">
+      <section className="hero-panel home-hero">
         <div className="hero-copy">
           <p className="eyebrow">Sweet Medical</p>
           <h2>Tu atención médica, organizada desde el primer clic</h2>
@@ -56,7 +56,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="content-grid columns-3">
+      <section className="content-grid columns-3 home-highlights">
         {highlights.map((item) => (
           <article key={item.title} className="info-card">
             <h3>{item.title}</h3>
@@ -65,7 +65,7 @@ export function HomePage() {
         ))}
       </section>
 
-      <section className="content-grid two-columns">
+      <section className="content-grid two-columns home-details">
         <article className="info-card">
           <p className="eyebrow">Servicios</p>
           <h3>Áreas con disponibilidad para reservar</h3>

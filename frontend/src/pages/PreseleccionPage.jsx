@@ -1,16 +1,15 @@
 import { Link } from 'react-router-dom'
-import { SelectionSummary } from '../components/SelectionSummary.jsx'
+import { ResumenSeleccion } from '../components/ResumenSeleccion.jsx'
 
 const reminders = [
   'Revisá profesional, práctica, sede y horario antes de decidir.',
-  'Eliminá opciones que no te sirvan y dejá sólo las más convenientes.',
-  'Usá este resumen como un carrito de turnos para comparar alternativas.',
+  'Eliminá opciones que no te sirvan y dejá sólo las más convenientes.'
 ]
 
-export function PreselectionPage() {
+export function PreseleccionPage() {
   return (
     <div className="content-grid two-columns align-start">
-      <SelectionSummary />
+      <ResumenSeleccion />
 
       <section className="info-card stack-md cart-support-panel">
         <div>

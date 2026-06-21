@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { createSlotId, STORAGE_KEY } from '../utils/preselection.js'
-import { PreselectionContext } from './preselection-context.js'
+import { CLAVE_ALMACENAMIENTO, crearIdTurno } from '../utils/preseleccion.js'
+import { PreseleccionContexto } from './preseleccion-contexto.js'
 
-export function PreselectionProvider({ children }) {
+export function PreseleccionProvider({ children }) {
   const [items, setItems] = useState(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY)
+    const saved = window.localStorage.getItem(CLAVE_ALMACENAMIENTO)
 
     if (!saved) {
       return []
@@ -18,7 +18,7 @@ export function PreselectionProvider({ children }) {
   })
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    window.localStorage.setItem(CLAVE_ALMACENAMIENTO, JSON.stringify(items))
   }, [items])
 
   const value = useMemo(
@@ -27,7 +27,7 @@ export function PreselectionProvider({ children }) {
       total: items.length,
       totalEstimatedCost: items.reduce((acc, item) => acc + (item.costoPaciente ?? 0), 0),
       addItem: (slot) => {
-        const item = { ...slot, frontendId: createSlotId(slot) }
+        const item = { ...slot, frontendId: crearIdTurno(slot) }
 
         setItems((current) => {
           if (current.some((existing) => existing.frontendId === item.frontendId)) {
@@ -41,10 +41,10 @@ export function PreselectionProvider({ children }) {
         setItems((current) => current.filter((item) => item.frontendId !== frontendId))
       },
       clearItems: () => setItems([]),
-      hasItem: (slot) => items.some((item) => item.frontendId === createSlotId(slot)),
+      hasItem: (slot) => items.some((item) => item.frontendId === crearIdTurno(slot)),
     }),
     [items],
   )
 
-  return <PreselectionContext.Provider value={value}>{children}</PreselectionContext.Provider>
+  return <PreseleccionContexto.Provider value={value}>{children}</PreseleccionContexto.Provider>
 }
