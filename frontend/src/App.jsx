@@ -1,28 +1,26 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./index.css";
-import { PreselectionProvider } from "./context/PreselectionContext.jsx";
-import { AppShell } from "./components/AppShell.jsx";
+import { PreseleccionProvider } from "./context/PreseleccionContext.jsx";
+
+import { Header } from "./components/Header.jsx";
 import { HomePage } from "./pages/HomePage.jsx";
-import { SearchPageV2 } from "./pages/SearchPageV2.jsx";
-import { PreselectionPage } from "./pages/PreselectionPage.jsx";
-import { GuidancePage } from "./pages/GuidancePage.jsx";
+import { SearchPage } from "./pages/SearchPage.jsx";
+import { PreseleccionPage } from "./pages/PreseleccionPage.jsx";
 import { NotFoundPage } from "./pages/NotFoundPage.jsx";
 
 function App() {
   return (
     <BrowserRouter>
-      <PreselectionProvider>
+      <PreseleccionProvider>
         <Routes>
-          <Route element={<AppShell />}>
+          <Route element={<Header />}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/buscar" element={<SearchPageV2 />} />
-            <Route path="/preseleccion" element={<PreselectionPage />} />
-            <Route path="/como-funciona" element={<GuidancePage />} />
-            <Route path="/inicio" element={<Navigate to="/" replace />} />
+            <Route path="/buscar" element={<SearchPage />} />
+            <Route path="/preseleccion" element={<PreseleccionPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
-      </PreselectionProvider>
+      </PreseleccionProvider>
     </BrowserRouter>
   );
 }

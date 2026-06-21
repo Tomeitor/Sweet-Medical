@@ -2,58 +2,61 @@ import { Link } from 'react-router-dom'
 
 const highlights = [
   {
-    title: 'Búsqueda guiada',
-    description: 'Filtrá por especialidad, práctica, sede, médico y rango de fechas con mensajes claros.',
+    title: 'Turnos por especialidad',
+    description: 'Encontrá disponibilidad para clínica médica, cardiología, pediatría y otras áreas en pocos pasos.',
   },
   {
-    title: 'Resultados con contexto',
-    description: 'Ves cobertura, costo estimado y disponibilidad sin tener que adivinar qué significa cada dato.',
+    title: 'Profesionales y sedes',
+    description: 'Consultá médicos, prácticas, cobertura y ubicación antes de decidir dónde atenderte.',
   },
   {
-    title: 'Preselección tipo carrito',
-    description: 'Compará varios turnos antes de decidir cuál te conviene más.',
+    title: 'Preselección ordenada',
+    description: 'Guardá horarios como si fuera un carrito de turnos para revisarlos con tranquilidad.',
   },
 ]
 
-const pages = [
-  'Inicio con explicación del flujo',
-  'Búsqueda integrada con backend',
-  'Resumen de preselección de turnos',
-  'Pantalla de ayuda y pasos del proceso',
+const trustPoints = [
+  'Atención ambulatoria y estudios programados en un solo lugar.',
+  'Información visible sobre cobertura, sede y costo estimado.',
+  'Experiencia simple para pacientes que necesitan resolver rápido.',
+]
+
+const serviceAreas = [
+  'Clínica médica y medicina familiar',
+  'Cardiología, diagnóstico y controles',
+  'Pediatría y seguimiento integral',
+  'Prácticas y estudios con agenda disponible',
 ]
 
 export function HomePage() {
   return (
-    <div className="stack-xl">
-      <section className="hero-panel">
+    <div className="stack-xl home-page">
+      <section className="hero-panel home-hero">
         <div className="hero-copy">
-          <p className="eyebrow">Entrega 3 · UI + Integración</p>
-          <h2>Una experiencia de reserva pensada para pacientes reales</h2>
+          <p className="eyebrow">Sweet Medical</p>
+          <h2>Tu atención médica, organizada desde el primer clic</h2>
           <p>
-            Acá no hay humo, loco. Tenés navegación clara, feedback visual, búsqueda integrada con backend y un módulo
-            de preselección para comparar turnos antes de reservar.
+            Gestioná turnos médicos, revisá disponibilidad por especialidad y elegí la opción más conveniente para vos o tu
+            familia desde una experiencia simple, confiable y clara.
           </p>
           <div className="hero-actions">
             <Link className="primary-button" to="/buscar">
-              Empezar búsqueda
-            </Link>
-            <Link className="secondary-button" to="/como-funciona">
-              Ver flujo guiado
+              Buscar turnos
             </Link>
           </div>
         </div>
 
         <div className="status-card" aria-label="Resumen de experiencia">
-          <strong>Qué resuelve esta entrega</strong>
+          <strong>Por qué elegir Sweet Medical</strong>
           <ul>
-            <li>Integra la búsqueda de turnos con el backend.</li>
-            <li>Permite preseleccionar múltiples opciones desde el frontend.</li>
-            <li>Explica el proceso con patrones visuales de ecommerce.</li>
+            {trustPoints.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
           </ul>
         </div>
       </section>
 
-      <section className="content-grid columns-3">
+      <section className="content-grid columns-3 home-highlights">
         {highlights.map((item) => (
           <article key={item.title} className="info-card">
             <h3>{item.title}</h3>
@@ -62,23 +65,23 @@ export function HomePage() {
         ))}
       </section>
 
-      <section className="content-grid two-columns">
+      <section className="content-grid two-columns home-details">
         <article className="info-card">
-          <p className="eyebrow">Navegabilidad</p>
-          <h3>Pantallas incluidas</h3>
+          <p className="eyebrow">Servicios</p>
+          <h3>Áreas con disponibilidad para reservar</h3>
           <ul className="bullet-list">
-            {pages.map((page) => (
-              <li key={page}>{page}</li>
+            {serviceAreas.map((area) => (
+              <li key={area}>{area}</li>
             ))}
           </ul>
         </article>
 
         <article className="info-card emphasis-card">
-          <p className="eyebrow">Accesibilidad y claridad</p>
-          <h3>Diseño pensado para usarlo sin fricción</h3>
+          <p className="eyebrow">Pacientes</p>
+          <h3>Una experiencia pensada para resolver sin fricción</h3>
           <p>
-            Contraste alto, foco visible por teclado, etiquetas semánticas, tamaños táctiles cómodos y mensajes de carga
-            o error en cada interacción relevante.
+            Desde la búsqueda hasta la preselección, cada pantalla prioriza lectura clara, acciones visibles y contexto
+            suficiente para tomar una decisión sin vueltas.
           </p>
         </article>
       </section>
