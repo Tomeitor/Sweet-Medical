@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom'
 import { SelectionSummary } from '../components/SelectionSummary.jsx'
 
 const reminders = [
-  'La preselección vive sólo en el frontend y sirve para comparar opciones.',
-  'Podés eliminar cualquier turno antes de confirmar tu decisión.',
-  'El siguiente paso natural sería conectar la reserva definitiva con backend en una próxima iteración.',
+  'Revisá profesional, práctica, sede y horario antes de decidir.',
+  'Eliminá opciones que no te sirvan y dejá sólo las más convenientes.',
+  'Usá este resumen como un carrito de turnos para comparar alternativas.',
 ]
 
 export function PreselectionPage() {
@@ -12,10 +12,10 @@ export function PreselectionPage() {
     <div className="content-grid two-columns align-start">
       <SelectionSummary />
 
-      <section className="info-card stack-md">
+      <section className="info-card stack-md cart-support-panel">
         <div>
-          <p className="eyebrow">Paso 4</p>
-          <h2>Qué podés hacer desde acá</h2>
+          <p className="eyebrow">Resumen del paciente</p>
+          <h2>Revisá tu selección antes de continuar</h2>
         </div>
 
         <ul className="bullet-list">
@@ -25,11 +25,19 @@ export function PreselectionPage() {
         </ul>
 
         <div className="inline-card">
-          <strong>¿Querés seguir explorando?</strong>
-          <p>Volvé a la búsqueda para sumar o comparar más horarios disponibles.</p>
+          <strong>¿Te falta comparar opciones?</strong>
+          <p>Volvé a la búsqueda para agregar más horarios disponibles a tu carrito de turnos.</p>
           <Link to="/buscar" className="primary-button">
             Seguir buscando
           </Link>
+        </div>
+
+        <div className="inline-card hospital-note">
+          <strong>Sweet Medical</strong>
+          <p>
+            Nuestro equipo trabaja con agendas por sede y especialidad para que puedas elegir la alternativa que mejor se
+            adapte a tu cobertura y disponibilidad.
+          </p>
         </div>
       </section>
     </div>

@@ -1,13 +1,6 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { usePreselection } from "../hooks/usePreselection.jsx";
 import { Footer } from "./Footer.jsx";
-
-const navItems = [
-  { to: "/", label: "Inicio" },
-  { to: "/buscar", label: "Buscar turnos" },
-  { to: "/preseleccion", label: "Preselección" },
-  { to: "/como-funciona", label: "Cómo funciona" },
-];
 
 export function AppShell() {
   const { total } = usePreselection();
@@ -19,7 +12,7 @@ export function AppShell() {
       </a>
 
       <header className="topbar">
-        <div>
+        <Link to="/" className="brand-block" aria-label="Ir al inicio de Sweet Medical">
           <div className="brand-heading">
             <img
               src="/faviconSweetMedical.png"
@@ -28,22 +21,8 @@ export function AppShell() {
             />
             <p className="eyebrow" id="titulo-unico">Sweet Medical</p>
           </div>
-          <h1 className="brand-title">Reserva médica simple, clara y rápida</h1>
-        </div>
-
-        <nav aria-label="Principal" className="main-nav">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                isActive ? "nav-link is-active" : "nav-link"
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+          <p className="brand-title">Centro médico integral para gestionar tus turnos de forma clara y rápida.</p>
+        </Link>
 
         <NavLink
           to="/preseleccion"

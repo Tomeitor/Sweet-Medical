@@ -17,7 +17,6 @@
   --radius-lg: 24px;
   --radius-md: 18px;
   --radius-sm: 12px;
-  --container: 1200px;
   color: var(--text);
   background: var(--bg);
   font-family:
@@ -99,25 +98,30 @@ button:disabled {
 }
 
 .app-shell {
-  width: min(var(--container), calc(100% - 24px));
-  margin: 0 auto;
-  padding: 20px 0 48px;
+  width: 100%;
+  padding: 16px 20px 48px;
 }
 
 .topbar {
   display: grid;
-  grid-template-columns: 1.2fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px;
   align-items: center;
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(123, 138, 166, 0.2);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  padding: 20px 24px;
+  padding: 18px 24px;
   position: sticky;
   top: 12px;
   z-index: 10;
+}
+
+.brand-block {
+  display: grid;
+  gap: 6px;
+  text-decoration: none;
 }
 
 .brand-title,
@@ -141,7 +145,8 @@ h3 {
 }
 
 .brand-title {
-  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  font-size: clamp(1rem, 1.5vw, 1.1rem);
+  color: var(--text-muted);
 }
 
 .brand-heading .eyebrow {
@@ -149,7 +154,7 @@ h3 {
 }
 
 #titulo-unico {
-  font-size: 2.2rem
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
 }
 
 .eyebrow {
@@ -159,12 +164,6 @@ h3 {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--primary);
-}
-
-.main-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
 }
 
 .nav-link,
@@ -249,7 +248,8 @@ h3 {
   display: grid;
   grid-template-columns: 1.4fr minmax(260px, 0.8fr);
   gap: 24px;
-  padding: 32px;
+  padding: 40px;
+  background: linear-gradient(135deg, #ffffff 0%, #f2f7ff 100%);
 }
 
 .hero-copy h2 {
@@ -319,6 +319,14 @@ h3 {
 .summary-panel,
 .results-section,
 .filters-panel {
+  padding: 24px;
+}
+
+.search-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
   padding: 24px;
 }
 
@@ -489,6 +497,14 @@ h3 {
   top: 120px;
 }
 
+.summary-panel--cart {
+  min-height: 100%;
+}
+
+.summary-panel--compact {
+  background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+}
+
 .empty-box,
 .inline-card {
   border: 1px dashed var(--border-strong);
@@ -627,6 +643,11 @@ h3 {
   align-items: start;
 }
 
+.cart-support-panel,
+.hospital-note {
+  align-self: start;
+}
+
 @keyframes pulse {
   0% {
     background-position: 200% 0;
@@ -654,8 +675,7 @@ h3 {
 
 @media (max-width: 768px) {
   .app-shell {
-    width: min(var(--container), calc(100% - 16px));
-    padding-top: 12px;
+    padding: 12px 12px 32px;
   }
 
   .topbar,
@@ -680,7 +700,7 @@ h3 {
     flex-direction: column;
   }
 
-  .main-nav {
-    justify-content: start;
+  .topbar {
+    grid-template-columns: 1fr;
   }
 }

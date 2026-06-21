@@ -6,11 +6,11 @@ export function SelectionSummary({ compact = false }) {
   const { items, total, totalEstimatedCost, removeItem, clearItems } = usePreselection()
 
   return (
-    <aside className="summary-panel" aria-labelledby="summary-title">
+    <aside className={`summary-panel ${compact ? 'summary-panel--compact' : 'summary-panel--cart'}`} aria-labelledby="summary-title">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Paso 2</p>
-          <h2 id="summary-title">Resumen de preselección</h2>
+          <p className="eyebrow">Preselección</p>
+          <h2 id="summary-title">{compact ? 'Turnos guardados' : 'Carrito de turnos'}</h2>
         </div>
         {items.length > 0 ? (
           <button type="button" className="text-button" onClick={clearItems}>
@@ -21,7 +21,7 @@ export function SelectionSummary({ compact = false }) {
 
       {items.length === 0 ? (
         <div className="empty-box">
-          <p>Todavía no agregaste turnos. Elegí opciones desde la búsqueda para compararlas antes de reservar.</p>
+          <p>Todavía no agregaste turnos. Sumá opciones desde la búsqueda para revisarlas antes de avanzar.</p>
         </div>
       ) : (
         <>
@@ -45,7 +45,7 @@ export function SelectionSummary({ compact = false }) {
 
           <div className="summary-footer">
             <div>
-              <p className="muted-text">Turnos seleccionados</p>
+              <p className="muted-text">Turnos guardados</p>
               <strong>{total}</strong>
             </div>
             <div>

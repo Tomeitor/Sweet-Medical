@@ -7,8 +7,8 @@ export function Footer() {
         <div className="footer-column">
           <p className="eyebrow">Sweet Medical</p>
           <p>
-            Reserva tus turnos con médicos y prácticas en un solo lugar. Simple,
-            rápido y con costos estimados.
+            Centro médico con turnos online, información clara de sedes y
+            disponibilidad actualizada para pacientes.
           </p>
         </div>
 
@@ -26,11 +26,10 @@ export function Footer() {
         </div>
 
         <div className="footer-column">
-          <h3>Enlaces</h3>
+          <h3>Accesos rápidos</h3>
           <Link to="/">Inicio</Link>
           <Link to="/buscar">Buscar turnos</Link>
           <Link to="/preseleccion">Preselección</Link>
-          <Link to="/como-funciona">Cómo funciona</Link>
         </div>
       </div>
 

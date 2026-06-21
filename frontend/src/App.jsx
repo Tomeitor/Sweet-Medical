@@ -5,7 +5,6 @@ import { AppShell } from "./components/AppShell.jsx";
 import { HomePage } from "./pages/HomePage.jsx";
 import { SearchPageV2 } from "./pages/SearchPageV2.jsx";
 import { PreselectionPage } from "./pages/PreselectionPage.jsx";
-import { GuidancePage } from "./pages/GuidancePage.jsx";
 import { NotFoundPage } from "./pages/NotFoundPage.jsx";
 
 function App() {
@@ -17,7 +16,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/buscar" element={<SearchPageV2 />} />
             <Route path="/preseleccion" element={<PreselectionPage />} />
-            <Route path="/como-funciona" element={<GuidancePage />} />
+            <Route path="/como-funciona" element={<Navigate to="/" replace />} />
             <Route path="/inicio" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
