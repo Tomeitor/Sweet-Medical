@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { TurnosCard } from "../components/TurnosCard.jsx";
 import { LoadingSkeleton } from "../components/LoadingSkeleton.jsx";
-import { ResumenSeleccion } from "../components/ResumenSeleccion.jsx";
 import { SearchFilters } from "../components/SearchFilters.jsx";
 import { usePreseleccion } from "../hooks/usePreseleccion.jsx";
+import { useFilters } from "../hooks/useFilters.jsx";
+import { usePagination } from "../hooks/usePagination.jsx";
 import {
   fetchAvailableAppointments,
   fetchDoctors,
@@ -11,22 +12,6 @@ import {
 } from "../services/api.js";
 import { buildCatalog } from "../utils/catalog.js";
 import { formatIsoDate } from "../utils/formatters.js";
-
-const initialFilters = {
-  medicoId: "",
-  especialidad: "",
-  practica: "",
-  sede: "",
-  fechaDesde: "",
-  fechaHasta: "",
-};
-
-const initialPagination = {
-  page: 1,
-  limit: 12,
-  total: 0,
-  totalPages: 0,
-};
 
 function getPagination(response, fallbackPage) {
   const items = response.items ?? response.data ?? [];
@@ -42,7 +27,6 @@ function getPagination(response, fallbackPage) {
 
 export function SearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState(initialFilters);
   const [showFilters, setShowFilters] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [results, setResults] = useState([]);
@@ -50,9 +34,9 @@ export function SearchPage() {
   const [searchError, setSearchError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [catalogError, setCatalogError] = useState("");
-  const [searchMode, setSearchMode] = useState(null);
-  const [pagination, setPagination] = useState(initialPagination);
   const { addItem, removeItem, hasItem } = usePreseleccion();
+  const { filters, updateFilter, clearFilters } = useFilters();
+  const { pagination, setPaginationData } = usePagination();
 
   useEffect(() => {
     async function loadDoctors() {
@@ -68,7 +52,7 @@ export function SearchPage() {
 
   const catalog = useMemo(() => buildCatalog(doctors), [doctors]);
 
-  function buildRequestParams({ page = 1, includeQuery = true } = {}) {
+  function buildRequestParams({ page = 1 } = {}) {
     const params = {
       pacienteId: "1",
       page,
@@ -77,7 +61,7 @@ export function SearchPage() {
       orden: "asc",
     };
 
-    if (includeQuery && searchQuery.trim()) {
+    if (searchQuery.trim()) {
       params.q = searchQuery;
     }
     if (filters.medicoId) {
@@ -102,27 +86,17 @@ export function SearchPage() {
     return params;
   }
 
-  function clearFeedback() {
-    setSearchError("");
-  }
-
-  function resetResults() {
-    setResults([]);
-    setPagination(initialPagination);
-  }
-
-  async function executeSearch({ page = 1, includeQuery, mode }) {
+  async function executeSearch({ page = 1 } = {}) {
     try {
       setIsLoading(true);
       setHasSearched(true);
-      setSearchMode(mode);
       setSearchError("");
 
-      const response = await fetchAvailableAppointments(buildRequestParams({ page, includeQuery }));
+      const response = await fetchAvailableAppointments(buildRequestParams({ page }));
       const { items, pagination: nextPagination } = getPagination(response, page);
 
       setResults(items);
-      setPagination(nextPagination);
+      setPaginationData(nextPagination);
     } catch (error) {
       setResults([]);
       setSearchError(handleApiError(error));
@@ -133,48 +107,11 @@ export function SearchPage() {
 
   async function handleSearch(e) {
     e.preventDefault();
-
-    if (!searchQuery.trim()) {
-      clearFeedback();
-      resetResults();
-      setHasSearched(false);
-      setSearchMode(null);
-      return;
-    }
-
-    await executeSearch({
-      page: 1,
-      includeQuery: true,
-      mode: 'query',
-    });
-  }
-
-  async function handleSearchAll() {
-    await executeSearch({
-      page: 1,
-      includeQuery: false,
-      mode: 'all',
-    });
-  }
-
-  function updateFilter(field, value) {
-    setFilters((current) => ({ ...current, [field]: value }));
-  }
-
-  function clearFilters() {
-    setFilters(initialFilters);
+    await executeSearch({ page: 1 });
   }
 
   async function changePage(nextPage) {
-    if (!searchMode) {
-      return;
-    }
-
-    await executeSearch({
-      page: nextPage,
-      includeQuery: searchMode === 'query',
-      mode: searchMode,
-    });
+    await executeSearch({ page: nextPage });
   }
 
   function handleAdd(slot) {
@@ -186,6 +123,9 @@ export function SearchPage() {
       [slot.medico.id, slot.fechaHora, slot.sede, slot.practica].join("|"),
     );
   }
+
+  const hasActiveFilters = Object.values(filters).some(Boolean) || searchQuery.trim() !== "";
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   return (
     <div className="search-layout">
@@ -219,22 +159,18 @@ export function SearchPage() {
               className="primary-button"
               disabled={isLoading}
             >
-              {isLoading ? "Buscando..." : "Buscar"}
+              {isLoading ? "Buscando..." : hasActiveFilters ? "Buscar" : "Buscar todos"}
             </button>
             <button
               type="button"
-              className="secondary-button"
+              className="secondary-button filter-btn"
               onClick={() => setShowFilters(!showFilters)}
             >
+              <svg className="filter-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              </svg>
               {showFilters ? "Cerrar filtros" : "Filtros"}
-            </button>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={handleSearchAll}
-              disabled={isLoading}
-            >
-              Buscar todos
+              {activeFilterCount > 0 && <span className="badge">{activeFilterCount}</span>}
             </button>
           </div>
         </form>
