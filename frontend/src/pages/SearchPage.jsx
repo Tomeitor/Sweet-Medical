@@ -48,7 +48,6 @@ export function SearchPage() {
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [catalogError, setCatalogError] = useState("");
   const [searchMode, setSearchMode] = useState(null);
@@ -105,7 +104,6 @@ export function SearchPage() {
 
   function clearFeedback() {
     setSearchError("");
-    setSuccessMessage("");
   }
 
   function resetResults() {
@@ -113,26 +111,18 @@ export function SearchPage() {
     setPagination(initialPagination);
   }
 
-  async function executeSearch({ page = 1, includeQuery, mode, successMessageBuilder, emptyMessage, preserveMessage = false }) {
+  async function executeSearch({ page = 1, includeQuery, mode }) {
     try {
       setIsLoading(true);
       setHasSearched(true);
       setSearchMode(mode);
       setSearchError("");
 
-      if (!preserveMessage) {
-        setSuccessMessage("");
-      }
-
       const response = await fetchAvailableAppointments(buildRequestParams({ page, includeQuery }));
       const { items, pagination: nextPagination } = getPagination(response, page);
 
       setResults(items);
       setPagination(nextPagination);
-
-      if (!preserveMessage) {
-        setSuccessMessage(items.length > 0 ? successMessageBuilder(nextPagination) : emptyMessage);
-      }
     } catch (error) {
       setResults([]);
       setSearchError(handleApiError(error));
@@ -156,8 +146,6 @@ export function SearchPage() {
       page: 1,
       includeQuery: true,
       mode: 'query',
-      successMessageBuilder: (nextPagination) => `Encontramos ${nextPagination.total} turnos que coinciden.`,
-      emptyMessage: 'No hay turnos disponibles con esa búsqueda.',
     });
   }
 
@@ -166,8 +154,6 @@ export function SearchPage() {
       page: 1,
       includeQuery: false,
       mode: 'all',
-      successMessageBuilder: (nextPagination) => `Encontramos ${nextPagination.total} turnos disponibles.`,
-      emptyMessage: 'No hay turnos disponibles con esos filtros.',
     });
   }
 
@@ -188,22 +174,17 @@ export function SearchPage() {
       page: nextPage,
       includeQuery: searchMode === 'query',
       mode: searchMode,
-      successMessageBuilder: () => successMessage,
-      emptyMessage: '',
-      preserveMessage: true,
     });
   }
 
   function handleAdd(slot) {
     addItem(slot);
-    setSuccessMessage("Turno agregado a la preselección.");
   }
 
   function handleRemove(slot) {
     removeItem(
       [slot.medico.id, slot.fechaHora, slot.sede, slot.practica].join("|"),
     );
-    setSuccessMessage("Turno removido de la preselección.");
   }
 
   return (
@@ -271,11 +252,6 @@ export function SearchPage() {
         {searchError ? (
           <div className="alert alert-error" role="alert">
             {searchError}
-          </div>
-        ) : null}
-        {successMessage ? (
-          <div className="alert alert-success" role="status">
-            {successMessage}
           </div>
         ) : null}
 
