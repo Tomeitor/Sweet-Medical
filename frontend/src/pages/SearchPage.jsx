@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppointmentCard } from "../components/AppointmentCard.jsx";
+import { TurnosCard } from "../components/TurnosCard.jsx";
 import { LoadingSkeleton } from "../components/LoadingSkeleton.jsx";
 import { ResumenSeleccion } from "../components/ResumenSeleccion.jsx";
+import { SearchFilters } from "../components/SearchFilters.jsx";
 import { usePreseleccion } from "../hooks/usePreseleccion.jsx";
 import {
   fetchAvailableAppointments,
   fetchDoctors,
-  normalizeError,
+  handleApiError,
 } from "../services/api.js";
-import { buildCatalog, demoPatients } from "../utils/catalog.js";
+import { buildCatalog } from "../utils/catalog.js";
 import { formatIsoDate } from "../utils/formatters.js";
 
 const initialFilters = {
@@ -19,6 +20,25 @@ const initialFilters = {
   fechaDesde: "",
   fechaHasta: "",
 };
+
+const initialPagination = {
+  page: 1,
+  limit: 12,
+  total: 0,
+  totalPages: 0,
+};
+
+function getPagination(response, fallbackPage) {
+  const items = response.items ?? response.data ?? [];
+  const pagination = response.pagination ?? {
+    page: fallbackPage,
+    limit: 12,
+    total: items.length,
+    totalPages: 1,
+  };
+
+  return { items, pagination };
+}
 
 export function SearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,13 +51,8 @@ export function SearchPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [catalogError, setCatalogError] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 12,
-    total: 0,
-    totalPages: 0,
-  });
+  const [searchMode, setSearchMode] = useState(null);
+  const [pagination, setPagination] = useState(initialPagination);
   const { addItem, removeItem, hasItem } = usePreseleccion();
 
   useEffect(() => {
@@ -46,7 +61,7 @@ export function SearchPage() {
         const response = await fetchDoctors();
         setDoctors(response);
       } catch (error) {
-        setCatalogError(normalizeError(error));
+        setCatalogError(handleApiError(error));
       }
     }
     loadDoctors();
@@ -54,16 +69,16 @@ export function SearchPage() {
 
   const catalog = useMemo(() => buildCatalog(doctors), [doctors]);
 
-  function buildRequestParams() {
+  function buildRequestParams({ page = 1, includeQuery = true } = {}) {
     const params = {
       pacienteId: "1",
-      page: currentPage,
+      page,
       limit: 12,
       ordenarPor: "fecha",
       orden: "asc",
     };
 
-    if (searchQuery.trim()) {
+    if (includeQuery && searchQuery.trim()) {
       params.q = searchQuery;
     }
     if (filters.medicoId) {
@@ -88,83 +103,72 @@ export function SearchPage() {
     return params;
   }
 
-  async function handleSearch(e) {
-    e.preventDefault();
+  function clearFeedback() {
     setSearchError("");
     setSuccessMessage("");
-    setCurrentPage(1);
+  }
 
-    if (!searchQuery.trim()) {
-      setResults([]);
-      setHasSearched(false);
-      return;
-    }
+  function resetResults() {
+    setResults([]);
+    setPagination(initialPagination);
+  }
 
+  async function executeSearch({ page = 1, includeQuery, mode, successMessageBuilder, emptyMessage, preserveMessage = false }) {
     try {
       setIsLoading(true);
       setHasSearched(true);
+      setSearchMode(mode);
+      setSearchError("");
 
-      const params = buildRequestParams();
-      params.page = 1;
-      const response = await fetchAvailableAppointments(params);
-      const items = response.items ?? response.data ?? [];
-      const paginationInfo = response.pagination ?? {
-        page: 1,
-        limit: 12,
-        total: items.length,
-        totalPages: 1,
-      };
+      if (!preserveMessage) {
+        setSuccessMessage("");
+      }
+
+      const response = await fetchAvailableAppointments(buildRequestParams({ page, includeQuery }));
+      const { items, pagination: nextPagination } = getPagination(response, page);
 
       setResults(items);
-      setPagination(paginationInfo);
-      setSuccessMessage(
-        items.length > 0
-          ? `Encontramos ${paginationInfo.total} turnos que coinciden.`
-          : "No hay turnos disponibles con esa búsqueda.",
-      );
+      setPagination(nextPagination);
+
+      if (!preserveMessage) {
+        setSuccessMessage(items.length > 0 ? successMessageBuilder(nextPagination) : emptyMessage);
+      }
     } catch (error) {
       setResults([]);
-      setSearchError(normalizeError(error));
+      setSearchError(handleApiError(error));
     } finally {
       setIsLoading(false);
     }
   }
 
-  async function handleSearchAll() {
-    setSearchError("");
-    setSuccessMessage("");
-    setCurrentPage(1);
+  async function handleSearch(e) {
+    e.preventDefault();
 
-    try {
-      setIsLoading(true);
-      setHasSearched(true);
-
-      const params = buildRequestParams();
-      params.page = 1;
-      delete params.q; // Sin búsqueda de texto
-
-      const response = await fetchAvailableAppointments(params);
-      const items = response.items ?? response.data ?? [];
-      const paginationInfo = response.pagination ?? {
-        page: 1,
-        limit: 12,
-        total: items.length,
-        totalPages: 1,
-      };
-
-      setResults(items);
-      setPagination(paginationInfo);
-      setSuccessMessage(
-        items.length > 0
-          ? `Encontramos ${paginationInfo.total} turnos disponibles.`
-          : "No hay turnos disponibles con esos filtros.",
-      );
-    } catch (error) {
-      setResults([]);
-      setSearchError(normalizeError(error));
-    } finally {
-      setIsLoading(false);
+    if (!searchQuery.trim()) {
+      clearFeedback();
+      resetResults();
+      setHasSearched(false);
+      setSearchMode(null);
+      return;
     }
+
+    await executeSearch({
+      page: 1,
+      includeQuery: true,
+      mode: 'query',
+      successMessageBuilder: (nextPagination) => `Encontramos ${nextPagination.total} turnos que coinciden.`,
+      emptyMessage: 'No hay turnos disponibles con esa búsqueda.',
+    });
+  }
+
+  async function handleSearchAll() {
+    await executeSearch({
+      page: 1,
+      includeQuery: false,
+      mode: 'all',
+      successMessageBuilder: (nextPagination) => `Encontramos ${nextPagination.total} turnos disponibles.`,
+      emptyMessage: 'No hay turnos disponibles con esos filtros.',
+    });
   }
 
   function updateFilter(field, value) {
@@ -175,45 +179,19 @@ export function SearchPage() {
     setFilters(initialFilters);
   }
 
-  async function handleNextPage() {
-    if (currentPage < pagination.totalPages) {
-      const nextPage = currentPage + 1;
-      setCurrentPage(nextPage);
-      await performSearch(nextPage);
+  async function changePage(nextPage) {
+    if (!searchMode) {
+      return;
     }
-  }
 
-  async function handlePreviousPage() {
-    if (currentPage > 1) {
-      const prevPage = currentPage - 1;
-      setCurrentPage(prevPage);
-      await performSearch(prevPage);
-    }
-  }
-
-  async function performSearch(page) {
-    try {
-      setIsLoading(true);
-
-      const params = buildRequestParams();
-      params.page = page;
-
-      const response = await fetchAvailableAppointments(params);
-      const items = response.items ?? response.data ?? [];
-      const paginationInfo = response.pagination ?? {
-        page,
-        limit: 12,
-        total: items.length,
-        totalPages: 1,
-      };
-
-      setResults(items);
-      setPagination(paginationInfo);
-    } catch (error) {
-      setSearchError(normalizeError(error));
-    } finally {
-      setIsLoading(false);
-    }
+    await executeSearch({
+      page: nextPage,
+      includeQuery: searchMode === 'query',
+      mode: searchMode,
+      successMessageBuilder: () => successMessage,
+      emptyMessage: '',
+      preserveMessage: true,
+    });
   }
 
   function handleAdd(slot) {
@@ -247,20 +225,13 @@ export function SearchPage() {
             </p>
           </div>
 
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+          <div className="search-toolbar">
             <input
+              className="search-input"
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Ej: Cardiologia, Dr. Ana, Electrocardiograma..."
-              style={{
-                flex: 1,
-                minWidth: "250px",
-                padding: "12px",
-                borderRadius: "8px",
-                border: "1px solid var(--border)",
-                fontSize: "1rem",
-              }}
             />
             <button
               type="submit"
@@ -287,131 +258,14 @@ export function SearchPage() {
           </div>
         </form>
 
-        {/* Panel de filtros (desplegable) */}
         {showFilters && (
-          <div
-            className="filters-panel"
-            style={{
-              marginTop: "20px",
-              padding: "20px",
-              background: "var(--surface-muted)",
-              borderRadius: "12px",
-              border: "1px solid var(--border)",
-            }}
-          >
-            <div className="panel-heading">
-              <h3>Filtros avanzados</h3>
-            </div>
-
-            <div className="filters-grid">
-              <label className="field" htmlFor="medicoId">
-                <span className="field-label">Médico</span>
-                <select
-                  id="medicoId"
-                  value={filters.medicoId}
-                  onChange={(event) =>
-                    updateFilter("medicoId", event.target.value)
-                  }
-                >
-                  <option value="">Todos</option>
-                  {doctors.map((doctor) => (
-                    <option key={doctor._id} value={doctor._id}>
-                      {doctor.nombre} · MP {doctor.matricula}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="field" htmlFor="especialidad">
-                <span className="field-label">Especialidad</span>
-                <select
-                  id="especialidad"
-                  value={filters.especialidad}
-                  onChange={(event) =>
-                    updateFilter("especialidad", event.target.value)
-                  }
-                >
-                  <option value="">Todas</option>
-                  {catalog.especialidades?.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="field" htmlFor="practica">
-                <span className="field-label">Práctica</span>
-                <select
-                  id="practica"
-                  value={filters.practica}
-                  onChange={(event) =>
-                    updateFilter("practica", event.target.value)
-                  }
-                >
-                  <option value="">Todas</option>
-                  {catalog.practicas?.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="field" htmlFor="sede">
-                <span className="field-label">Sede</span>
-                <select
-                  id="sede"
-                  value={filters.sede}
-                  onChange={(event) => updateFilter("sede", event.target.value)}
-                >
-                  <option value="">Todas</option>
-                  {catalog.sedes?.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="field" htmlFor="fechaDesde">
-                <span className="field-label">Desde</span>
-                <input
-                  id="fechaDesde"
-                  type="datetime-local"
-                  value={filters.fechaDesde}
-                  onChange={(event) =>
-                    updateFilter("fechaDesde", event.target.value)
-                  }
-                />
-              </label>
-
-              <label className="field" htmlFor="fechaHasta">
-                <span className="field-label">Hasta</span>
-                <input
-                  id="fechaHasta"
-                  type="datetime-local"
-                  value={filters.fechaHasta}
-                  onChange={(event) =>
-                    updateFilter("fechaHasta", event.target.value)
-                  }
-                />
-              </label>
-            </div>
-
-            <div
-              className="actions-row"
-              style={{ marginTop: "16px", display: "flex", gap: "12px" }}
-            >
-              <button
-                type="button"
-                className="text-button"
-                onClick={clearFilters}
-              >
-                Limpiar filtros
-              </button>
-            </div>
-          </div>
+          <SearchFilters
+            filters={filters}
+            onChange={updateFilter}
+            onClear={clearFilters}
+            doctors={doctors}
+            catalog={catalog}
+          />
         )}
 
         {searchError ? (
@@ -435,14 +289,7 @@ export function SearchPage() {
                 <h2>
                   Resultados ({results.length} de {pagination.total})
                 </h2>
-                <p
-                  className="pagination-info"
-                  style={{
-                    color: "var(--text-muted)",
-                    fontSize: "0.9rem",
-                    marginTop: "8px",
-                  }}
-                >
+                <p className="pagination-info">
                   Página {pagination.page} de {pagination.totalPages} • Total:{" "}
                   {pagination.total} turnos
                 </p>
@@ -450,7 +297,7 @@ export function SearchPage() {
             </div>
             <div className="results-grid">
               {results.map((slot) => (
-                <AppointmentCard
+                <TurnosCard
                   key={[
                     slot.medico.id,
                     slot.fechaHora,
@@ -467,36 +314,23 @@ export function SearchPage() {
 
             {/* Controles de paginación */}
             {pagination.totalPages > 1 && (
-              <div
-                className="pagination-controls"
-                style={{
-                  marginTop: "24px",
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: "12px",
-                  alignItems: "center",
-                }}
-              >
+              <div className="pagination-controls">
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1 || isLoading}
-                  style={{ opacity: currentPage === 1 ? 0.5 : 1 }}
+                  onClick={() => changePage(pagination.page - 1)}
+                  disabled={pagination.page === 1 || isLoading}
                 >
                   ← Anterior
                 </button>
-                <span style={{ padding: "0 12px", fontWeight: "500" }}>
-                  {currentPage} / {pagination.totalPages}
+                <span className="pagination-indicator">
+                  {pagination.page} / {pagination.totalPages}
                 </span>
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={handleNextPage}
-                  disabled={currentPage >= pagination.totalPages || isLoading}
-                  style={{
-                    opacity: currentPage >= pagination.totalPages ? 0.5 : 1,
-                  }}
+                  onClick={() => changePage(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages || isLoading}
                 >
                   Siguiente →
                 </button>
@@ -516,8 +350,6 @@ export function SearchPage() {
           </div>
         )}
       </section>
-
-      <ResumenSeleccion compact />
     </div>
   );
 }

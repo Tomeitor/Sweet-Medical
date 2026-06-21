@@ -356,6 +356,24 @@ h3 {
   padding: 24px;
 }
 
+.search-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 250px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(194, 37, 45, 0.18);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1rem;
+}
+
 .status-card ul,
 .bullet-list,
 .lista-seleccion {
@@ -430,6 +448,12 @@ h3 {
   align-items: center;
 }
 
+.actions-row--compact {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
 .inline-note {
   margin: 0;
   max-width: 32rem;
@@ -455,6 +479,29 @@ h3 {
 
 .results-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pagination-info {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 8px 0 0;
+}
+
+.pagination-controls {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  align-items: center;
+}
+
+.pagination-indicator {
+  padding: 0 12px;
+  font-weight: 500;
+}
+
+.secondary-button:disabled {
+  opacity: 0.5;
 }
 
 .result-card {
@@ -529,6 +576,11 @@ h3 {
 
 .panel-resumen--compacto {
   background: linear-gradient(180deg, #ffffff 0%, #f8f2f0 100%);
+}
+
+.filters-panel--advanced {
+  margin-top: 20px;
+  background: var(--surface-muted);
 }
 
 .empty-box,

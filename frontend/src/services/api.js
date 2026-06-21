@@ -5,7 +5,7 @@ const api = axios.create({
   timeout: 10000,
 })
 
-function normalizeError(error) {
+function handleApiError(error) {
   if (error.response?.data?.errors?.length) {
     return error.response.data.errors.map((item) => item.message).join(' · ')
   }
@@ -18,7 +18,7 @@ function normalizeError(error) {
     return 'La solicitud tardó demasiado. Probá nuevamente.'
   }
 
-  return 'No pudimos conectar con el backend. Verificá que esté levantado en el puerto configurado.'
+  return 'No pudimos conectar con el backend.'
 }
 
 export async function fetchDoctors() {
@@ -31,4 +31,4 @@ export async function fetchAvailableAppointments(filters) {
   return response.data
 }
 
-export { normalizeError }
+export { handleApiError }

@@ -1,6 +1,5 @@
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import { usePreseleccion } from "../hooks/usePreseleccion.jsx";
-import { Footer } from "./Footer.jsx";
 
 export function Header() {
   const { total } = usePreseleccion();
@@ -12,7 +11,7 @@ export function Header() {
       </a>
 
       <header className="topbar">
-        <Link to="/" className="brand-block" aria-label="Ir al inicio de Sweet Medical">
+        <NavLink to="/" className="brand-block" aria-label="Ir al inicio de Sweet Medical">
           <div className="brand-heading">
             <img
               src="/faviconSweetMedical.png"
@@ -22,7 +21,7 @@ export function Header() {
             <p className="eyebrow" id="titulo-unico">Sweet Medical</p>
           </div>
           <p className="brand-title">Centro médico integral para gestionar tus turnos de forma clara y rápida.</p>
-        </Link>
+        </NavLink>
 
         <NavLink
           to="/preseleccion"
@@ -38,7 +37,41 @@ export function Header() {
         <Outlet />
       </main>
 
-      <Footer />
+      <footer className="app-footer" aria-label="Pie de página">
+        <div className="footer-content">
+          <div className="footer-column">
+            <p className="eyebrow">Sweet Medical</p>
+            <p>
+              Centro médico con turnos online, información clara de sedes y
+              disponibilidad actualizada para pacientes.
+            </p>
+          </div>
+
+          <div className="footer-column">
+            <h3>Contacto</h3>
+            <p>
+              <a href="mailto:contacto@sweetmedical.com">
+                contacto@sweetmedical.com
+              </a>
+            </p>
+            <p>
+              <a href="tel:+541112345678">+54 11 1234 5678</a>
+            </p>
+            <p>CABA, Argentina</p>
+          </div>
+
+          <div className="footer-column">
+            <h3>Accesos rápidos</h3>
+            <NavLink to="/">Inicio</NavLink>
+            <NavLink to="/buscar">Buscar turnos</NavLink>
+            <NavLink to="/preseleccion">Preselección</NavLink>
+          </div>
+        </div>
+
+        <div className="footer-bottom">
+          <p>© 2026 Sweet Medical. Todos los derechos reservados.</p>
+        </div>
+      </footer>
     </div>
   );
 }

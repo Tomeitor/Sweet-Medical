@@ -1,6 +1,6 @@
 import { formatCoverageLevel, formatCurrency, formatDateTime } from '../utils/formatters.js'
 
-export function AppointmentCard({ slot, isSelected, onAdd, onRemove }) {
+export function TurnosCard({ slot, isSelected, onAdd, onRemove }) {
   return (
     <article className="result-card" aria-label={`Turno con ${slot.medico.nombre}`}>
       <div className="result-card__header">
