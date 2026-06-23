@@ -5,13 +5,13 @@
 ### Flujo principal y happy path
 
 En esta entrega, lo primero que ve el usuario al entrar a la página es una pantalla de bienvenida donde explica brevemente el uso de la misma y le da la opción de empezar a utilizarla.
-Si decide buscar los turnos disponibles, pasa a otra pantalla donde tiene un buscador al que se le pueden aplicar filtros de búsqueda según sede, especialidad fechas, etc. Si no quiere aplicara filtros puede aplicar filtros. Una vez que obtiene los turnos que busca puede "preseleccionarlas" para luego en la siguiente pantalla del mismo nombre donde puede reservar los turnos o seguir buscando por más opciones.
+Si decide buscar los turnos disponibles, pasa a otra pantalla donde tiene un buscador al que se le pueden aplicar filtros de búsqueda según sede, especialidad fechas, etc. Si no quiere aplicar filtros a la búsqueda puede presionar el botón de "Buscar Todos" que hará que aparezcan todos los turnos que están disponibles. Una vez que obtiene los turnos que busca puede "preseleccionarlas" para luego en la siguiente pantalla del mismo nombre donde puede reservar los turnos o seguir buscando por más opciones.
 
 ### Decisiones y Patrones
 
 La página de inicio tiene un patrón de navegación Scroll para darle una presentación al usuario del contenido de la página y sus servicios. El contenido de la presentación está dispuesto teniendo en cuenta el patrón de lectura F, donde el usuario primero lee el título más grande, luego sus ojos van hacia la derecha donde están las razones por las que se debe elegir esta página, y finalmente su mirada se dirige al botón de "Buscar turnos".
 
-Para la página de búsqueda de turnos se utiliza el patrón de interacción de búsqueda, con su barra correspondiente. Dentro de la misma tiene un texto placeholder para que le sirva de guía a un usuario sin experiencia en la página de qué se puede ingresar para acotar la búsqueda. El botón "Filtros" que abre la solapa de filtros tiene un ícono usado comúnmente en otras páginas para que sea reconocible. Se tiene un paginado de los turnos disponibles para reducir la carga cognitiva del usuario con tanto contenido y que tampoco que scrollear hasta el fondo de la pantalla.
+Para la página de búsqueda de turnos se utiliza el patrón de interacción de búsqueda, con su barra correspondiente. Dentro de la misma tiene un texto placeholder para que le sirva de guía a un usuario sin experiencia en la página de qué se puede ingresar para acotar la búsqueda. El botón "Filtros" que abre la solapa de filtros tiene un ícono usado comúnmente en otras páginas para que sea reconocible. Se tiene un paginado de los turnos disponibles para reducir la carga cognitiva del usuario con tanto contenido a la vista y para que no tenga que estar haciendo scrolls demasiado largos hasta el fondo de la pantalla.
 
 En la página de Preselección, se utiliza un patrón de navegación por cartas para tener una división clara de las secciones dentro de la pantalla. En el carrito de turnos figuran todos los turnos que el usuario seleccionó como una lista.
 
