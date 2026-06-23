@@ -741,6 +741,30 @@ h3 {
   text-align: center;
 }
 
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-icon {
+  flex-shrink: 0;
+}
+
+.filter-btn .badge {
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0 6px;
+  line-height: 1;
+}
+
 @media (max-width: 840px) {
   .footer-content {
     grid-template-columns: 1fr;
