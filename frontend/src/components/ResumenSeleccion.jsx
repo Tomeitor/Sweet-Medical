@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { usePreseleccion } from '../hooks/usePreseleccion.jsx'
 import { formatCurrency, formatDateTime } from '../utils/formatters.js'
 
-export function ResumenSeleccion({ compact = false }) {
+export function ResumenSeleccion({ compact = false, onReserveItem, reservingIds = [] }) {
   const { items, total, totalEstimatedCost, removeItem, clearItems } = usePreseleccion()
 
   return (
@@ -35,6 +35,16 @@ export function ResumenSeleccion({ compact = false }) {
                 </div>
                 <div className="item-seleccion__acciones">
                   <span>{formatCurrency(item.costoPaciente)}</span>
+                  {onReserveItem ? (
+                    <button
+                      type="button"
+                      className="primary-button primary-button--small"
+                      onClick={() => onReserveItem(item)}
+                      disabled={reservingIds.includes(item.frontendId)}
+                    >
+                      {reservingIds.includes(item.frontendId) ? 'Reservando...' : 'Reservar'}
+                    </button>
+                  ) : null}
                   <button type="button" className="text-button" onClick={() => removeItem(item.frontendId)}>
                     Eliminar
                   </button>

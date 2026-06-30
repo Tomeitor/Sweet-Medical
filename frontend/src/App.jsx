@@ -1,5 +1,6 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./index.css";
+import { SessionProvider } from "./context/SessionContext.jsx";
 import { PreseleccionProvider } from "./context/PreseleccionContext.jsx";
 
 import { Header } from "./components/Header.jsx";
@@ -11,16 +12,18 @@ import { NotFoundPage } from "./pages/NotFoundPage.jsx";
 function App() {
   return (
     <BrowserRouter>
-      <PreseleccionProvider>
-        <Routes>
-          <Route element={<Header />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/buscar" element={<SearchPage />} />
-            <Route path="/preseleccion" element={<PreseleccionPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-      </PreseleccionProvider>
+      <SessionProvider>
+        <PreseleccionProvider>
+          <Routes>
+            <Route element={<Header />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/buscar" element={<SearchPage />} />
+              <Route path="/preseleccion" element={<PreseleccionPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </PreseleccionProvider>
+      </SessionProvider>
     </BrowserRouter>
   );
 }

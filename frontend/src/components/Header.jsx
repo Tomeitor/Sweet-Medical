@@ -1,8 +1,10 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { usePreseleccion } from "../hooks/usePreseleccion.jsx";
+import { SessionSwitcher } from "./SessionSwitcher.jsx";
 
 export function Header() {
   const { total } = usePreseleccion();
+  const navLinkClass = ({ isActive }) => (isActive ? "nav-link is-active" : "nav-link");
 
   return (
     <div className="app-shell">
@@ -23,14 +25,18 @@ export function Header() {
           <p className="brand-title">Centro médico integral para gestionar tus turnos de forma clara y rápida.</p>
         </NavLink>
 
-        <NavLink
-          to="/preseleccion"
-          className="cart-chip"
-          aria-label={`Turnos preseleccionados: ${total}`}
-        >
-          Preselección
-          <span>{total}</span>
-        </NavLink>
+        <div className="topbar-actions">
+          <SessionSwitcher />
+
+          <nav className="topbar-nav" aria-label="Navegación principal">
+            <NavLink to="/" className={navLinkClass}>Inicio</NavLink>
+            <NavLink to="/buscar" className={navLinkClass}>Buscar turnos</NavLink>
+            <NavLink to="/preseleccion" className="cart-chip" aria-label={`Turnos preseleccionados: ${total}`}>
+              Preselección
+              <span>{total}</span>
+            </NavLink>
+          </nav>
+        </div>
       </header>
 
       <main id="main-content" className="page-content">
@@ -62,9 +68,9 @@ export function Header() {
 
           <div className="footer-column">
             <h3>Accesos rápidos</h3>
-            <NavLink to="/">Inicio</NavLink>
-            <NavLink to="/buscar">Buscar turnos</NavLink>
-            <NavLink to="/preseleccion">Preselección</NavLink>
+            <NavLink to="/" className={navLinkClass}>Inicio</NavLink>
+            <NavLink to="/buscar" className={navLinkClass}>Buscar turnos</NavLink>
+            <NavLink to="/preseleccion" className={navLinkClass}>Preselección</NavLink>
           </div>
         </div>
 

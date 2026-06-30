@@ -116,6 +116,19 @@ button:disabled {
   z-index: 10;
 }
 
+.topbar-actions {
+  display: grid;
+  gap: 12px;
+  justify-items: end;
+}
+
+.topbar-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .brand-block {
   display: grid;
   gap: 6px;
@@ -436,12 +449,19 @@ h3 {
 }
 
 .field select,
-.field input {
+.field input,
+.field textarea {
   min-height: 48px;
   border: 1px solid rgba(194, 37, 45, 0.18);
   padding: 0 14px;
   background: var(--surface);
   color: var(--text);
+}
+
+.field textarea {
+  min-height: 120px;
+  padding: 12px 14px;
+  resize: vertical;
 }
 
 .actions-row {
@@ -478,6 +498,12 @@ h3 {
   border-color: rgba(17, 122, 72, 0.24);
 }
 
+.alert-info {
+  background: #eef5ff;
+  color: #23408e;
+  border-color: rgba(35, 64, 142, 0.18);
+}
+
 .results-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -503,6 +529,11 @@ h3 {
 
 .secondary-button:disabled {
   opacity: 0.5;
+}
+
+.primary-button--small {
+  min-height: 38px;
+  padding: 8px 12px;
 }
 
 .result-card {
@@ -617,6 +648,35 @@ h3 {
 .item-seleccion__acciones {
   flex-direction: column;
   align-items: flex-end;
+}
+
+.session-switcher {
+  min-width: min(100%, 280px);
+}
+
+.session-switcher select {
+  min-height: 44px;
+}
+
+.session-switcher .field-hint {
+  font-size: 0.85rem;
+}
+
+.notification-card,
+.availability-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  border: 1px solid rgba(194, 37, 45, 0.08);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  background: #fff;
+}
+
+.appointment-card .action-form {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
 .pie-resumen {
@@ -768,6 +828,23 @@ h3 {
 @media (max-width: 840px) {
   .footer-content {
     grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar-actions {
+    justify-items: start;
+  }
+
+  .topbar-nav {
+    justify-content: flex-start;
+  }
+
+  .notification-card,
+  .availability-card {
+    flex-direction: column;
   }
 }
 

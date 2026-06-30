@@ -15,7 +15,7 @@ const filterConfig = [
       <select id="medicoId" value={filters.medicoId} onChange={(event) => onChange('medicoId', event.target.value)}>
         <option value="">Todos</option>
         {doctors.map((doctor) => (
-          <option key={doctor._id} value={doctor._id}>
+          <option key={doctor.id ?? doctor._id} value={doctor.id ?? doctor._id}>
             {doctor.nombre} · MP {doctor.matricula}
           </option>
         ))}
@@ -94,7 +94,18 @@ const filterConfig = [
   },
 ]
 
-export function SearchFilters({ filters, onChange, onClear, doctors, catalog }) {
+export function SearchFilters({
+  filters,
+  onChange,
+  onClear,
+  doctors,
+  catalog,
+  sortBy,
+  sortOrder,
+  limit,
+  onSortChange,
+  onLimitChange,
+}) {
   return (
     <section className="filters-panel filters-panel--advanced" aria-label="Filtros avanzados de búsqueda">
       <div className="panel-heading">
@@ -110,6 +121,29 @@ export function SearchFilters({ filters, onChange, onClear, doctors, catalog }) 
             {field.render({ filters, onChange, doctors, catalog })}
           </CampoFiltro>
         ))}
+
+        <CampoFiltro label="Ordenar por" htmlFor="ordenarPor">
+          <select id="ordenarPor" value={sortBy} onChange={(event) => onSortChange("ordenarPor", event.target.value)}>
+            <option value="fecha">Fecha</option>
+            <option value="costo">Costo</option>
+          </select>
+        </CampoFiltro>
+
+        <CampoFiltro label="Orden" htmlFor="orden">
+          <select id="orden" value={sortOrder} onChange={(event) => onSortChange("orden", event.target.value)}>
+            <option value="asc">Ascendente</option>
+            <option value="desc">Descendente</option>
+          </select>
+        </CampoFiltro>
+
+        <CampoFiltro label="Límite" htmlFor="limit">
+          <select id="limit" value={limit} onChange={(event) => onLimitChange(event.target.value)}>
+            <option value="6">6</option>
+            <option value="12">12</option>
+            <option value="24">24</option>
+            <option value="48">48</option>
+          </select>
+        </CampoFiltro>
       </div>
 
       <div className="actions-row actions-row--compact">

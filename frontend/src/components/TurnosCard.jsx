@@ -2,7 +2,7 @@ import { formatCoverageLevel, formatCurrency, formatDateTime } from '../utils/fo
 
 export function TurnosCard({ slot, isSelected, onAdd, onRemove }) {
   return (
-    <article className="result-card" aria-label={`Turno con ${slot.medico.nombre}`}>
+    <article className="result-card" data-testid="shift-card" aria-label={`Turno con ${slot.medico.nombre}`}>
       <div className="result-card__header">
         <div>
           <p className="eyebrow">{slot.especialidad ?? slot.practica}</p>

@@ -5,6 +5,7 @@ import { SearchFilters } from "../components/SearchFilters.jsx";
 import { usePreseleccion } from "../hooks/usePreseleccion.jsx";
 import { useFilters } from "../hooks/useFilters.jsx";
 import { usePagination } from "../hooks/usePagination.jsx";
+import { useSession } from "../hooks/useSession.jsx";
 import {
   fetchAvailableAppointments,
   fetchDoctors,
@@ -13,11 +14,11 @@ import {
 import { buildCatalog } from "../utils/catalog.js";
 import { formatIsoDate } from "../utils/formatters.js";
 
-function getPagination(response, fallbackPage) {
+function getPagination(response, fallbackPage, fallbackLimit) {
   const items = response.items ?? response.data ?? [];
   const pagination = response.pagination ?? {
     page: fallbackPage,
-    limit: 12,
+    limit: fallbackLimit,
     total: items.length,
     totalPages: 1,
   };
@@ -34,7 +35,11 @@ export function SearchPage() {
   const [searchError, setSearchError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [catalogError, setCatalogError] = useState("");
+  const [sortBy, setSortBy] = useState("fecha");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [limit, setLimit] = useState("12");
   const { addItem, removeItem, hasItem } = usePreseleccion();
+  const { currentSession, isPatient } = useSession();
   const { filters, updateFilter, clearFilters } = useFilters();
   const { pagination, setPaginationData } = usePagination();
 
@@ -54,11 +59,11 @@ export function SearchPage() {
 
   function buildRequestParams({ page = 1 } = {}) {
     const params = {
-      pacienteId: "1",
+      pacienteId: currentSession?.patientId,
       page,
-      limit: 12,
-      ordenarPor: "fecha",
-      orden: "asc",
+      limit: Number(limit),
+      ordenarPor: sortBy,
+      orden: sortOrder,
     };
 
     if (searchQuery.trim()) {
@@ -87,13 +92,20 @@ export function SearchPage() {
   }
 
   async function executeSearch({ page = 1 } = {}) {
+    if (!isPatient || !currentSession?.patientId) {
+      setSearchError("Cambiate a una sesión de paciente para buscar turnos.");
+      setHasSearched(false);
+      setResults([]);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setHasSearched(true);
       setSearchError("");
 
       const response = await fetchAvailableAppointments(buildRequestParams({ page }));
-      const { items, pagination: nextPagination } = getPagination(response, page);
+      const { items, pagination: nextPagination } = getPagination(response, page, Number(limit));
 
       setResults(items);
       setPaginationData(nextPagination);
@@ -127,12 +139,18 @@ export function SearchPage() {
   const hasActiveFilters = Object.values(filters).some(Boolean) || searchQuery.trim() !== "";
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
+  const sessionNotice = !isPatient
+    ? "Esta pantalla usa la sesión de paciente. Cambiá el mock selector para reservar desde un perfil paciente."
+    : `Buscando como ${currentSession?.label} (${currentSession?.subtitle})`;
+
   return (
     <div className="search-layout">
       <section className="stack-lg">
         {catalogError ? (
           <div className="alert alert-error">{catalogError}</div>
         ) : null}
+
+        <div className="alert alert-info">{sessionNotice}</div>
 
         {/* Buscador simple */}
         <form className="search-form" onSubmit={handleSearch}>
@@ -157,6 +175,7 @@ export function SearchPage() {
             <button
               type="submit"
               className="primary-button"
+              data-testid="search-submit-button"
               disabled={isLoading}
             >
               {isLoading ? "Buscando..." : hasActiveFilters ? "Buscar" : "Buscar todos"}
@@ -173,6 +192,7 @@ export function SearchPage() {
               {activeFilterCount > 0 && <span className="badge">{activeFilterCount}</span>}
             </button>
           </div>
+
         </form>
 
         {showFilters && (
@@ -182,6 +202,19 @@ export function SearchPage() {
             onClear={clearFilters}
             doctors={doctors}
             catalog={catalog}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            limit={limit}
+            onSortChange={(field, value) => {
+              if (field === "ordenarPor") {
+                setSortBy(value);
+              }
+
+              if (field === "orden") {
+                setSortOrder(value);
+              }
+            }}
+            onLimitChange={setLimit}
           />
         )}
 
