@@ -1,7 +1,7 @@
-FROM mongo:7
-
-ENV MONGO_INITDB_DATABASE=backend-grupo-02
-
-EXPOSE 27017
-
-CMD ["mongod"]
+FROM node:22-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --omit=dev && npm cache clean --force
+COPY . .
+EXPOSE 3000
+CMD ["node", "server.js"]
