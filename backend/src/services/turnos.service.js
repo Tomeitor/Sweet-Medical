@@ -18,6 +18,7 @@ import timezone from "dayjs/plugin/timezone.js";
 import {
   BadRequestError,
   ConflictError,
+  ForbiddenError,
   NotFoundError,
   TurnoFuturoError,
 } from "../errors/AppError.js";
@@ -134,10 +135,22 @@ export class TurnoService {
     return !!disponibilidadEncontrada;
   }
 
-  async darDeBaja(turnoId, motivo) {
+  obtenerPacienteIdTurno(turno) {
+    return String(turno?.paciente?.id ?? turno?.paciente ?? "");
+  }
+
+  obtenerMedicoIdTurno(turno) {
+    return String(turno?.medico?.id ?? turno?.medico ?? "");
+  }
+
+  async darDeBaja(turnoId, motivo, pacienteId) {
     const turno = await turnosRepository.findById(turnoId);
     if (!turno) {
       throw new NotFoundError("El turno que querés cancelar no existe");
+    }
+
+    if (pacienteId !== undefined && String(pacienteId) !== this.obtenerPacienteIdTurno(turno)) {
+      throw new ForbiddenError("No podés cancelar un turno que no es tuyo");
     }
 
     this.validarTurnoPuedeModificarse(turno, "dar de baja");
@@ -148,13 +161,17 @@ export class TurnoService {
     return this.normalizarTurnoParaRespuesta(turnoActualizado);
   }
 
-  async cambiarTurno(turnoId, nuevaFechaHora, motivo) {
+  async cambiarTurno(turnoId, nuevaFechaHora, motivo, pacienteId) {
     const turno = await turnosRepository.findById(turnoId);
     if (!turno) {
       throw new NotFoundError("El turno que querés cambiar no existe");
     }
 
     const fechaTurnoNueva = new Date(nuevaFechaHora);
+    if (pacienteId !== undefined && String(pacienteId) !== this.obtenerPacienteIdTurno(turno)) {
+      throw new ForbiddenError("No podés cambiar un turno que no es tuyo");
+    }
+
     this.validarTurnoPuedeModificarse(turno, "cambiar");
 
     if (!dayjs(fechaTurnoNueva).isAfter(dayjs())) {
@@ -210,10 +227,14 @@ export class TurnoService {
     }
   }
 
-  async marcarComoRealizado(turnoId) {
+  async marcarComoRealizado(turnoId, medicoId) {
     const turno = await turnosRepository.findById(turnoId);
     if (!turno) {
       throw new NotFoundError("El turno no existe");
+    }
+
+    if (medicoId !== undefined && String(medicoId) !== this.obtenerMedicoIdTurno(turno)) {
+      throw new ForbiddenError("No podés marcar como realizado un turno de otro médico");
     }
 
     if (turno.estado === EstadoTurno.REALIZADO) {
@@ -260,7 +281,7 @@ export class TurnoService {
   }
 
   async getTurnosDisponibles(filtros) {
-    const paciente = pacientesRepository.getById(filtros.pacienteId);
+    const paciente = await pacientesRepository.getById(filtros.pacienteId);
     if (!paciente) {
       throw new NotFoundError("El paciente no existe");
     }

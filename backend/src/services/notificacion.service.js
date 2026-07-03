@@ -11,10 +11,19 @@ export class NotificacionService {
         return await this.repo.findByDestinatarioYEstado(usuarioId, estaLeida);
     }
 
-    async actualizarEstadoLectura(idNotificacion, nuevoEstadoLeida) {
+    async actualizarEstadoLectura(idNotificacion, usuarioId, nuevoEstadoLeida) {
+        if (typeof nuevoEstadoLeida === 'undefined' && typeof usuarioId === 'boolean') {
+            nuevoEstadoLeida = usuarioId;
+            usuarioId = undefined;
+        }
+
         const notificacion = await this.repo.findById(idNotificacion);
         
         if (!notificacion) {
+            throw new NotFoundError(`No se encontró la notificación con ID ${idNotificacion}`);
+        }
+
+        if (usuarioId !== undefined && String(notificacion.destinatario?.id) !== String(usuarioId)) {
             throw new NotFoundError(`No se encontró la notificación con ID ${idNotificacion}`);
         }
 

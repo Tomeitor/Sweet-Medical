@@ -1,15 +1,19 @@
 import { notificacionService } from "../services/notificacion.service.js";
-import { BadRequestError } from "../errors/AppError.js";
+import { BadRequestError, ForbiddenError } from "../errors/AppError.js";
 
 export class NotificacionController {
     constructor() {
         this.service = notificacionService;
     }
 
-   getNotificaciones = async (req, res, next) => {
+    getNotificaciones = async (req, res, next) => {
         try {
             const { usuarioId } = req.params;
             const leidaQuery = req.query.leida; 
+
+            if (req.auth?.role === 'MEDICO' && String(usuarioId) !== String(req.auth.username)) {
+                throw new ForbiddenError("No podés ver notificaciones de otro médico");
+            }
 
             if (leidaQuery === undefined) {
                  throw new BadRequestError("Falta el parámetro de búsqueda. Debes especificar '?leida=true' o '?leida=false' en la URL.");
@@ -21,7 +25,7 @@ export class NotificacionController {
             
             const estaLeida = leidaQuery === 'true'; 
     
-            const notificaciones = await this.service.obtenerPorEstado(usuarioId, estaLeida);
+            const notificaciones = await this.service.obtenerPorEstado(String(req.auth?.username ?? usuarioId), estaLeida);
 
             res.status(200).json({ status: "success", data: notificaciones });
         } catch (error) {
@@ -31,13 +35,18 @@ export class NotificacionController {
     patchEstadoLectura = async (req, res, next) => {
         try {
             const { notificacionId } = req.params;
+            const { usuarioId } = req.params;
             const { leida } = req.body;
+
+            if (req.auth?.role === 'MEDICO' && String(usuarioId) !== String(req.auth.username)) {
+                throw new ForbiddenError("No podés modificar notificaciones de otro médico");
+            }
 
             if (typeof leida !== 'boolean') {
                 throw new BadRequestError("El body debe contener la propiedad 'leida' con un valor booleano (true o false)");
             }
 
-            const notificacionActualizada = await this.service.actualizarEstadoLectura(notificacionId, leida);
+            const notificacionActualizada = await this.service.actualizarEstadoLectura(notificacionId, String(req.auth?.username ?? usuarioId), leida);
             
             res.status(200).json({ status: "success", data: notificacionActualizada });
         } catch (error) {

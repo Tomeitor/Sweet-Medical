@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import MedicoController from '../controllers/medicos.controller.js';
+import { optionalAuthenticate, requireRole } from '../middlewares/auth.middleware.js';
 
 const controller = new MedicoController();
 const router = Router();
@@ -99,7 +100,7 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Medico'
  */
-router.get('/', controller.getMedicos);
+router.get('/', optionalAuthenticate, controller.getMedicos);
 
 /**
  * @swagger
@@ -135,7 +136,7 @@ router.get('/', controller.getMedicos);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', controller.getMedicoById);
+router.get('/:id', optionalAuthenticate, controller.getMedicoById);
 
 /**
  * @swagger
@@ -169,7 +170,7 @@ router.get('/:id', controller.getMedicoById);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', controller.createMedico);
+router.post('/', requireRole('MEDICO'), controller.createMedico);
 
 /**
  * @swagger
@@ -217,7 +218,7 @@ router.post('/', controller.createMedico);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', controller.updateMedico);
+router.put('/:id', requireRole('MEDICO'), controller.updateMedico);
 
 /**
  * @swagger
@@ -257,6 +258,6 @@ router.put('/:id', controller.updateMedico);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', controller.deleteMedico);
+router.delete('/:id', requireRole('MEDICO'), controller.deleteMedico);
 
 export default router; 

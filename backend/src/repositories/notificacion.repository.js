@@ -6,7 +6,7 @@ export class NotificacionRepository {
     }
 
     async findByDestinatarioYEstado(usuarioId, estaLeida) {
-        return await this.model.find({ destinatario: usuarioId, leida: estaLeida });
+        return await this.model.find({ 'destinatario.id': usuarioId, leida: estaLeida });
     }
 
     async findById(id) {

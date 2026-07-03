@@ -8,6 +8,11 @@ const medicosSchema = new mongoose.Schema({
         type: String,
         required:true
     },
+    usuarioId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Usuario',
+        default: null,
+    },
     matricula: {
         type: String,
         required: true

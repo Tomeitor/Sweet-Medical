@@ -1,4 +1,5 @@
 import { TurnoService } from "../services/turnos.service.js";
+import { BadRequestError, ForbiddenError } from "../errors/AppError.js";
 import z from "zod";
 
 const optionalDateTimeSchema = z
@@ -15,10 +16,6 @@ const crearTurnoSchema = z.object({
     .string({ required_error: "El ID del médico es obligatorio" })
     .trim()
     .regex(/^[0-9a-fA-F]{24}$/, "El ID del médico no es válido"),
-  pacienteId: z
-    .string()
-    .trim()
-    .regex(/^\d+$/, "El ID del paciente debe ser numérico"),
   fechaHora: z
     .string()
     .datetime({
@@ -50,14 +47,15 @@ const historialPacienteParamsSchema = z.object({
   pacienteId: z
     .string()
     .trim()
-    .regex(/^\d+$/, "El ID del paciente debe ser numérico"),
+    .regex(/^([0-9a-fA-F]{24}|\d+)$/, "El ID del paciente no es válido"),
 });
 
 const turnosDisponiblesQuerySchema = z.object({
   pacienteId: z
     .string()
     .trim()
-    .regex(/^\d+$/, "El ID del paciente debe ser numérico"),
+    .regex(/^([0-9a-fA-F]{24}|\d+)$/, "El ID del paciente no es válido")
+    .optional(),
   medicoId: z
     .string()
     .trim()
@@ -91,9 +89,15 @@ export class TurnosController {
   async alta(req, res, next) {
     try {
       const datosValidados = crearTurnoSchema.parse(req.body);
+      const pacienteId = req.auth?.profileId;
+
+      if (!pacienteId) {
+        throw new BadRequestError("Debes iniciar sesión como paciente para reservar un turno");
+      }
+
       const nuevoTurno = await service.darDeAlta(
         datosValidados.medicoId,
-        datosValidados.pacienteId,
+        pacienteId,
         datosValidados.fechaHora,
         datosValidados.sede,
         datosValidados.practica,
@@ -112,7 +116,7 @@ export class TurnosController {
       const id = req.params.id;
       const datosValidados = cancelarTurnoSchema.parse(req.body);
 
-      await service.darDeBaja(id, datosValidados.motivo);
+      await service.darDeBaja(id, datosValidados.motivo, req.auth?.profileId);
 
       res.status(200).json({ message: "Turno cancelado con éxito" });
     } catch (error) {
@@ -123,8 +127,18 @@ export class TurnosController {
   async historialPaciente(req, res, next) {
     try {
       const datosValidados = historialPacienteParamsSchema.parse(req.params);
+      const pacienteIdAutorizado = req.auth?.profileId;
+
+      if (!pacienteIdAutorizado) {
+        throw new BadRequestError("Debes iniciar sesión como paciente para ver tu historial");
+      }
+
+      if (String(datosValidados.pacienteId) !== String(pacienteIdAutorizado)) {
+        throw new ForbiddenError("No podés ver el historial de otro paciente");
+      }
+
       const historial = await service.getHistorialPaciente(
-        datosValidados.pacienteId,
+        pacienteIdAutorizado,
       );
 
       res.status(200).json(historial);
@@ -141,6 +155,7 @@ export class TurnosController {
         id,
         datosValidados.fechaHora,
         datosValidados.motivo,
+        req.auth?.profileId,
       );
 
       res.status(200).json(turno);
@@ -152,7 +167,7 @@ export class TurnosController {
   async marcarComoRealizado(req, res, next) {
     try {
       const { id } = req.params;
-      const turno = await service.marcarComoRealizado(id);
+      const turno = await service.marcarComoRealizado(id, req.auth?.profileId);
 
       res.status(200).json(turno);
     } catch (error) {
@@ -163,7 +178,16 @@ export class TurnosController {
   async disponibles(req, res, next) {
     try {
       const filtros = turnosDisponiblesQuerySchema.parse(req.query);
-      const turnosDisponibles = await service.getTurnosDisponibles(filtros);
+      const pacienteId = req.auth?.role === 'PACIENTE' ? req.auth.profileId : filtros.pacienteId;
+
+      if (!pacienteId) {
+        throw new BadRequestError("El ID del paciente es obligatorio");
+      }
+
+      const turnosDisponibles = await service.getTurnosDisponibles({
+        ...filtros,
+        pacienteId,
+      });
 
       res.status(200).json(turnosDisponibles);
     } catch (error) {

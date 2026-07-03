@@ -12,6 +12,8 @@ import {
 } from "../services/api.js";
 import { buildCatalog } from "../utils/catalog.js";
 import { formatIsoDate } from "../utils/formatters.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import { DEMO_PATIENT_PROFILE_ID } from "../auth/constants.js";
 
 function getPagination(response, fallbackPage) {
   const items = response.items ?? response.data ?? [];
@@ -26,6 +28,7 @@ function getPagination(response, fallbackPage) {
 }
 
 export function SearchPage() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [doctors, setDoctors] = useState([]);
@@ -53,8 +56,10 @@ export function SearchPage() {
   const catalog = useMemo(() => buildCatalog(doctors), [doctors]);
 
   function buildRequestParams({ page = 1 } = {}) {
+    const pacienteId = user?.role === "PACIENTE" ? user.profileId : DEMO_PATIENT_PROFILE_ID;
+
     const params = {
-      pacienteId: "1",
+      pacienteId,
       page,
       limit: 12,
       ordenarPor: "fecha",

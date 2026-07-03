@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import DisponibilidadController from '../controllers/disponibilidades.controller.js';
+import { requireRole } from '../middlewares/auth.middleware.js';
 
 const controller = new DisponibilidadController();
 const router = Router({mergeParams: true});
@@ -148,7 +149,7 @@ router.get('/:id', controller.getDisponibilidadById);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', controller.createDisponibilidad);
+router.post('/', requireRole('MEDICO'), controller.createDisponibilidad);
 
 /**
  * @swagger
@@ -190,7 +191,7 @@ router.post('/', controller.createDisponibilidad);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', controller.updateDisponibilidad);
+router.put('/:id', requireRole('MEDICO'), controller.updateDisponibilidad);
 
 /**
  * @swagger
@@ -226,6 +227,6 @@ router.put('/:id', controller.updateDisponibilidad);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', controller.deleteDisponibilidad);
+router.delete('/:id', requireRole('MEDICO'), controller.deleteDisponibilidad);
 
 export default router; 

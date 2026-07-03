@@ -13,12 +13,13 @@ export class factoryNotificacionService {
 
         let mensaje = `El turno con el médico ${turno.medico} cambió su estado a ${turno.estado}.`;
 
-        let nuevaNotificacion = new Notificacion(
-            this.proximoId,
-            turno.paciente,
-            turno.medico,
+        let nuevaNotificacion = new Notificacion({
+            id: this.proximoId,
+            destinatario: { id: String(turno.paciente?.id ?? turno.paciente) },
+            remitente: { id: String(turno.medico?.id ?? turno.medico) },
             mensaje,
-            hoy);
+            fechaHoraCreacion: hoy,
+        });
 
         this.proximoId += 1;
         

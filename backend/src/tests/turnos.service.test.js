@@ -1,10 +1,14 @@
-import { afterEach, describe, expect, it, jest } from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import dayjs from "dayjs";
 
 import { TurnoService } from "../services/turnos.service.js";
+import { DiaSemana } from "../domain/DiaSemana.js";
 import { EstadoTurno } from "../domain/EstadoTurno.js";
 import { Turno } from "../domain/Turno.js";
+import { medicoRepository } from "../repositories/medicos.repository.js";
+import { disponibilidadesRepository } from "../repositories/disponibilidades.repository.js";
 import { turnosRepository } from "../repositories/turnos.repository.js";
+import { pacientesRepository } from "../repositories/pacientes.repository.js";
 
 const obtenerProximoDia = (diaSemana, hora, minuto = 0) => {
   let fecha = dayjs()
@@ -21,8 +25,57 @@ const obtenerProximoDia = (diaSemana, hora, minuto = 0) => {
   return fecha;
 };
 
+const medicoMock = {
+  id: 1,
+  nombre: "Dra. Ana Gómez",
+  matricula: "12345",
+  especialidades: ["Cardiologia"],
+  practicas: ["Electrocardiograma"],
+  sedes: ["Sede Centro"],
+};
+
+const disponibilidadesMock = [
+  DiaSemana.DOMINGO,
+  DiaSemana.LUNES,
+  DiaSemana.MARTES,
+  DiaSemana.MIERCOLES,
+  DiaSemana.JUEVES,
+  DiaSemana.VIERNES,
+  DiaSemana.SABADO,
+].map((diaSemana) => ({
+  diaSemana,
+  desde: "08:00",
+  hasta: "09:00",
+}));
+
 afterEach(() => {
   jest.restoreAllMocks();
+});
+
+beforeEach(() => {
+  jest.spyOn(pacientesRepository, "getById").mockImplementation(async (id) => {
+    if (String(id) === "999") {
+      return null;
+    }
+
+    return {
+      id: String(id),
+      plan: {
+        coberturasEspecialidad: [
+          { especialidad: "Cardiologia", nivel: "TOTAL" },
+        ],
+        coberturasPractica: [
+          { practica: "Electrocardiograma", nivel: "PARCIAL" },
+        ],
+      },
+    };
+  });
+
+  jest.spyOn(medicoRepository, "getAll").mockResolvedValue([medicoMock]);
+  jest
+    .spyOn(disponibilidadesRepository, "getByMedico")
+    .mockResolvedValue(disponibilidadesMock);
+  jest.spyOn(turnosRepository, "findByMedicoYFecha").mockResolvedValue(null);
 });
 
 describe("TurnoService", () => {
@@ -119,7 +172,7 @@ describe("TurnoService", () => {
       const service = new TurnoService();
       const fechaReservada = obtenerProximoDia(2, 8, 0).toDate();
 
-      jest.spyOn(turnosRepository, "findByMedicoYFecha").mockImplementation(
+      turnosRepository.findByMedicoYFecha.mockImplementation(
         (medicoId, fecha) => {
           if (
             String(medicoId) === "1" &&

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { TurnosController } from '../controllers/turnos.controller.js';
+import { optionalAuthenticate, requireRole } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 const controller = new TurnosController();
@@ -238,7 +239,7 @@ const controller = new TurnosController();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', controller.alta);
+router.post('/', requireRole('PACIENTE'), controller.alta);
 
 /**
  * @swagger
@@ -335,7 +336,7 @@ router.post('/', controller.alta);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/disponibles', controller.disponibles);
+router.get('/disponibles', optionalAuthenticate, controller.disponibles);
 
 /**
  * @swagger
@@ -366,7 +367,7 @@ router.get('/disponibles', controller.disponibles);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/historial/:pacienteId/', controller.historialPaciente);
+router.get('/historial/:pacienteId/', requireRole('PACIENTE'), controller.historialPaciente);
 
 /**
  * @swagger
@@ -415,7 +416,7 @@ router.get('/historial/:pacienteId/', controller.historialPaciente);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch('/:id/cambio', controller.cambiar);
+router.patch('/:id/cambio', requireRole('PACIENTE'), controller.cambiar);
 
 /**
  * @swagger
@@ -457,7 +458,7 @@ router.patch('/:id/cambio', controller.cambiar);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch('/:id/realizado', controller.marcarComoRealizado);
+router.patch('/:id/realizado', requireRole('MEDICO'), controller.marcarComoRealizado);
 
 /**
  * @swagger
@@ -509,6 +510,6 @@ router.patch('/:id/realizado', controller.marcarComoRealizado);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', controller.baja);
+router.delete('/:id', requireRole('PACIENTE'), controller.baja);
 
 export default router;
