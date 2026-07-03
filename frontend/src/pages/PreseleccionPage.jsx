@@ -1,10 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ResumenSeleccion } from '../components/ResumenSeleccion.jsx'
 
-const reminders = [
-  'Revisá profesional, práctica, sede y horario antes de decidir.',
-]
-
 export function PreseleccionPage() {
   return (
     <div className="content-grid two-columns align-start">

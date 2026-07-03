@@ -18,14 +18,16 @@ function App() {
       <AuthProvider>
         <PreseleccionProvider>
           <Routes>
-            <Route element={<Header />}>
+            <Route element={<Header />}> 
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/buscar" element={<SearchPage />} />
               <Route element={<ProtectedRoute allowedRoles={["MEDICO"]} />}>
                 <Route path="/medicos" element={<DoctorsPage />} />
               </Route>
-              <Route path="/preseleccion" element={<PreseleccionPage />} />
+              <Route element={<ProtectedRoute allowedRoles={["PACIENTE"]} />}>
+                <Route path="/buscar" element={<SearchPage />} />
+                <Route path="/preseleccion" element={<PreseleccionPage />} />
+              </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
