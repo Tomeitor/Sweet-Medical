@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { TurnosController } from '../controllers/turnos.controller.js';
-import { optionalAuthenticate, requireRole } from '../middlewares/auth.middleware.js';
+import { requireRole } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 const controller = new TurnosController();
@@ -247,14 +247,8 @@ router.post('/', requireRole('PACIENTE'), controller.alta);
  *   get:
  *     summary: Obtener turnos disponibles
  *     tags: [Turnos]
- *     description: Debe indicarse el paciente y al menos una especialidad o una practica.
+ *     description: Requiere una sesión de paciente activa y al menos una especialidad o una practica.
  *     parameters:
- *       - in: query
- *         name: pacienteId
- *         required: true
- *         schema:
- *           type: string
- *         description: Id del paciente para calcular cobertura y costo
  *       - in: query
  *         name: medicoId
  *         schema:
@@ -336,7 +330,7 @@ router.post('/', requireRole('PACIENTE'), controller.alta);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/disponibles', optionalAuthenticate, controller.disponibles);
+router.get('/disponibles', requireRole('PACIENTE'), controller.disponibles);
 
 /**
  * @swagger

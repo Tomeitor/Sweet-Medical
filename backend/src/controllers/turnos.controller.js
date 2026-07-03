@@ -51,11 +51,6 @@ const historialPacienteParamsSchema = z.object({
 });
 
 const turnosDisponiblesQuerySchema = z.object({
-  pacienteId: z
-    .string()
-    .trim()
-    .regex(/^([0-9a-fA-F]{24}|\d+)$/, "El ID del paciente no es válido")
-    .optional(),
   medicoId: z
     .string()
     .trim()
@@ -178,10 +173,10 @@ export class TurnosController {
   async disponibles(req, res, next) {
     try {
       const filtros = turnosDisponiblesQuerySchema.parse(req.query);
-      const pacienteId = req.auth?.role === 'PACIENTE' ? req.auth.profileId : filtros.pacienteId;
+      const pacienteId = req.auth?.role === 'PACIENTE' ? req.auth.profileId : null;
 
       if (!pacienteId) {
-        throw new BadRequestError("El ID del paciente es obligatorio");
+        throw new BadRequestError("Debes iniciar sesión como paciente para ver los turnos disponibles");
       }
 
       const turnosDisponibles = await service.getTurnosDisponibles({
