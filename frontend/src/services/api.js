@@ -52,6 +52,51 @@ export async function fetchAvailableAppointments(filters) {
   return response.data
 }
 
+export async function fetchDoctorAppointmentsHistory(medicoId) {
+  const response = await api.get(`/turnos/medicos/${medicoId}/historial`)
+  return response.data
+}
+
+export async function fetchPatientAppointmentsHistory(pacienteId) {
+  const response = await api.get(`/turnos/pacientes/${pacienteId}/historial`)
+  return response.data
+}
+
+export async function fetchMyAppointmentsHistory(pacienteId) {
+  const response = await api.get(`/turnos/historial/${pacienteId}`)
+  return response.data
+}
+
+export async function cancelAppointmentByPatient(id, motivo) {
+  const response = await api.delete(`/turnos/${id}`, { data: { motivo } })
+  return response.data
+}
+
+export async function rescheduleAppointmentByPatient(id, fechaHora, motivo) {
+  const response = await api.patch(`/turnos/${id}/cambio`, { fechaHora, motivo })
+  return response.data
+}
+
+export async function acceptAppointment(id) {
+  const response = await api.patch(`/turnos/${id}/aceptar`, {})
+  return response.data
+}
+
+export async function rejectAppointment(id) {
+  const response = await api.patch(`/turnos/${id}/rechazar`, {})
+  return response.data
+}
+
+export async function cancelAppointmentByDoctor(id, motivo) {
+  const response = await api.patch(`/turnos/${id}/cancelacion-medico`, { motivo })
+  return response.data
+}
+
+export async function markAppointmentAsCompleted(id) {
+  const response = await api.patch(`/turnos/${id}/realizado`, {})
+  return response.data
+}
+
 export async function fetchDoctorAvailabilities() {
   const response = await api.get('/disponibilidades')
   return response.data

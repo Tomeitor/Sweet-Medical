@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  acceptAppointment,
   createAvailability,
+  cancelAppointmentByDoctor,
   deleteAvailability,
+  fetchDoctorAppointmentsHistory,
   fetchDoctorAvailabilities,
   fetchDoctors,
+  fetchPatientAppointmentsHistory,
   fetchNotifications,
   handleApiError,
+  rejectAppointment,
   markNotificationAsRead,
+  markAppointmentAsCompleted,
 } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -20,6 +26,21 @@ function getItemId(item) {
 
 function unwrapNotifications(response) {
   return Array.isArray(response) ? response : response?.data ?? [];
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat("es-AR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function canStillBeCanceled(value) {
+  return (new Date(value).getTime() - Date.now()) >= 60 * 60 * 1000;
 }
 
 export function DoctorsPage() {
@@ -44,6 +65,14 @@ export function DoctorsPage() {
   const [notificationMessageType, setNotificationMessageType] = useState("success");
   const [busyAvailabilityId, setBusyAvailabilityId] = useState("");
   const [busyNotificationId, setBusyNotificationId] = useState("");
+  const [doctorAppointments, setDoctorAppointments] = useState([]);
+  const [appointmentMessage, setAppointmentMessage] = useState("");
+  const [appointmentMessageType, setAppointmentMessageType] = useState("success");
+  const [busyAppointmentId, setBusyAppointmentId] = useState("");
+  const [patientHistoryId, setPatientHistoryId] = useState("");
+  const [patientHistory, setPatientHistory] = useState([]);
+  const [patientHistoryMessage, setPatientHistoryMessage] = useState("");
+  const [patientHistoryMessageType, setPatientHistoryMessageType] = useState("success");
   const visibleDoctors = useMemo(() => {
     if (user?.role !== "MEDICO") {
       return doctors;
@@ -118,12 +147,21 @@ export function DoctorsPage() {
         setAvailabilityMessageType("success");
         setNotificationMessage("");
         setNotificationMessageType("success");
+        setAppointmentMessage("");
+        setAppointmentMessageType("success");
 
-        const [allAvailabilities, unread, read] = await Promise.all([
+        const requests = [
           fetchDoctorAvailabilities(),
           fetchNotifications(selectedDoctor.usuario, false),
           fetchNotifications(selectedDoctor.usuario, true),
-        ]);
+        ];
+
+        if (user?.role === "MEDICO") {
+          requests.push(fetchDoctorAppointmentsHistory(getItemId(selectedDoctor)));
+        }
+
+        const results = await Promise.all(requests);
+        const [allAvailabilities, unread, read, appointments = []] = results;
 
         const doctorId = getItemId(selectedDoctor);
         setAvailabilities(
@@ -131,11 +169,13 @@ export function DoctorsPage() {
         );
         setUnreadNotifications(unwrapNotifications(unread));
         setReadNotifications(unwrapNotifications(read));
+        setDoctorAppointments(Array.isArray(appointments) ? appointments : []);
       } catch (error) {
         setDetailError(handleApiError(error));
         setAvailabilities([]);
         setUnreadNotifications([]);
         setReadNotifications([]);
+        setDoctorAppointments([]);
       } finally {
         setIsLoadingDetails(false);
       }
@@ -149,16 +189,24 @@ export function DoctorsPage() {
       return;
     }
 
-    const [allAvailabilities, unread, read] = await Promise.all([
+    const requests = [
       fetchDoctorAvailabilities(),
       fetchNotifications(selectedDoctor.usuario, false),
       fetchNotifications(selectedDoctor.usuario, true),
-    ]);
+    ];
+
+    if (user?.role === "MEDICO") {
+      requests.push(fetchDoctorAppointmentsHistory(getItemId(selectedDoctor)));
+    }
+
+    const results = await Promise.all(requests);
+    const [allAvailabilities, unread, read, appointments = []] = results;
 
     const doctorId = getItemId(selectedDoctor);
     setAvailabilities(allAvailabilities.filter((item) => String(item.idMedico) === String(doctorId)));
     setUnreadNotifications(unwrapNotifications(unread));
     setReadNotifications(unwrapNotifications(read));
+    setDoctorAppointments(Array.isArray(appointments) ? appointments : []);
   }
 
   function handleDoctorChange(event) {
@@ -224,6 +272,59 @@ export function DoctorsPage() {
       setNotificationMessageType("error");
     } finally {
       setBusyNotificationId("");
+    }
+  }
+
+  async function handleAppointmentAction(appointmentId, action) {
+    try {
+      setBusyAppointmentId(`${action}:${appointmentId}`);
+      setAppointmentMessage("");
+      setAppointmentMessageType("success");
+
+      if (action === "cancel") {
+        const reason = window.prompt("Motivo de cancelación");
+        if (!reason?.trim()) {
+          return;
+        }
+
+        await cancelAppointmentByDoctor(appointmentId, reason.trim());
+      } else if (action === "accept") {
+        await acceptAppointment(appointmentId);
+      } else if (action === "reject") {
+        await rejectAppointment(appointmentId);
+      } else if (action === "complete") {
+        await markAppointmentAsCompleted(appointmentId);
+      }
+
+      await refreshDetails();
+      setAppointmentMessage("Turno actualizado.");
+      setAppointmentMessageType("success");
+    } catch (error) {
+      setAppointmentMessage(handleApiError(error));
+      setAppointmentMessageType("error");
+    } finally {
+      setBusyAppointmentId("");
+    }
+  }
+
+  async function handlePatientHistorySubmit(event) {
+    event.preventDefault();
+
+    if (!patientHistoryId.trim()) {
+      return;
+    }
+
+    try {
+      setPatientHistoryMessage("");
+      setPatientHistoryMessageType("success");
+      const history = await fetchPatientAppointmentsHistory(patientHistoryId.trim());
+      setPatientHistory(Array.isArray(history) ? history : []);
+      setPatientHistoryMessage("Historial cargado.");
+      setPatientHistoryMessageType("success");
+    } catch (error) {
+      setPatientHistory([]);
+      setPatientHistoryMessage(handleApiError(error));
+      setPatientHistoryMessageType("error");
     }
   }
 
@@ -383,60 +484,208 @@ export function DoctorsPage() {
         </article>
       </section>
 
-      <section className="info-card stack-md" id="notificaciones">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Notificaciones</p>
-            <h2>Mensajes no leídos y leídos</h2>
-          </div>
-          {selectedDoctor ? <p className="panel-copy">{unreadNotifications.length} sin leer</p> : null}
-        </div>
+      <section className="stack-lg">
+        {user?.role === "MEDICO" ? (
+          <article className="info-card stack-md">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">Turnos</p>
+                <h2>Mi historial y gestión</h2>
+              </div>
+              {doctorAppointments.length > 0 ? <p className="panel-copy">{doctorAppointments.length} turnos</p> : null}
+            </div>
 
-        {notificationMessage ? (
-          <div className={`alert alert-${notificationMessageType}`}>{notificationMessage}</div>
+            {appointmentMessage ? (
+              <div className={`alert alert-${appointmentMessageType}`}>{appointmentMessage}</div>
+            ) : null}
+
+            {doctorAppointments.length > 0 ? (
+              <div className="stack-md">
+                {doctorAppointments.map((appointment) => {
+                  const appointmentId = getItemId(appointment);
+                  const canCancel = canStillBeCanceled(appointment.fechaHora);
+                  const isReserved = appointment.estado === "RESERVADO";
+                  const isConfirmed = appointment.estado === "CONFIRMADO";
+                  const isPast = new Date(appointment.fechaHora).getTime() <= Date.now();
+
+                  return (
+                    <article key={appointmentId} className="inline-card stack-sm">
+                      <div className="panel-heading">
+                        <div>
+                          <strong>{formatDateTime(appointment.fechaHora)}</strong>
+                          <p>{appointment.practica} · {appointment.sede}</p>
+                        </div>
+                        <span className="tag">{appointment.estado}</span>
+                      </div>
+
+                      <p className="muted-text">Paciente: {appointment.paciente?.id ?? appointment.paciente ?? "—"}</p>
+
+                      {user?.role === "MEDICO" ? (
+                        <div className="appointment-actions">
+                          {isReserved ? (
+                            <>
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => handleAppointmentAction(appointmentId, "accept")}
+                                disabled={busyAppointmentId === `accept:${appointmentId}`}
+                              >
+                                Aceptar
+                              </button>
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => handleAppointmentAction(appointmentId, "reject")}
+                                disabled={busyAppointmentId === `reject:${appointmentId}`}
+                              >
+                                Rechazar
+                              </button>
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => handleAppointmentAction(appointmentId, "cancel")}
+                                disabled={busyAppointmentId === `cancel:${appointmentId}` || !canCancel}
+                              >
+                                Cancelar
+                              </button>
+                            </>
+                          ) : null}
+
+                          {isConfirmed ? (
+                            <>
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => handleAppointmentAction(appointmentId, "complete")}
+                                disabled={busyAppointmentId === `complete:${appointmentId}` || !isPast}
+                              >
+                                Completar
+                              </button>
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => handleAppointmentAction(appointmentId, "cancel")}
+                                disabled={busyAppointmentId === `cancel:${appointmentId}` || !canCancel}
+                              >
+                                Cancelar
+                              </button>
+                            </>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="muted-text">Aún no hay turnos registrados.</p>
+            )}
+          </article>
         ) : null}
 
-        <div className="stack-md">
-          <div>
-            <h3>No leídas</h3>
-            {unreadNotifications.length > 0 ? (
+        {user?.role === "MEDICO" ? (
+          <article className="info-card stack-md">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">Historial de paciente</p>
+                <h2>Consultar historial por ID</h2>
+              </div>
+            </div>
+
+            <form className="doctor-form" onSubmit={handlePatientHistorySubmit}>
+              <label className="field">
+                <span className="field-label">Paciente ID</span>
+                <input
+                  value={patientHistoryId}
+                  onChange={(event) => setPatientHistoryId(event.target.value)}
+                  placeholder="Ingrese el ID del paciente"
+                />
+              </label>
+
+              <button type="submit" className="primary-button" disabled={!patientHistoryId.trim()}>
+                Buscar historial
+              </button>
+            </form>
+
+            {patientHistoryMessage ? (
+              <div className={`alert alert-${patientHistoryMessageType}`}>{patientHistoryMessage}</div>
+            ) : null}
+
+            {patientHistory.length > 0 ? (
               <div className="stack-md">
-                {unreadNotifications.map((notification) => (
-                  <article key={getItemId(notification)} className="inline-card notification-row">
-                    <div>
-                      <p>{notification.mensaje}</p>
+                {patientHistory.map((appointment) => (
+                  <article key={getItemId(appointment)} className="inline-card stack-sm">
+                    <div className="panel-heading">
+                      <div>
+                        <strong>{formatDateTime(appointment.fechaHora)}</strong>
+                        <p>{appointment.practica} · {appointment.sede}</p>
+                      </div>
+                      <span className="tag">{appointment.estado}</span>
                     </div>
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => handleMarkAsRead(notification)}
-                      disabled={busyNotificationId === getItemId(notification)}
-                    >
-                      Marcar como leída
-                    </button>
                   </article>
                 ))}
               </div>
             ) : (
-              <p className="muted-text">No hay notificaciones sin leer.</p>
+              <p className="muted-text">No se cargó ningún historial todavía.</p>
             )}
+          </article>
+        ) : null}
+
+        <article className="info-card stack-md" id="notificaciones">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Notificaciones</p>
+              <h2>Mensajes no leídos y leídos</h2>
+            </div>
+            {selectedDoctor ? <p className="panel-copy">{unreadNotifications.length} sin leer</p> : null}
           </div>
 
-          <div>
-            <h3>Leídas</h3>
-            {readNotifications.length > 0 ? (
-              <div className="stack-md">
-                {readNotifications.map((notification) => (
-                  <article key={getItemId(notification)} className="inline-card notification-row">
-                    <p>{notification.mensaje}</p>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p className="muted-text">Aún no hay notificaciones leídas.</p>
-            )}
+          {notificationMessage ? (
+            <div className={`alert alert-${notificationMessageType}`}>{notificationMessage}</div>
+          ) : null}
+
+          <div className="stack-md">
+            <div>
+              <h3>No leídas</h3>
+              {unreadNotifications.length > 0 ? (
+                <div className="stack-md">
+                  {unreadNotifications.map((notification) => (
+                    <article key={getItemId(notification)} className="inline-card notification-row">
+                      <div>
+                        <p>{notification.mensaje}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => handleMarkAsRead(notification)}
+                        disabled={busyNotificationId === getItemId(notification)}
+                      >
+                        Marcar como leída
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="muted-text">No hay notificaciones sin leer.</p>
+              )}
+            </div>
+
+            <div>
+              <h3>Leídas</h3>
+              {readNotifications.length > 0 ? (
+                <div className="stack-md">
+                  {readNotifications.map((notification) => (
+                    <article key={getItemId(notification)} className="inline-card notification-row">
+                      <p>{notification.mensaje}</p>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="muted-text">Aún no hay notificaciones leídas.</p>
+              )}
+            </div>
           </div>
-        </div>
+        </article>
       </section>
     </div>
   );

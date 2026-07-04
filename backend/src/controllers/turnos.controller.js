@@ -50,6 +50,13 @@ const historialPacienteParamsSchema = z.object({
     .regex(/^([0-9a-fA-F]{24}|\d+)$/, "El ID del paciente no es válido"),
 });
 
+const historialMedicoParamsSchema = z.object({
+  medicoId: z
+    .string()
+    .trim()
+    .regex(/^([0-9a-fA-F]{24}|\d+)$/, "El ID del médico no es válido"),
+});
+
 const turnosDisponiblesQuerySchema = z.object({
   medicoId: z
     .string()
@@ -119,6 +126,19 @@ export class TurnosController {
     }
   }
 
+  async bajaPorMedico(req, res, next) {
+    try {
+      const { id } = req.params;
+      const datosValidados = cancelarTurnoSchema.parse(req.body);
+
+      await service.darDeBajaPorMedico(id, datosValidados.motivo, req.auth?.profileId);
+
+      res.status(200).json({ message: "Turno cancelado con éxito" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async historialPaciente(req, res, next) {
     try {
       const datosValidados = historialPacienteParamsSchema.parse(req.params);
@@ -142,6 +162,34 @@ export class TurnosController {
     }
   }
 
+  async historialPacienteComoMedico(req, res, next) {
+    try {
+      const datosValidados = historialPacienteParamsSchema.parse(req.params);
+
+      const historial = await service.getHistorialPaciente(datosValidados.pacienteId);
+
+      res.status(200).json(historial);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async historialMedico(req, res, next) {
+    try {
+      const datosValidados = historialMedicoParamsSchema.parse(req.params);
+
+      if (String(datosValidados.medicoId) !== String(req.auth?.profileId)) {
+        throw new ForbiddenError("No podés ver el historial de otro médico");
+      }
+
+      const historial = await service.getHistorialMedico(datosValidados.medicoId);
+
+      res.status(200).json(historial);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async cambiar(req, res, next) {
     try {
       const { id } = req.params;
@@ -152,6 +200,28 @@ export class TurnosController {
         datosValidados.motivo,
         req.auth?.profileId,
       );
+
+      res.status(200).json(turno);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async aceptar(req, res, next) {
+    try {
+      const { id } = req.params;
+      const turno = await service.aceptarTurno(id, req.auth?.profileId);
+
+      res.status(200).json(turno);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async rechazar(req, res, next) {
+    try {
+      const { id } = req.params;
+      const turno = await service.rechazarTurno(id, req.auth?.profileId);
 
       res.status(200).json(turno);
     } catch (error) {

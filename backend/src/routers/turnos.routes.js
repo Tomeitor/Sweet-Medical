@@ -21,7 +21,7 @@ const controller = new TurnosController();
  *           format: date-time
  *         estado:
  *           type: string
- *           enum: [DISPONIBLE, RESERVADO, CONFIRMADO, CANCELADO, REALIZADO]
+  *           enum: [DISPONIBLE, RESERVADO, CONFIRMADO, RECHAZADO, CANCELADO, REALIZADO]
  *           example: CANCELADO
  *         quien:
  *           type: string
@@ -55,7 +55,7 @@ const controller = new TurnosController();
  *           example: 15000
  *         estado:
  *           type: string
- *           enum: [DISPONIBLE, RESERVADO, CONFIRMADO, CANCELADO, REALIZADO]
+  *           enum: [DISPONIBLE, RESERVADO, CONFIRMADO, RECHAZADO, CANCELADO, REALIZADO]
  *           example: RESERVADO
  *         historialEstados:
  *           type: array
@@ -411,6 +411,51 @@ router.get('/historial/:pacienteId/', requireRole('PACIENTE'), controller.histor
  *               $ref: '#/components/schemas/Error'
  */
 router.patch('/:id/cambio', requireRole('PACIENTE'), controller.cambiar);
+
+/**
+ * @swagger
+ * /turnos/medicos/{medicoId}/historial:
+ *   get:
+ *     summary: Obtener el historial de turnos del médico autenticado
+ *     tags: [Turnos]
+ */
+router.get('/medicos/:medicoId/historial', requireRole('MEDICO'), controller.historialMedico);
+
+/**
+ * @swagger
+ * /turnos/pacientes/{pacienteId}/historial:
+ *   get:
+ *     summary: Obtener el historial de un paciente
+ *     tags: [Turnos]
+ */
+router.get('/pacientes/:pacienteId/historial', requireRole('MEDICO'), controller.historialPacienteComoMedico);
+
+/**
+ * @swagger
+ * /turnos/{id}/aceptar:
+ *   patch:
+ *     summary: Aceptar un turno reservado
+ *     tags: [Turnos]
+ */
+router.patch('/:id/aceptar', requireRole('MEDICO'), controller.aceptar);
+
+/**
+ * @swagger
+ * /turnos/{id}/rechazar:
+ *   patch:
+ *     summary: Rechazar un turno reservado
+ *     tags: [Turnos]
+ */
+router.patch('/:id/rechazar', requireRole('MEDICO'), controller.rechazar);
+
+/**
+ * @swagger
+ * /turnos/{id}/cancelacion-medico:
+ *   patch:
+ *     summary: Cancelar un turno asignado por el médico
+ *     tags: [Turnos]
+ */
+router.patch('/:id/cancelacion-medico', requireRole('MEDICO'), controller.bajaPorMedico);
 
 /**
  * @swagger

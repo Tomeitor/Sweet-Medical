@@ -7,6 +7,7 @@ import {
   NivelCobertura,
 } from "../repositories/pacientes.repository.js";
 import { prestacionesRepository } from "../repositories/prestaciones.repository.js";
+import { notificacionRepository } from "../repositories/notificacion.repository.js";
 import { DiaSemana } from "../domain/DiaSemana.js";
 import { EstadoTurno } from "../domain/EstadoTurno.js";
 
@@ -143,6 +144,44 @@ export class TurnoService {
     return String(turno?.medico?.id ?? turno?.medico ?? "");
   }
 
+  async crearNotificacionParaUsuario(usuarioId, mensaje) {
+    if (!usuarioId) {
+      return;
+    }
+
+    const existente = await notificacionRepository.findByDestinatarioYMensaje(
+      usuarioId,
+      mensaje,
+    );
+
+    if (existente) {
+      return;
+    }
+
+    await notificacionRepository.create({
+      destinatario: { id: usuarioId },
+      remitente: { id: "SYSTEM" },
+      mensaje,
+      fechaHoraCreacion: new Date(),
+      leida: false,
+      fechaHoraLeida: null,
+    });
+  }
+
+  async obtenerUsuarioPacienteTurno(turno) {
+    const paciente = await pacientesRepository.getById(
+      this.obtenerPacienteIdTurno(turno),
+    );
+
+    return paciente?.usuario ?? null;
+  }
+
+  async obtenerUsuarioMedicoTurno(turno) {
+    const medico = await medicoRepository.getById(this.obtenerMedicoIdTurno(turno));
+
+    return medico?.usuario ?? null;
+  }
+
   async darDeBaja(turnoId, motivo, pacienteId) {
     const turno = await turnosRepository.findById(turnoId);
     if (!turno) {
@@ -156,6 +195,79 @@ export class TurnoService {
     this.validarTurnoPuedeModificarse(turno, "dar de baja");
 
     turno.actualizarEstado(EstadoTurno.CANCELADO, "SISTEMA", motivo);
+
+    const turnoActualizado = await turnosRepository.update(turno);
+    await this.crearNotificacionParaUsuario(
+      await this.obtenerUsuarioMedicoTurno(turnoActualizado),
+      `El paciente canceló el turno del ${this.formatearFechaArgentina(turnoActualizado.fechaHora)}.`,
+    );
+
+    return this.normalizarTurnoParaRespuesta(turnoActualizado);
+  }
+
+  async darDeBajaPorMedico(turnoId, motivo, medicoId) {
+    const turno = await turnosRepository.findById(turnoId);
+    if (!turno) {
+      throw new NotFoundError("El turno que querés cancelar no existe");
+    }
+
+    if (medicoId !== undefined && String(medicoId) !== this.obtenerMedicoIdTurno(turno)) {
+      throw new ForbiddenError("No podés cancelar un turno que no es tuyo");
+    }
+
+    this.validarTurnoPuedeModificarse(turno, "cancelar");
+
+    turno.actualizarEstado(EstadoTurno.CANCELADO, "MEDICO", motivo);
+
+    const turnoActualizado = await turnosRepository.update(turno);
+    await this.crearNotificacionParaUsuario(
+      await this.obtenerUsuarioPacienteTurno(turnoActualizado),
+      `Tu turno del ${this.formatearFechaArgentina(turnoActualizado.fechaHora)} fue cancelado por el médico.`,
+    );
+
+    return this.normalizarTurnoParaRespuesta(turnoActualizado);
+  }
+
+  async aceptarTurno(turnoId, medicoId) {
+    const turno = await turnosRepository.findById(turnoId);
+    if (!turno) {
+      throw new NotFoundError("El turno no existe");
+    }
+
+    if (medicoId !== undefined && String(medicoId) !== this.obtenerMedicoIdTurno(turno)) {
+      throw new ForbiddenError("No podés aceptar un turno que no es tuyo");
+    }
+
+    if (turno.estado !== EstadoTurno.RESERVADO) {
+      throw new ConflictError("Solo se puede aceptar un turno reservado");
+    }
+
+    turno.actualizarEstado(EstadoTurno.CONFIRMADO, "MEDICO");
+
+    const turnoActualizado = await turnosRepository.update(turno);
+    await this.crearNotificacionParaUsuario(
+      await this.obtenerUsuarioPacienteTurno(turnoActualizado),
+      `Tu turno del ${this.formatearFechaArgentina(turnoActualizado.fechaHora)} fue confirmado por el médico.`,
+    );
+
+    return this.normalizarTurnoParaRespuesta(turnoActualizado);
+  }
+
+  async rechazarTurno(turnoId, medicoId) {
+    const turno = await turnosRepository.findById(turnoId);
+    if (!turno) {
+      throw new NotFoundError("El turno no existe");
+    }
+
+    if (medicoId !== undefined && String(medicoId) !== this.obtenerMedicoIdTurno(turno)) {
+      throw new ForbiddenError("No podés rechazar un turno que no es tuyo");
+    }
+
+    if (turno.estado !== EstadoTurno.RESERVADO) {
+      throw new ConflictError("Solo se puede rechazar un turno reservado");
+    }
+
+    turno.actualizarEstado(EstadoTurno.RECHAZADO, "MEDICO");
 
     const turnoActualizado = await turnosRepository.update(turno);
     return this.normalizarTurnoParaRespuesta(turnoActualizado);
@@ -204,15 +316,9 @@ export class TurnoService {
   }
 
   validarTurnoPuedeModificarse(turno, accion) {
-    if (turno.estado === EstadoTurno.CANCELADO) {
+    if ([EstadoTurno.CANCELADO, EstadoTurno.REALIZADO, EstadoTurno.RECHAZADO].includes(turno.estado)) {
       throw new ConflictError(
-        `No se puede ${accion}: el turno ya está cancelado`,
-      );
-    }
-
-    if (turno.estado === EstadoTurno.REALIZADO) {
-      throw new ConflictError(
-        `No se puede ${accion}: el turno ya está realizado`,
+        `No se puede ${accion}: el turno ya no se puede modificar`,
       );
     }
 
@@ -241,10 +347,8 @@ export class TurnoService {
       throw new ConflictError("El turno ya está marcado como realizado");
     }
 
-    if (turno.estado === EstadoTurno.CANCELADO) {
-      throw new ConflictError(
-        "No se puede marcar como realizado un turno cancelado",
-      );
+    if (turno.estado !== EstadoTurno.CONFIRMADO) {
+      throw new ConflictError("Solo se puede marcar como realizado un turno confirmado");
     }
 
     if (dayjs(turno.fechaHora).isAfter(dayjs())) {
@@ -278,6 +382,44 @@ export class TurnoService {
           turnoA.fechaHora.getTime() - turnoB.fechaHora.getTime(),
       )
       .map((turno) => this.normalizarTurnoParaRespuesta(turno));
+  }
+
+  async getHistorialMedico(medicoId) {
+    const turnos = await turnosRepository.findByMedico(medicoId);
+    return turnos
+      .sort(
+        (turnoA, turnoB) =>
+          turnoB.fechaHora.getTime() - turnoA.fechaHora.getTime(),
+      )
+      .map((turno) => this.normalizarTurnoParaRespuesta(turno));
+  }
+
+  async generarRecordatoriosTurnosDelDiaSiguiente() {
+    const manana = dayjs().tz(ARGENTINA_TZ).add(1, "day");
+    const inicioManana = manana.startOf("day");
+    const finManana = manana.endOf("day");
+    const turnos = await turnosRepository.getAll();
+
+    const turnosDelDiaSiguiente = turnos.filter((turno) => {
+      if (![EstadoTurno.RESERVADO, EstadoTurno.CONFIRMADO].includes(turno.estado)) {
+        return false;
+      }
+
+      return dayjs(turno.fechaHora)
+        .tz(ARGENTINA_TZ)
+        .isBetween(inicioManana, finManana, null, "[]");
+    });
+
+    for (const turno of turnosDelDiaSiguiente) {
+      const mensaje = `Recordatorio: tenés un turno mañana a las ${dayjs(turno.fechaHora).tz(ARGENTINA_TZ).format("HH:mm")}.`;
+      const medicoUsuarioId = await this.obtenerUsuarioMedicoTurno(turno);
+      const pacienteUsuarioId = await this.obtenerUsuarioPacienteTurno(turno);
+
+      await Promise.all([
+        this.crearNotificacionParaUsuario(medicoUsuarioId, mensaje),
+        this.crearNotificacionParaUsuario(pacienteUsuarioId, mensaje),
+      ]);
+    }
   }
 
   async getTurnosDisponibles(filtros) {

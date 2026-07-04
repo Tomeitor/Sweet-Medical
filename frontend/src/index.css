@@ -777,6 +777,12 @@ h3 {
   align-items: center;
 }
 
+.appointment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .availability-row p,
 .notification-row p {
   margin: 6px 0 0;
