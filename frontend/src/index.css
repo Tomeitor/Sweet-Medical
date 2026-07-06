@@ -49,7 +49,8 @@ body {
 body,
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -59,7 +60,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   border-radius: var(--radius-sm);
 }
 
@@ -463,12 +465,19 @@ h3 {
 }
 
 .field select,
-.field input {
+.field input,
+.field textarea {
   min-height: 48px;
   border: 1px solid rgba(194, 37, 45, 0.18);
   padding: 0 14px;
   background: var(--surface);
   color: var(--text);
+}
+
+.field textarea {
+  min-height: 120px;
+  padding: 14px;
+  resize: vertical;
 }
 
 .actions-row {
@@ -781,6 +790,56 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(45, 33, 31, 0.48);
+}
+
+.dialog-panel {
+  width: min(100%, 560px);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 24px 64px rgba(45, 33, 31, 0.2);
+}
+
+.dialog-header,
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.dialog-description {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+}
+
+.dialog-close {
+  min-width: 40px;
+  min-height: 40px;
+  border: 1px solid rgba(194, 37, 45, 0.16);
+  background: var(--surface-muted);
+}
+
+.dialog-body {
+  margin-top: 20px;
+}
+
+.dialog-footer {
+  margin-top: 24px;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .availability-row p,

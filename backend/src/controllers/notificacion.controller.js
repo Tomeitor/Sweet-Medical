@@ -11,8 +11,8 @@ export class NotificacionController {
             const { usuarioId } = req.params;
             const leidaQuery = req.query.leida; 
 
-            if (req.auth?.role === 'MEDICO' && String(usuarioId) !== String(req.auth.username)) {
-                throw new ForbiddenError("No podés ver notificaciones de otro médico");
+            if (String(usuarioId) !== String(req.auth?.username)) {
+                throw new ForbiddenError("No podés ver notificaciones de otro usuario");
             }
 
             if (leidaQuery === undefined) {
@@ -38,8 +38,8 @@ export class NotificacionController {
             const { usuarioId } = req.params;
             const { leida } = req.body;
 
-            if (req.auth?.role === 'MEDICO' && String(usuarioId) !== String(req.auth.username)) {
-                throw new ForbiddenError("No podés modificar notificaciones de otro médico");
+            if (String(usuarioId) !== String(req.auth?.username)) {
+                throw new ForbiddenError("No podés modificar notificaciones de otro usuario");
             }
 
             if (typeof leida !== 'boolean') {

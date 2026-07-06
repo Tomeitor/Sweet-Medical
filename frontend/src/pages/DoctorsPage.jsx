@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Dialog } from "../components/Dialog.jsx";
 import {
   acceptAppointment,
   createAvailability,
@@ -10,6 +11,7 @@ import {
   fetchPatientAppointmentsHistory,
   fetchNotifications,
   handleApiError,
+  notifyNotificationsChanged,
   rejectAppointment,
   markNotificationAsRead,
   markAppointmentAsCompleted,
@@ -43,10 +45,51 @@ function canStillBeCanceled(value) {
   return (new Date(value).getTime() - Date.now()) >= 60 * 60 * 1000;
 }
 
+function buildPatientHistoryOptions(appointments) {
+  const patientsById = new Map();
+  const nameOccurrences = new Map();
+
+  appointments.forEach((appointment) => {
+    const patient = appointment?.paciente;
+    const id = getItemId(patient) || (typeof patient === "string" ? patient : "");
+
+    if (!id || patientsById.has(id)) {
+      return;
+    }
+
+    const rawName = typeof patient === "object" ? patient?.nombre : "";
+    const name = rawName?.trim() ?? "";
+
+    if (name) {
+      nameOccurrences.set(name, (nameOccurrences.get(name) ?? 0) + 1);
+    }
+
+    patientsById.set(id, {
+      id,
+      name,
+    });
+  });
+
+  return [...patientsById.values()]
+    .map((patient) => ({
+      ...patient,
+      label: patient.name
+        ? (nameOccurrences.get(patient.name) ?? 0) > 1
+          ? `${patient.name} (${patient.id})`
+          : patient.name
+        : `Paciente ${patient.id}`,
+    }))
+    .sort((patientA, patientB) =>
+      patientA.label.localeCompare(patientB.label, "es", { sensitivity: "base" }),
+    );
+}
+
 export function DoctorsPage() {
   const { user } = useAuth();
   const [doctors, setDoctors] = useState([]);
-  const [selectedDoctorId, setSelectedDoctorId] = useState("");
+  const [selectedDoctorId, setSelectedDoctorId] = useState(
+    () => window.localStorage.getItem(selectedDoctorIdKey) ?? "",
+  );
   const [doctorError, setDoctorError] = useState("");
   const [detailError, setDetailError] = useState("");
   const [isLoadingDoctors, setIsLoadingDoctors] = useState(true);
@@ -69,10 +112,12 @@ export function DoctorsPage() {
   const [appointmentMessage, setAppointmentMessage] = useState("");
   const [appointmentMessageType, setAppointmentMessageType] = useState("success");
   const [busyAppointmentId, setBusyAppointmentId] = useState("");
-  const [patientHistoryId, setPatientHistoryId] = useState("");
+  const [cancelDialog, setCancelDialog] = useState(null);
+  const [patientHistorySelection, setPatientHistorySelection] = useState("");
   const [patientHistory, setPatientHistory] = useState([]);
   const [patientHistoryMessage, setPatientHistoryMessage] = useState("");
   const [patientHistoryMessageType, setPatientHistoryMessageType] = useState("success");
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const visibleDoctors = useMemo(() => {
     if (user?.role !== "MEDICO") {
       return doctors;
@@ -81,9 +126,26 @@ export function DoctorsPage() {
     return doctors.filter((doctor) => getItemId(doctor) === user.profileId);
   }, [doctors, user]);
 
-  const selectedDoctor = useMemo(
-    () => visibleDoctors.find((doctor) => getItemId(doctor) === selectedDoctorId) ?? null,
-    [selectedDoctorId, visibleDoctors],
+  const selectedDoctor = useMemo(() => {
+    if (!visibleDoctors.length) {
+      return null;
+    }
+
+    if (user?.role === "MEDICO") {
+      return visibleDoctors.find((doctor) => getItemId(doctor) === user.profileId) ?? visibleDoctors[0] ?? null;
+    }
+
+    return visibleDoctors.find((doctor) => getItemId(doctor) === selectedDoctorId) ?? visibleDoctors[0] ?? null;
+  }, [selectedDoctorId, user, visibleDoctors]);
+
+  const patientHistoryOptions = useMemo(
+    () => buildPatientHistoryOptions(doctorAppointments),
+    [doctorAppointments],
+  );
+
+  const selectedPatientHistoryOption = useMemo(
+    () => patientHistoryOptions.find((option) => option.label === patientHistorySelection) ?? null,
+    [patientHistoryOptions, patientHistorySelection],
   );
 
   useEffect(() => {
@@ -102,21 +164,10 @@ export function DoctorsPage() {
   }, []);
 
   useEffect(() => {
-    if (!visibleDoctors.length) {
-      return;
-    }
+    const timer = window.setInterval(() => setCurrentTime(Date.now()), 60_000);
 
-    const storedId = window.localStorage.getItem(selectedDoctorIdKey);
-    const userDoctor = user?.role === "MEDICO"
-      ? visibleDoctors.find((doctor) => getItemId(doctor) === user.profileId)
-      : null;
-    const nextDoctor = visibleDoctors.find((doctor) => getItemId(doctor) === storedId) ?? userDoctor ?? visibleDoctors[0];
-    const nextDoctorId = getItemId(nextDoctor);
-
-    if (nextDoctorId && nextDoctorId !== selectedDoctorId) {
-      setSelectedDoctorId(nextDoctorId);
-    }
-  }, [selectedDoctorId, user, visibleDoctors]);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!selectedDoctor) {
@@ -182,7 +233,7 @@ export function DoctorsPage() {
     }
 
     loadDetails();
-  }, [selectedDoctor]);
+  }, [selectedDoctor, user?.role]);
 
   async function refreshDetails() {
     if (!selectedDoctor) {
@@ -266,6 +317,7 @@ export function DoctorsPage() {
       await refreshDetails();
       setNotificationMessage("Notificación marcada como leída.");
       setNotificationMessageType("success");
+      notifyNotificationsChanged();
       window.dispatchEvent(new Event("selected-doctor-changed"));
     } catch (error) {
       setNotificationMessage(handleApiError(error));
@@ -275,20 +327,45 @@ export function DoctorsPage() {
     }
   }
 
+  function openCancelDialog(appointmentId) {
+    setAppointmentMessage("");
+    setAppointmentMessageType("success");
+    setCancelDialog({
+      appointmentId,
+      reason: "",
+      error: "",
+    });
+  }
+
+  function closeCancelDialog() {
+    if (busyAppointmentId) {
+      return;
+    }
+
+    setCancelDialog(null);
+  }
+
+  function updateCancelDialogReason(value) {
+    setCancelDialog((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        reason: value,
+        error: "",
+      };
+    });
+  }
+
   async function handleAppointmentAction(appointmentId, action) {
     try {
       setBusyAppointmentId(`${action}:${appointmentId}`);
       setAppointmentMessage("");
       setAppointmentMessageType("success");
 
-      if (action === "cancel") {
-        const reason = window.prompt("Motivo de cancelación");
-        if (!reason?.trim()) {
-          return;
-        }
-
-        await cancelAppointmentByDoctor(appointmentId, reason.trim());
-      } else if (action === "accept") {
+      if (action === "accept") {
         await acceptAppointment(appointmentId);
       } else if (action === "reject") {
         await rejectAppointment(appointmentId);
@@ -307,17 +384,54 @@ export function DoctorsPage() {
     }
   }
 
+  async function handleDoctorCancelSubmit(event) {
+    event.preventDefault();
+
+    if (!cancelDialog) {
+      return;
+    }
+
+    const trimmedReason = cancelDialog.reason.trim();
+
+    if (!trimmedReason) {
+      setCancelDialog((current) =>
+        current ? { ...current, error: "El motivo es obligatorio." } : current,
+      );
+      return;
+    }
+
+    try {
+      setBusyAppointmentId(`cancel:${cancelDialog.appointmentId}`);
+      setAppointmentMessage("");
+      setAppointmentMessageType("success");
+      await cancelAppointmentByDoctor(cancelDialog.appointmentId, trimmedReason);
+      await refreshDetails();
+      setAppointmentMessage("Turno actualizado.");
+      setAppointmentMessageType("success");
+      setCancelDialog(null);
+    } catch (error) {
+      const message = handleApiError(error);
+      setAppointmentMessage(message);
+      setAppointmentMessageType("error");
+      setCancelDialog((current) =>
+        current ? { ...current, error: message } : current,
+      );
+    } finally {
+      setBusyAppointmentId("");
+    }
+  }
+
   async function handlePatientHistorySubmit(event) {
     event.preventDefault();
 
-    if (!patientHistoryId.trim()) {
+    if (!selectedPatientHistoryOption) {
       return;
     }
 
     try {
       setPatientHistoryMessage("");
       setPatientHistoryMessageType("success");
-      const history = await fetchPatientAppointmentsHistory(patientHistoryId.trim());
+      const history = await fetchPatientAppointmentsHistory(selectedPatientHistoryOption.id);
       setPatientHistory(Array.isArray(history) ? history : []);
       setPatientHistoryMessage("Historial cargado.");
       setPatientHistoryMessageType("success");
@@ -326,6 +440,13 @@ export function DoctorsPage() {
       setPatientHistoryMessage(handleApiError(error));
       setPatientHistoryMessageType("error");
     }
+  }
+
+  function handlePatientHistorySelectionChange(value) {
+    setPatientHistorySelection(value);
+    setPatientHistory([]);
+    setPatientHistoryMessage("");
+    setPatientHistoryMessageType("success");
   }
 
   return (
@@ -348,7 +469,7 @@ export function DoctorsPage() {
 
           <label className="field">
             <span className="field-label">Médico</span>
-              <select value={selectedDoctorId} onChange={handleDoctorChange} disabled={isLoadingDoctors || user?.role === "MEDICO"}>
+              <select value={selectedDoctor ? getItemId(selectedDoctor) : selectedDoctorId} onChange={handleDoctorChange} disabled={isLoadingDoctors || user?.role === "MEDICO"}>
                 <option value="">Seleccione un médico</option>
                 {visibleDoctors.map((doctor) => (
                   <option key={getItemId(doctor)} value={getItemId(doctor)}>
@@ -506,7 +627,7 @@ export function DoctorsPage() {
                   const canCancel = canStillBeCanceled(appointment.fechaHora);
                   const isReserved = appointment.estado === "RESERVADO";
                   const isConfirmed = appointment.estado === "CONFIRMADO";
-                  const isPast = new Date(appointment.fechaHora).getTime() <= Date.now();
+                  const isPast = new Date(appointment.fechaHora).getTime() <= currentTime;
 
                   return (
                     <article key={appointmentId} className="inline-card stack-sm">
@@ -518,7 +639,7 @@ export function DoctorsPage() {
                         <span className="tag">{appointment.estado}</span>
                       </div>
 
-                      <p className="muted-text">Paciente: {appointment.paciente?.id ?? appointment.paciente ?? "—"}</p>
+                      <p className="muted-text">Paciente: {appointment.paciente?.nombre ?? appointment.paciente?.id ?? appointment.paciente ?? "—"}</p>
 
                       {user?.role === "MEDICO" ? (
                         <div className="appointment-actions">
@@ -543,7 +664,7 @@ export function DoctorsPage() {
                               <button
                                 type="button"
                                 className="secondary-button"
-                                onClick={() => handleAppointmentAction(appointmentId, "cancel")}
+                                onClick={() => openCancelDialog(appointmentId)}
                                 disabled={busyAppointmentId === `cancel:${appointmentId}` || !canCancel}
                               >
                                 Cancelar
@@ -564,7 +685,7 @@ export function DoctorsPage() {
                               <button
                                 type="button"
                                 className="secondary-button"
-                                onClick={() => handleAppointmentAction(appointmentId, "cancel")}
+                                onClick={() => openCancelDialog(appointmentId)}
                                 disabled={busyAppointmentId === `cancel:${appointmentId}` || !canCancel}
                               >
                                 Cancelar
@@ -588,24 +709,49 @@ export function DoctorsPage() {
             <div className="panel-heading">
               <div>
                 <p className="eyebrow">Historial de paciente</p>
-                <h2>Consultar historial por ID</h2>
+                <h2>Consultar historial por nombre</h2>
               </div>
             </div>
 
             <form className="doctor-form" onSubmit={handlePatientHistorySubmit}>
               <label className="field">
-                <span className="field-label">Paciente ID</span>
+                <span className="field-label">Paciente</span>
                 <input
-                  value={patientHistoryId}
-                  onChange={(event) => setPatientHistoryId(event.target.value)}
-                  placeholder="Ingrese el ID del paciente"
+                  list="doctor-patient-history-options"
+                  value={patientHistorySelection}
+                  onChange={(event) => handlePatientHistorySelectionChange(event.target.value)}
+                  placeholder={
+                    patientHistoryOptions.length > 0
+                      ? "Buscá o seleccioná un paciente"
+                      : "No hay pacientes disponibles todavía"
+                  }
+                  disabled={patientHistoryOptions.length === 0}
                 />
+                <datalist id="doctor-patient-history-options">
+                  {patientHistoryOptions.map((patient) => (
+                    <option key={patient.id} value={patient.label} />
+                  ))}
+                </datalist>
               </label>
 
-              <button type="submit" className="primary-button" disabled={!patientHistoryId.trim()}>
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={!selectedPatientHistoryOption}
+              >
                 Buscar historial
               </button>
             </form>
+
+            {!selectedPatientHistoryOption && patientHistorySelection.trim() ? (
+              <p className="muted-text">Seleccioná un paciente desde las opciones sugeridas.</p>
+            ) : null}
+
+            {patientHistoryOptions.length === 0 ? (
+              <p className="muted-text">
+                Todavía no hay pacientes en tu historial para seleccionar.
+              </p>
+            ) : null}
 
             {patientHistoryMessage ? (
               <div className={`alert alert-${patientHistoryMessageType}`}>{patientHistoryMessage}</div>
@@ -617,9 +763,13 @@ export function DoctorsPage() {
                   <article key={getItemId(appointment)} className="inline-card stack-sm">
                     <div className="panel-heading">
                       <div>
-                        <strong>{formatDateTime(appointment.fechaHora)}</strong>
-                        <p>{appointment.practica} · {appointment.sede}</p>
-                      </div>
+                          <strong>{formatDateTime(appointment.fechaHora)}</strong>
+                          <p>
+                            {appointment.medico?.nombre ?? appointment.medico?.id ?? appointment.medico ?? "—"}
+                            {" · "}
+                            {appointment.practica} · {appointment.sede}
+                          </p>
+                        </div>
                       <span className="tag">{appointment.estado}</span>
                     </div>
                   </article>
@@ -687,6 +837,54 @@ export function DoctorsPage() {
           </div>
         </article>
       </section>
+
+      <Dialog
+        isOpen={Boolean(cancelDialog)}
+        title="Cancelar turno"
+        description="Indicá el motivo de la cancelación para notificar correctamente al paciente."
+        onClose={closeCancelDialog}
+        footer={(
+          <>
+            <button
+              type="button"
+              className="text-button"
+              onClick={closeCancelDialog}
+              disabled={Boolean(busyAppointmentId)}
+            >
+              Volver
+            </button>
+            <button
+              type="submit"
+              form="doctor-cancel-appointment-form"
+              className="primary-button"
+              disabled={Boolean(busyAppointmentId)}
+            >
+              {busyAppointmentId ? "Guardando..." : "Confirmar cancelación"}
+            </button>
+          </>
+        )}
+      >
+        <form
+          id="doctor-cancel-appointment-form"
+          className="stack-md"
+          onSubmit={handleDoctorCancelSubmit}
+        >
+          <label className="field">
+            <span className="field-label">Motivo</span>
+            <textarea
+              rows="4"
+              value={cancelDialog?.reason ?? ""}
+              onChange={(event) => updateCancelDialogReason(event.target.value)}
+              placeholder="Contanos por qué necesitás cancelar el turno"
+              required
+            />
+          </label>
+
+          {cancelDialog?.error ? (
+            <div className="alert alert-error">{cancelDialog.error}</div>
+          ) : null}
+        </form>
+      </Dialog>
     </div>
   );
 }

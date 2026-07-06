@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Dialog } from "../components/Dialog.jsx";
 import { TurnosCard } from "../components/TurnosCard.jsx";
 import { LoadingSkeleton } from "../components/LoadingSkeleton.jsx";
 import { SearchFilters } from "../components/SearchFilters.jsx";
@@ -11,10 +12,18 @@ import {
   fetchAvailableAppointments,
   fetchDoctors,
   fetchMyAppointmentsHistory,
+  fetchNotifications,
   handleApiError,
+  markNotificationAsRead,
+  notifyNotificationsChanged,
   rescheduleAppointmentByPatient,
 } from "../services/api.js";
 import { buildCatalog } from "../utils/catalog.js";
+import { crearIdTurno } from "../utils/preseleccion.js";
+import {
+  formatDateTimeLocalValue,
+  serializeDateTimeLocal,
+} from "../utils/dateTime.js";
 import { formatIsoDate } from "../utils/formatters.js";
 
 function getPagination(response, fallbackPage) {
@@ -62,6 +71,12 @@ export function SearchPage() {
   const [patientHistoryMessage, setPatientHistoryMessage] = useState("");
   const [patientHistoryMessageType, setPatientHistoryMessageType] = useState("success");
   const [busyPatientActionId, setBusyPatientActionId] = useState("");
+  const [patientActionDialog, setPatientActionDialog] = useState(null);
+  const [unreadNotifications, setUnreadNotifications] = useState([]);
+  const [readNotifications, setReadNotifications] = useState([]);
+  const [busyNotificationId, setBusyNotificationId] = useState("");
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [notificationMessageType, setNotificationMessageType] = useState("success");
   const { addItem, removeItem, hasItem } = usePreseleccion();
   const { filters, updateFilter, clearFilters } = useFilters();
   const { pagination, setPaginationData } = usePagination();
@@ -97,6 +112,34 @@ export function SearchPage() {
     }
 
     loadHistory();
+  }, [user]);
+
+  useEffect(() => {
+    async function loadNotifications() {
+      if (user?.role !== "PACIENTE" || !user?.username) {
+        setUnreadNotifications([]);
+        setReadNotifications([]);
+        return;
+      }
+
+      try {
+        const [unread, read] = await Promise.all([
+          fetchNotifications(user.username, false),
+          fetchNotifications(user.username, true),
+        ]);
+        setUnreadNotifications(unread);
+        setReadNotifications(read);
+        setNotificationMessage("");
+        notifyNotificationsChanged();
+      } catch (error) {
+        setUnreadNotifications([]);
+        setReadNotifications([]);
+        setNotificationMessage(handleApiError(error));
+        setNotificationMessageType("error");
+      }
+    }
+
+    loadNotifications();
   }, [user]);
 
   const catalog = useMemo(() => buildCatalog(doctors), [doctors]);
@@ -171,48 +214,132 @@ export function SearchPage() {
     setPatientHistory(Array.isArray(history) ? history : []);
   }
 
-  async function handlePatientAppointmentAction(appointmentId, action) {
+  async function refreshNotifications() {
+    if (user?.role !== "PACIENTE" || !user?.username) {
+      return;
+    }
+
+    const [unread, read] = await Promise.all([
+      fetchNotifications(user.username, false),
+      fetchNotifications(user.username, true),
+    ]);
+
+    setUnreadNotifications(unread);
+    setReadNotifications(read);
+    notifyNotificationsChanged();
+  }
+
+  async function handleMarkNotificationAsRead(notification) {
+    if (!user?.username) {
+      return;
+    }
+
+    try {
+      setBusyNotificationId(getItemId(notification));
+      setNotificationMessage("");
+      setNotificationMessageType("success");
+      await markNotificationAsRead(user.username, getItemId(notification));
+      await refreshNotifications();
+      setNotificationMessage("Notificación marcada como leída.");
+      setNotificationMessageType("success");
+    } catch (error) {
+      setNotificationMessage(handleApiError(error));
+      setNotificationMessageType("error");
+    } finally {
+      setBusyNotificationId("");
+    }
+  }
+
+  function openPatientActionDialog(appointment, action) {
+    setPatientHistoryMessage("");
+    setPatientHistoryMessageType("success");
+    setPatientActionDialog({
+      action,
+      appointmentId: getItemId(appointment),
+      reason: "",
+      nextDateTime:
+        action === "reschedule"
+          ? formatDateTimeLocalValue(appointment.fechaHora)
+          : "",
+      error: "",
+    });
+  }
+
+  function closePatientActionDialog() {
+    if (busyPatientActionId) {
+      return;
+    }
+
+    setPatientActionDialog(null);
+  }
+
+  function updatePatientDialogField(field, value) {
+    setPatientActionDialog((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [field]: value,
+        error: "",
+      };
+    });
+  }
+
+  async function handlePatientAppointmentAction(event) {
+    event.preventDefault();
+
+    if (!patientActionDialog) {
+      return;
+    }
+
+    const { action, appointmentId, reason, nextDateTime } = patientActionDialog;
+    const trimmedReason = reason.trim();
+
+    if (!trimmedReason) {
+      setPatientActionDialog((current) =>
+        current ? { ...current, error: "El motivo es obligatorio." } : current,
+      );
+      return;
+    }
+
+    if (action === "reschedule" && !nextDateTime) {
+      setPatientActionDialog((current) =>
+        current ? { ...current, error: "La nueva fecha y hora es obligatoria." } : current,
+      );
+      return;
+    }
+
     try {
       setBusyPatientActionId(`${action}:${appointmentId}`);
       setPatientHistoryMessage("");
       setPatientHistoryMessageType("success");
 
       if (action === "cancel") {
-        const reason = window.prompt("Motivo de cancelación");
-        if (!reason?.trim()) {
-          return;
-        }
-
-        await cancelAppointmentByPatient(appointmentId, reason.trim());
+        await cancelAppointmentByPatient(appointmentId, trimmedReason);
       }
 
       if (action === "reschedule") {
-        const nextDateTime = window.prompt(
-          "Nueva fecha y hora en formato ISO (ej: 2026-07-05T10:00:00-03:00)",
-        );
-
-        if (!nextDateTime?.trim()) {
-          return;
-        }
-
-        const reason = window.prompt("Motivo del cambio");
-        if (!reason?.trim()) {
-          return;
-        }
-
         await rescheduleAppointmentByPatient(
           appointmentId,
-          nextDateTime.trim(),
-          reason.trim(),
+          serializeDateTimeLocal(nextDateTime),
+          trimmedReason,
         );
       }
 
       await refreshHistory();
+      await refreshNotifications();
       setPatientHistoryMessage("Turno actualizado.");
       setPatientHistoryMessageType("success");
+      setPatientActionDialog(null);
     } catch (error) {
-      setPatientHistoryMessage(handleApiError(error));
+      const message = handleApiError(error);
+      setPatientHistoryMessage(message);
       setPatientHistoryMessageType("error");
+      setPatientActionDialog((current) =>
+        current ? { ...current, error: message } : current,
+      );
     } finally {
       setBusyPatientActionId("");
     }
@@ -223,9 +350,7 @@ export function SearchPage() {
   }
 
   function handleRemove(slot) {
-    removeItem(
-      [slot.medico.id, slot.fechaHora, slot.sede, slot.practica].join("|"),
-    );
+    removeItem(crearIdTurno(slot));
   }
 
   const hasActiveFilters = Object.values(filters).some(Boolean) || searchQuery.trim() !== "";
@@ -314,12 +439,7 @@ export function SearchPage() {
             <div className="results-grid">
               {results.map((slot) => (
                 <TurnosCard
-                  key={[
-                    slot.medico.id,
-                    slot.fechaHora,
-                    slot.sede,
-                    slot.practica,
-                  ].join("|")}
+                  key={crearIdTurno(slot)}
                   slot={slot}
                   isSelected={hasItem(slot)}
                   onAdd={handleAdd}
@@ -406,7 +526,7 @@ export function SearchPage() {
                           <button
                             type="button"
                             className="secondary-button"
-                            onClick={() => handlePatientAppointmentAction(appointmentId, "reschedule")}
+                            onClick={() => openPatientActionDialog(appointment, "reschedule")}
                             disabled={busyPatientActionId === `reschedule:${appointmentId}` || !canCancel}
                           >
                             Cambiar horario
@@ -414,7 +534,7 @@ export function SearchPage() {
                           <button
                             type="button"
                             className="secondary-button"
-                            onClick={() => handlePatientAppointmentAction(appointmentId, "cancel")}
+                            onClick={() => openPatientActionDialog(appointment, "cancel")}
                             disabled={busyPatientActionId === `cancel:${appointmentId}` || !canCancel}
                           >
                             Cancelar
@@ -430,7 +550,136 @@ export function SearchPage() {
             )}
           </article>
         ) : null}
+
+        {user?.role === "PACIENTE" ? (
+          <article className="info-card stack-md" id="notificaciones">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">Notificaciones</p>
+                <h2>Mis mensajes</h2>
+              </div>
+              <p className="panel-copy">{unreadNotifications.length} sin leer</p>
+            </div>
+
+            {notificationMessage ? (
+              <div className={`alert alert-${notificationMessageType}`}>{notificationMessage}</div>
+            ) : null}
+
+            <div className="stack-md">
+              <div>
+                <h3>No leídas</h3>
+                {unreadNotifications.length > 0 ? (
+                  <div className="stack-md">
+                    {unreadNotifications.map((notification) => (
+                      <article key={getItemId(notification)} className="inline-card notification-row">
+                        <p>{notification.mensaje}</p>
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => handleMarkNotificationAsRead(notification)}
+                          disabled={busyNotificationId === getItemId(notification)}
+                        >
+                          Marcar como leída
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="muted-text">No hay notificaciones sin leer.</p>
+                )}
+              </div>
+
+              <div>
+                <h3>Leídas</h3>
+                {readNotifications.length > 0 ? (
+                  <div className="stack-md">
+                    {readNotifications.map((notification) => (
+                      <article key={getItemId(notification)} className="inline-card notification-row">
+                        <p>{notification.mensaje}</p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="muted-text">Aún no hay notificaciones leídas.</p>
+                )}
+              </div>
+            </div>
+          </article>
+        ) : null}
       </section>
+
+      <Dialog
+        isOpen={Boolean(patientActionDialog)}
+        title={patientActionDialog?.action === "reschedule" ? "Cambiar horario" : "Cancelar turno"}
+        description={
+          patientActionDialog?.action === "reschedule"
+            ? "Elegí la nueva fecha y hora e indicá el motivo del cambio."
+            : "Indicá el motivo de la cancelación para continuar."
+        }
+        onClose={closePatientActionDialog}
+        footer={(
+          <>
+            <button
+              type="button"
+              className="text-button"
+              onClick={closePatientActionDialog}
+              disabled={Boolean(busyPatientActionId)}
+            >
+              Volver
+            </button>
+            <button
+              type="submit"
+              form="patient-appointment-action-form"
+              className="primary-button"
+              disabled={Boolean(busyPatientActionId)}
+            >
+              {busyPatientActionId
+                ? "Guardando..."
+                : patientActionDialog?.action === "reschedule"
+                  ? "Confirmar cambio"
+                  : "Confirmar cancelación"}
+            </button>
+          </>
+        )}
+      >
+        <form
+          id="patient-appointment-action-form"
+          className="stack-md"
+          onSubmit={handlePatientAppointmentAction}
+        >
+          {patientActionDialog?.action === "reschedule" ? (
+            <label className="field">
+              <span className="field-label">Nueva fecha y hora</span>
+              <input
+                type="datetime-local"
+                step="900"
+                value={patientActionDialog?.nextDateTime ?? ""}
+                onChange={(event) => updatePatientDialogField("nextDateTime", event.target.value)}
+                required
+              />
+            </label>
+          ) : null}
+
+          <label className="field">
+            <span className="field-label">Motivo</span>
+            <textarea
+              rows="4"
+              value={patientActionDialog?.reason ?? ""}
+              onChange={(event) => updatePatientDialogField("reason", event.target.value)}
+              placeholder={
+                patientActionDialog?.action === "reschedule"
+                  ? "Contanos por qué querés cambiar el turno"
+                  : "Contanos por qué querés cancelar el turno"
+              }
+              required
+            />
+          </label>
+
+          {patientActionDialog?.error ? (
+            <div className="alert alert-error">{patientActionDialog.error}</div>
+          ) : null}
+        </form>
+      </Dialog>
     </div>
   );
 }

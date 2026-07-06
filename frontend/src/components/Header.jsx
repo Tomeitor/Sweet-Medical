@@ -12,13 +12,14 @@ export function Header() {
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    if (!user || user.role !== "MEDICO") {
-      setUnreadCount(0);
+    if (!user || !["MEDICO", "PACIENTE"].includes(user.role)) {
       return;
     }
 
     function syncUnreadCount() {
-      const usuarioId = window.localStorage.getItem(selectedDoctorUserKey) ?? user.username ?? "";
+      const usuarioId = user.role === "MEDICO"
+        ? window.localStorage.getItem(selectedDoctorUserKey) ?? user.username ?? ""
+        : user.username ?? "";
 
       if (!usuarioId) {
         setUnreadCount(0);
@@ -32,10 +33,12 @@ export function Header() {
 
     syncUnreadCount();
     window.addEventListener("selected-doctor-changed", syncUnreadCount);
+    window.addEventListener("notifications-changed", syncUnreadCount);
     window.addEventListener("storage", syncUnreadCount);
 
     return () => {
       window.removeEventListener("selected-doctor-changed", syncUnreadCount);
+      window.removeEventListener("notifications-changed", syncUnreadCount);
       window.removeEventListener("storage", syncUnreadCount);
     };
   }, [user]);
@@ -66,18 +69,20 @@ export function Header() {
             </NavLink>
           ) : null}
 
-          <NavLink
-            to="/preseleccion"
-            className="cart-chip"
-            aria-label={`Turnos preseleccionados: ${total}`}
-          >
-            Preselección
-            <span>{total}</span>
-          </NavLink>
+          {user?.role === "PACIENTE" ? (
+            <NavLink
+              to="/preseleccion"
+              className="cart-chip"
+              aria-label={`Turnos preseleccionados: ${total}`}
+            >
+              Preselección
+              <span>{total}</span>
+            </NavLink>
+          ) : null}
 
-          {user?.role === "MEDICO" ? (
+          {user?.role === "MEDICO" || user?.role === "PACIENTE" ? (
             <Link
-              to="/medicos#notificaciones"
+              to={user.role === "MEDICO" ? "/medicos#notificaciones" : "/buscar#notificaciones"}
               className="cart-chip cart-chip--icon"
               aria-label={
                 unreadCount > 0
@@ -140,9 +145,9 @@ export function Header() {
           <div className="footer-column">
             <h3>Acceso rápido</h3>
             <NavLink to="/">Inicio</NavLink>
-            <NavLink to="/buscar">Buscar turnos</NavLink>
+            {user?.role === "PACIENTE" ? <NavLink to="/buscar">Buscar turnos</NavLink> : null}
             {user?.role === "MEDICO" ? <NavLink to="/medicos">Médicos</NavLink> : null}
-            <NavLink to="/preseleccion">Preselección</NavLink>
+            {user?.role === "PACIENTE" ? <NavLink to="/preseleccion">Preselección</NavLink> : null}
           </div>
         </div>
 

@@ -1,6 +1,9 @@
 import { formatCoverageLevel, formatCurrency, formatDateTime } from '../utils/formatters.js'
+import { tienePracticaValida } from '../utils/preseleccion.js'
 
 export function TurnosCard({ slot, isSelected, onAdd, onRemove }) {
+  const canBeSelected = tienePracticaValida(slot)
+
   return (
     <article className="result-card" aria-label={`Turno con ${slot.medico.nombre}`}>
       <div className="result-card__header">
@@ -27,7 +30,7 @@ export function TurnosCard({ slot, isSelected, onAdd, onRemove }) {
         </div>
         <div>
           <dt>Práctica</dt>
-          <dd>{slot.practica}</dd>
+          <dd>{slot.practica ?? 'No disponible para reserva desde esta búsqueda'}</dd>
         </div>
         <div>
           <dt>Cobertura</dt>
@@ -46,10 +49,12 @@ export function TurnosCard({ slot, isSelected, onAdd, onRemove }) {
           <button type="button" className="secondary-button" onClick={() => onRemove(slot)}>
             Quitar de preselección
           </button>
-        ) : (
+        ) : canBeSelected ? (
           <button type="button" className="primary-button" onClick={() => onAdd(slot)}>
             Preseleccionar turno
           </button>
+        ) : (
+          <p className="muted-text">Este horario no incluye una práctica reservable.</p>
         )}
       </div>
     </article>

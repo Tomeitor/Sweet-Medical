@@ -43,8 +43,19 @@ const DIAS_SEMANA = [
 
 const DURACION_TURNO_MINUTOS = 15;
 const CANTIDAD_DIAS_BUSQUEDA_DEFAULT = 7;
+const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/;
 
 export class TurnoService {
+  construirSufijoMotivoNotificacion(motivo) {
+    const motivoNormalizado = typeof motivo === "string" ? motivo.trim() : "";
+
+    if (!motivoNormalizado) {
+      return "";
+    }
+
+    return ` Motivo: ${motivoNormalizado}.`;
+  }
+
   formatearFechaArgentina(fecha) {
     if (!fecha) return fecha;
     return dayjs(fecha).tz(ARGENTINA_TZ).format();
@@ -68,6 +79,127 @@ export class TurnoService {
     }
 
     return t;
+  }
+
+  construirResumenMedico(turno, medico) {
+    const medicoTurno = turno?.medico;
+    const medicoId = this.obtenerMedicoIdTurno(turno);
+
+    if (!medico && medicoTurno && typeof medicoTurno === "object") {
+      return {
+        ...medicoTurno,
+        id: medicoId || medicoTurno.id || medicoTurno._id,
+      };
+    }
+
+    if (!medico) {
+      return medicoId ? { id: medicoId } : medicoTurno;
+    }
+
+    return {
+      id: this.normalizarIdEntidad(medico) || medicoId,
+      nombre: medico.nombre,
+      matricula: medico.matricula,
+      usuario: medico.usuario,
+    };
+  }
+
+  construirResumenPaciente(turno, paciente) {
+    const pacienteTurno = turno?.paciente;
+    const pacienteId = this.obtenerPacienteIdTurno(turno);
+
+    if (!paciente && pacienteTurno && typeof pacienteTurno === "object") {
+      return {
+        ...pacienteTurno,
+        id: pacienteId || pacienteTurno.id || pacienteTurno._id,
+      };
+    }
+
+    if (!paciente) {
+      return pacienteId ? { id: pacienteId } : pacienteTurno;
+    }
+
+    return {
+      id: this.normalizarIdEntidad(paciente) || pacienteId,
+      nombre: paciente.nombre,
+      usuario: paciente.usuario,
+    };
+  }
+
+  async enriquecerTurnosConNombres(turnos) {
+    const idsMedicos = [...new Set(turnos.map((turno) => this.obtenerMedicoIdTurno(turno)).filter(Boolean))];
+    const idsPacientes = [...new Set(turnos.map((turno) => this.obtenerPacienteIdTurno(turno)).filter(Boolean))];
+
+    const [medicos, pacientes] = await Promise.all([
+      Promise.all(idsMedicos.map(async (id) => [id, await medicoRepository.getById(id)])),
+      Promise.all(idsPacientes.map(async (id) => [id, await pacientesRepository.getById(id)])),
+    ]);
+
+    const medicosPorId = new Map(medicos);
+    const pacientesPorId = new Map(pacientes);
+
+    return turnos.map((turno) => {
+      const turnoNormalizado = this.normalizarTurnoParaRespuesta(turno);
+      const medicoId = this.obtenerMedicoIdTurno(turnoNormalizado);
+      const pacienteId = this.obtenerPacienteIdTurno(turnoNormalizado);
+
+      return {
+        ...turnoNormalizado,
+        medico: this.construirResumenMedico(
+          turnoNormalizado,
+          medicosPorId.get(medicoId) ?? null,
+        ),
+        paciente: this.construirResumenPaciente(
+          turnoNormalizado,
+          pacientesPorId.get(pacienteId) ?? null,
+        ),
+      };
+    });
+  }
+
+  convertirValorIdAString(valor) {
+    if (typeof valor === "string" || typeof valor === "number") {
+      return String(valor).trim();
+    }
+
+    if (
+      valor &&
+      typeof valor === "object" &&
+      typeof valor.toString === "function"
+    ) {
+      const representacion = valor.toString().trim();
+
+      if (representacion && representacion !== "[object Object]") {
+        return representacion;
+      }
+    }
+
+    return "";
+  }
+
+  esIdValido(id) {
+    if (!id) {
+      return false;
+    }
+
+    return (
+      OBJECT_ID_REGEX.test(id) ||
+      (!Number.isNaN(Number(id)) && Number(id) > 0)
+    );
+  }
+
+  normalizarIdEntidad(entidad) {
+    const candidatos = [entidad?.id, entidad?._id, entidad];
+
+    for (const candidato of candidatos) {
+      const id = this.convertirValorIdAString(candidato);
+
+      if (this.esIdValido(id)) {
+        return id;
+      }
+    }
+
+    return "";
   }
 
   async darDeAlta(medicoId, pacienteId, fechaHora, sede, practica, costo) {
@@ -98,9 +230,11 @@ export class TurnoService {
     );
     if (ocupado) throw new ConflictError("Horario ya reservado");
 
+    const medicoTurnoId = this.normalizarIdEntidad(medico) || String(medicoId);
+
     const nuevoTurno = new Turno(
       Date.now().toString(),
-      medico,
+      medicoTurnoId,
       { id: pacienteId },
       fechaTurno,
       sede,
@@ -137,11 +271,11 @@ export class TurnoService {
   }
 
   obtenerPacienteIdTurno(turno) {
-    return String(turno?.paciente?.id ?? turno?.paciente ?? "");
+    return this.normalizarIdEntidad(turno?.paciente);
   }
 
   obtenerMedicoIdTurno(turno) {
-    return String(turno?.medico?.id ?? turno?.medico ?? "");
+    return this.normalizarIdEntidad(turno?.medico);
   }
 
   async crearNotificacionParaUsuario(usuarioId, mensaje) {
@@ -169,15 +303,25 @@ export class TurnoService {
   }
 
   async obtenerUsuarioPacienteTurno(turno) {
-    const paciente = await pacientesRepository.getById(
-      this.obtenerPacienteIdTurno(turno),
-    );
+    const pacienteId = this.obtenerPacienteIdTurno(turno);
+
+    if (!pacienteId) {
+      return null;
+    }
+
+    const paciente = await pacientesRepository.getById(pacienteId);
 
     return paciente?.usuario ?? null;
   }
 
   async obtenerUsuarioMedicoTurno(turno) {
-    const medico = await medicoRepository.getById(this.obtenerMedicoIdTurno(turno));
+    const medicoId = this.obtenerMedicoIdTurno(turno);
+
+    if (!medicoId) {
+      return null;
+    }
+
+    const medico = await medicoRepository.getById(medicoId);
 
     return medico?.usuario ?? null;
   }
@@ -199,7 +343,7 @@ export class TurnoService {
     const turnoActualizado = await turnosRepository.update(turno);
     await this.crearNotificacionParaUsuario(
       await this.obtenerUsuarioMedicoTurno(turnoActualizado),
-      `El paciente canceló el turno del ${this.formatearFechaArgentina(turnoActualizado.fechaHora)}.`,
+      `El paciente canceló el turno del ${this.formatearFechaArgentina(turnoActualizado.fechaHora)}.${this.construirSufijoMotivoNotificacion(motivo)}`,
     );
 
     return this.normalizarTurnoParaRespuesta(turnoActualizado);
@@ -222,7 +366,7 @@ export class TurnoService {
     const turnoActualizado = await turnosRepository.update(turno);
     await this.crearNotificacionParaUsuario(
       await this.obtenerUsuarioPacienteTurno(turnoActualizado),
-      `Tu turno del ${this.formatearFechaArgentina(turnoActualizado.fechaHora)} fue cancelado por el médico.`,
+      `Tu turno del ${this.formatearFechaArgentina(turnoActualizado.fechaHora)} fue cancelado por el médico.${this.construirSufijoMotivoNotificacion(motivo)}`,
     );
 
     return this.normalizarTurnoParaRespuesta(turnoActualizado);
@@ -296,15 +440,17 @@ export class TurnoService {
       );
     }
 
+    const medicoIdTurno = this.obtenerMedicoIdTurno(turno);
+
     const atiende = await this.validarAgendaMedico(
-      turno.medico.toString(),
+      medicoIdTurno,
       fechaTurnoNueva,
     );
     if (!atiende)
       throw new ConflictError("El médico no atiende en ese horario");
 
     const ocupado = await turnosRepository.findByMedicoYFecha(
-      turno.medico.toString(),
+      medicoIdTurno,
       fechaTurnoNueva,
     );
     if (ocupado) throw new ConflictError("Horario ya reservado");
@@ -376,22 +522,22 @@ export class TurnoService {
 
   async getHistorialPaciente(pacienteId) {
     const turnos = await turnosRepository.findByPaciente(pacienteId);
-    return turnos
-      .sort(
+    return this.enriquecerTurnosConNombres(
+      turnos.sort(
         (turnoA, turnoB) =>
           turnoA.fechaHora.getTime() - turnoB.fechaHora.getTime(),
-      )
-      .map((turno) => this.normalizarTurnoParaRespuesta(turno));
+      ),
+    );
   }
 
   async getHistorialMedico(medicoId) {
     const turnos = await turnosRepository.findByMedico(medicoId);
-    return turnos
-      .sort(
+    return this.enriquecerTurnosConNombres(
+      turnos.sort(
         (turnoA, turnoB) =>
           turnoB.fechaHora.getTime() - turnoA.fechaHora.getTime(),
-      )
-      .map((turno) => this.normalizarTurnoParaRespuesta(turno));
+      ),
+    );
   }
 
   async generarRecordatoriosTurnosDelDiaSiguiente() {

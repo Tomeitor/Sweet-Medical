@@ -52,6 +52,11 @@ export async function fetchAvailableAppointments(filters) {
   return response.data
 }
 
+export async function createAppointment(payload) {
+  const response = await api.post('/turnos', payload)
+  return response.data
+}
+
 export async function fetchDoctorAppointmentsHistory(medicoId) {
   const response = await api.get(`/turnos/medicos/${medicoId}/historial`)
   return response.data
@@ -126,6 +131,10 @@ export async function markNotificationAsRead(usuarioId, notificacionId) {
   })
 
   return response.data.data
+}
+
+export function notifyNotificationsChanged() {
+  window.dispatchEvent(new Event('notifications-changed'))
 }
 
 export { handleApiError }

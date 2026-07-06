@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CLAVE_ALMACENAMIENTO, crearIdTurno } from '../utils/preseleccion.js'
+import { CLAVE_ALMACENAMIENTO, crearIdTurno, tienePracticaValida } from '../utils/preseleccion.js'
 import { PreseleccionContexto } from './preseleccion-contexto.js'
 
 export function PreseleccionProvider({ children }) {
@@ -27,6 +27,10 @@ export function PreseleccionProvider({ children }) {
       total: items.length,
       totalEstimatedCost: items.reduce((acc, item) => acc + (item.costoPaciente ?? 0), 0),
       addItem: (slot) => {
+        if (!tienePracticaValida(slot)) {
+          return
+        }
+
         const item = { ...slot, frontendId: crearIdTurno(slot) }
 
         setItems((current) => {
@@ -39,6 +43,10 @@ export function PreseleccionProvider({ children }) {
       },
       removeItem: (frontendId) => {
         setItems((current) => current.filter((item) => item.frontendId !== frontendId))
+      },
+      removeItems: (frontendIds) => {
+        const ids = new Set(frontendIds)
+        setItems((current) => current.filter((item) => !ids.has(item.frontendId)))
       },
       clearItems: () => setItems([]),
       hasItem: (slot) => items.some((item) => item.frontendId === crearIdTurno(slot)),
