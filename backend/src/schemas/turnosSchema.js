@@ -28,7 +28,7 @@ const turnosSchema = new mongoose.Schema({
     },
     estado: {
         type: String,
-        enum: ["RESERVADO", "CONFIRMADO", "REALIZADO"]
+        enum: ["RESERVADO", "CONFIRMADO", "RECHAZADO", "CANCELADO", "REALIZADO"]
     },
     historialEstados: {
         type: [],

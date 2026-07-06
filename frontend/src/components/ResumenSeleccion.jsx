@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import { usePreseleccion } from '../hooks/usePreseleccion.jsx'
 import { formatCurrency, formatDateTime } from '../utils/formatters.js'
+import { obtenerPracticaValida } from '../utils/preseleccion.js'
 
-export function ResumenSeleccion({ compact = false }) {
+export function ResumenSeleccion({ compact = false, footer = null }) {
   const { items, total, totalEstimatedCost, removeItem, clearItems } = usePreseleccion()
 
   return (
@@ -30,7 +31,7 @@ export function ResumenSeleccion({ compact = false }) {
               <li key={item.frontendId} className="item-seleccion">
                 <div>
                   <strong>{item.medico.nombre}</strong>
-                  <p>{item.practica}</p>
+                  <p>{obtenerPracticaValida(item) ?? `${item.especialidad ?? 'Práctica pendiente'} · requiere una práctica válida`}</p>
                   <p className="muted-text">{formatDateTime(item.fechaHora)} · {item.sede}</p>
                 </div>
                 <div className="item-seleccion__acciones">
@@ -56,6 +57,7 @@ export function ResumenSeleccion({ compact = false }) {
         </>
       )}
 
+      {footer}
       {compact ? <Link className="secondary-button enlace-resumen" to="/preseleccion">Ver detalle completo</Link> : null}
     </aside>
   )

@@ -6,7 +6,15 @@ export class NotificacionRepository {
     }
 
     async findByDestinatarioYEstado(usuarioId, estaLeida) {
-        return await this.model.find({ destinatario: usuarioId, leida: estaLeida });
+        return await this.model.find({ 'destinatario.id': usuarioId, leida: estaLeida });
+    }
+
+    async findByDestinatarioYMensaje(usuarioId, mensaje) {
+        return await this.model.findOne({ 'destinatario.id': usuarioId, mensaje });
+    }
+
+    async create(notificacion) {
+        return await this.model.create(notificacion);
     }
 
     async findById(id) {

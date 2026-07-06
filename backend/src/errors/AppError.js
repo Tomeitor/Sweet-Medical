@@ -27,6 +27,18 @@ export class ConflictError extends AppError {
     }
 }
 
+export class UnauthorizedError extends AppError {
+    constructor(message = 'Unauthorized - No autorizado') {
+        super(401, message);
+    }
+}
+
+export class ForbiddenError extends AppError {
+    constructor(message = 'Forbidden - Acceso denegado') {
+        super(403, message);
+    }
+}
+
 export class TurnoFuturoError extends AppError {
     constructor(message = 'No se puede marcar como realizado un turno futuro') {
         super(409, message);

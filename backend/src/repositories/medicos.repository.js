@@ -19,13 +19,13 @@ export class MedicoRepository {
   }
 
   getAll = async () => {
-    return await this.model.find({eliminado: false});
+    return await this.model.find({eliminado: false}).populate('usuarioId');
   };
 
   getById = async (id) => {
     this.validateId(id);
 
-    return await this.model.findOne({_id: id, eliminado: false}).populate('disponibilidades');
+    return await this.model.findOne({_id: id, eliminado: false}).populate(['disponibilidades', 'usuarioId']);
   };
 
   async add(medico) {

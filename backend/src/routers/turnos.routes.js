@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { TurnosController } from '../controllers/turnos.controller.js';
+import { requireRole } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 const controller = new TurnosController();
@@ -20,7 +21,7 @@ const controller = new TurnosController();
  *           format: date-time
  *         estado:
  *           type: string
- *           enum: [DISPONIBLE, RESERVADO, CONFIRMADO, CANCELADO, REALIZADO]
+  *           enum: [DISPONIBLE, RESERVADO, CONFIRMADO, RECHAZADO, CANCELADO, REALIZADO]
  *           example: CANCELADO
  *         quien:
  *           type: string
@@ -54,7 +55,7 @@ const controller = new TurnosController();
  *           example: 15000
  *         estado:
  *           type: string
- *           enum: [DISPONIBLE, RESERVADO, CONFIRMADO, CANCELADO, REALIZADO]
+  *           enum: [DISPONIBLE, RESERVADO, CONFIRMADO, RECHAZADO, CANCELADO, REALIZADO]
  *           example: RESERVADO
  *         historialEstados:
  *           type: array
@@ -238,7 +239,7 @@ const controller = new TurnosController();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', controller.alta);
+router.post('/', requireRole('PACIENTE'), controller.alta);
 
 /**
  * @swagger
@@ -246,14 +247,8 @@ router.post('/', controller.alta);
  *   get:
  *     summary: Obtener turnos disponibles
  *     tags: [Turnos]
- *     description: Debe indicarse el paciente y al menos una especialidad o una practica.
+ *     description: Requiere una sesión de paciente activa y al menos una especialidad o una practica.
  *     parameters:
- *       - in: query
- *         name: pacienteId
- *         required: true
- *         schema:
- *           type: string
- *         description: Id del paciente para calcular cobertura y costo
  *       - in: query
  *         name: medicoId
  *         schema:
@@ -335,7 +330,7 @@ router.post('/', controller.alta);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/disponibles', controller.disponibles);
+router.get('/disponibles', requireRole('PACIENTE'), controller.disponibles);
 
 /**
  * @swagger
@@ -366,7 +361,7 @@ router.get('/disponibles', controller.disponibles);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/historial/:pacienteId/', controller.historialPaciente);
+router.get('/historial/:pacienteId/', requireRole('PACIENTE'), controller.historialPaciente);
 
 /**
  * @swagger
@@ -415,7 +410,52 @@ router.get('/historial/:pacienteId/', controller.historialPaciente);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch('/:id/cambio', controller.cambiar);
+router.patch('/:id/cambio', requireRole('PACIENTE'), controller.cambiar);
+
+/**
+ * @swagger
+ * /turnos/medicos/{medicoId}/historial:
+ *   get:
+ *     summary: Obtener el historial de turnos del médico autenticado
+ *     tags: [Turnos]
+ */
+router.get('/medicos/:medicoId/historial', requireRole('MEDICO'), controller.historialMedico);
+
+/**
+ * @swagger
+ * /turnos/pacientes/{pacienteId}/historial:
+ *   get:
+ *     summary: Obtener el historial de un paciente
+ *     tags: [Turnos]
+ */
+router.get('/pacientes/:pacienteId/historial', requireRole('MEDICO'), controller.historialPacienteComoMedico);
+
+/**
+ * @swagger
+ * /turnos/{id}/aceptar:
+ *   patch:
+ *     summary: Aceptar un turno reservado
+ *     tags: [Turnos]
+ */
+router.patch('/:id/aceptar', requireRole('MEDICO'), controller.aceptar);
+
+/**
+ * @swagger
+ * /turnos/{id}/rechazar:
+ *   patch:
+ *     summary: Rechazar un turno reservado
+ *     tags: [Turnos]
+ */
+router.patch('/:id/rechazar', requireRole('MEDICO'), controller.rechazar);
+
+/**
+ * @swagger
+ * /turnos/{id}/cancelacion-medico:
+ *   patch:
+ *     summary: Cancelar un turno asignado por el médico
+ *     tags: [Turnos]
+ */
+router.patch('/:id/cancelacion-medico', requireRole('MEDICO'), controller.bajaPorMedico);
 
 /**
  * @swagger
@@ -457,7 +497,7 @@ router.patch('/:id/cambio', controller.cambiar);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch('/:id/realizado', controller.marcarComoRealizado);
+router.patch('/:id/realizado', requireRole('MEDICO'), controller.marcarComoRealizado);
 
 /**
  * @swagger
@@ -509,6 +549,6 @@ router.patch('/:id/realizado', controller.marcarComoRealizado);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', controller.baja);
+router.delete('/:id', requireRole('PACIENTE'), controller.baja);
 
 export default router;

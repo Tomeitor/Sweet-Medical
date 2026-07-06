@@ -53,6 +53,12 @@ export class TurnosRepository {
       
     }
 
+    async findByMedico(medicoId) {
+        this.validateId(medicoId)
+
+        return await this.model.find({ medico: medicoId });
+    }
+
     async update(turno) {
         this.validateTurno(turno)
         this.validateId(turno.id)

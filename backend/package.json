@@ -7,7 +7,9 @@
     "start": "node --env-file=.env server.js",
     "dev": "node --watch --env-file=.env server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "db:seed": "node scripts/seed.js",
+    "db:reset-seed": "node scripts/reset-and-seed.js"
   },
   "keywords": [],
   "author": "",
@@ -15,10 +17,12 @@
   "description": "",
   "dependencies": {
     "axios": "^1.15.2",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dayjs": "^1.11.20",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.6.2",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",

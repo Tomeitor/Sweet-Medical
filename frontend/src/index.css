@@ -49,7 +49,8 @@ body {
 body,
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -59,7 +60,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   border-radius: var(--radius-sm);
 }
 
@@ -187,6 +189,14 @@ h3 {
   color: var(--text);
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .nav-link.is-active,
 .nav-link:hover,
 .cart-chip:hover {
@@ -207,6 +217,25 @@ h3 {
   place-items: center;
   background: var(--primary);
   color: #fff;
+}
+
+.cart-chip--icon {
+  position: relative;
+  width: 44px;
+  padding-inline: 0;
+}
+
+.cart-chip--icon svg {
+  flex-shrink: 0;
+}
+
+.cart-chip--icon span {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0 6px;
 }
 
 .page-content {
@@ -436,12 +465,19 @@ h3 {
 }
 
 .field select,
-.field input {
+.field input,
+.field textarea {
   min-height: 48px;
   border: 1px solid rgba(194, 37, 45, 0.18);
   padding: 0 14px;
   background: var(--surface);
   color: var(--text);
+}
+
+.field textarea {
+  min-height: 120px;
+  padding: 14px;
+  resize: vertical;
 }
 
 .actions-row {
@@ -710,6 +746,105 @@ h3 {
 .footer-column h3 {
   margin: 0 0 12px;
   font-size: 1rem;
+}
+
+.doctor-form {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.doctor-form .primary-button {
+  grid-column: 1 / -1;
+}
+
+.doctor-summary {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.doctor-summary div {
+  display: grid;
+  gap: 4px;
+}
+
+.doctor-summary dt {
+  font-weight: 700;
+}
+
+.doctor-summary dd {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.availability-row,
+.notification-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.appointment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(45, 33, 31, 0.48);
+}
+
+.dialog-panel {
+  width: min(100%, 560px);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 24px 64px rgba(45, 33, 31, 0.2);
+}
+
+.dialog-header,
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.dialog-description {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+}
+
+.dialog-close {
+  min-width: 40px;
+  min-height: 40px;
+  border: 1px solid rgba(194, 37, 45, 0.16);
+  background: var(--surface-muted);
+}
+
+.dialog-body {
+  margin-top: 20px;
+}
+
+.dialog-footer {
+  margin-top: 24px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.availability-row p,
+.notification-row p {
+  margin: 6px 0 0;
 }
 
 .footer-column p,

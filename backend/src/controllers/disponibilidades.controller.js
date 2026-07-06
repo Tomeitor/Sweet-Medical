@@ -1,4 +1,4 @@
-import { BadRequestError } from "../errors/AppError.js";
+import { BadRequestError, ForbiddenError } from "../errors/AppError.js";
 import DisponibilidadesService from "../services/disponibilidades.service.js";
 import z from "zod";
 
@@ -59,7 +59,16 @@ export default class DisponibilidadController {
         throw new BadRequestError(`Datos inválidos: ${errores}`);
       }
 
-      const nuevaDisponibilidad = await service.create(result.data);
+      const idMedicoAutorizado = String(req.auth?.profileId ?? result.data.idMedico);
+
+      if (req.auth?.role === 'MEDICO' && String(result.data.idMedico) !== idMedicoAutorizado) {
+        throw new ForbiddenError("No podés crear disponibilidades para otro médico");
+      }
+
+      const nuevaDisponibilidad = await service.create({
+        ...result.data,
+        idMedico: idMedicoAutorizado,
+      });
       res.status(201).json(nuevaDisponibilidad);
     } catch (error) {
       next(error);
@@ -74,6 +83,11 @@ export default class DisponibilidadController {
       }
       const { id } = req.params;
 
+      const disponibilidadExistente = await service.getById(id);
+      if (req.auth?.role === 'MEDICO' && String(disponibilidadExistente.idMedico) !== String(req.auth.profileId)) {
+        throw new ForbiddenError("No podés modificar disponibilidades de otro médico");
+      }
+
       const disponibilidad = await service.update(id, req.body);
       res.status(200).json(disponibilidad);
     } catch (error) {
@@ -84,6 +98,12 @@ export default class DisponibilidadController {
   deleteDisponibilidad = async (req, res, next) => {
     try {
       const { id } = req.params;
+      const disponibilidadExistente = await service.getById(id);
+
+      if (req.auth?.role === 'MEDICO' && String(disponibilidadExistente.idMedico) !== String(req.auth.profileId)) {
+        throw new ForbiddenError("No podés eliminar disponibilidades de otro médico");
+      }
+
       const disponibilidad = await service.delete(id);
       res.status(200).json(disponibilidad);
     } catch (error) {

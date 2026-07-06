@@ -16,7 +16,7 @@ export class Turno {
 
     actualizarEstado(nuevoEstado, quien, motivo) {
         
-        if (this.estado === EstadoTurno.CANCELADO) return;
+        if ([EstadoTurno.CANCELADO, EstadoTurno.REALIZADO, EstadoTurno.RECHAZADO].includes(this.estado)) return;
 
         const cambio = {
             fechaHora: new Date(),
