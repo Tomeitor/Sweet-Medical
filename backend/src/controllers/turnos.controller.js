@@ -245,12 +245,12 @@ export class TurnosController {
         throw new BadRequestError("Faltan parámetros: notificacionId y accion");
       }
 
-      const pacienteId = req.auth?.profileId;
+      const usuarioId = req.auth?.username;
 
       const resultado = await service.responderPropuesta(
         notificacionId,
         accion.toUpperCase(),
-        pacienteId,
+        usuarioId,
       );
 
       res.status(200).json(resultado);

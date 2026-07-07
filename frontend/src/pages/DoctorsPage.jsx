@@ -22,14 +22,22 @@ import { serializeDateTimeLocal } from "../utils/dateTime.js";
 
 const selectedDoctorIdKey = "selectedDoctorId";
 const selectedDoctorUserKey = "selectedDoctorUsuarioId";
-const days = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"];
+const days = [
+  "LUNES",
+  "MARTES",
+  "MIERCOLES",
+  "JUEVES",
+  "VIERNES",
+  "SABADO",
+  "DOMINGO",
+];
 
 function getItemId(item) {
   return item?.id ?? item?._id ?? "";
 }
 
 function unwrapNotifications(response) {
-  return Array.isArray(response) ? response : response?.data ?? [];
+  return Array.isArray(response) ? response : (response?.data ?? []);
 }
 
 function formatDateTime(value) {
@@ -44,7 +52,7 @@ function formatDateTime(value) {
 }
 
 function canStillBeCanceled(value) {
-  return (new Date(value).getTime() - Date.now()) >= 60 * 60 * 1000;
+  return new Date(value).getTime() - Date.now() >= 60 * 60 * 1000;
 }
 
 function buildPatientHistoryOptions(appointments) {
@@ -53,7 +61,8 @@ function buildPatientHistoryOptions(appointments) {
 
   appointments.forEach((appointment) => {
     const patient = appointment?.paciente;
-    const id = getItemId(patient) || (typeof patient === "string" ? patient : "");
+    const id =
+      getItemId(patient) || (typeof patient === "string" ? patient : "");
 
     if (!id || patientsById.has(id)) {
       return;
@@ -82,7 +91,9 @@ function buildPatientHistoryOptions(appointments) {
         : `Paciente ${patient.id}`,
     }))
     .sort((patientA, patientB) =>
-      patientA.label.localeCompare(patientB.label, "es", { sensitivity: "base" }),
+      patientA.label.localeCompare(patientB.label, "es", {
+        sensitivity: "base",
+      }),
     );
 }
 
@@ -105,21 +116,25 @@ export function DoctorsPage() {
     hasta: "13:00",
   });
   const [availabilityMessage, setAvailabilityMessage] = useState("");
-  const [availabilityMessageType, setAvailabilityMessageType] = useState("success");
+  const [availabilityMessageType, setAvailabilityMessageType] =
+    useState("success");
   const [notificationMessage, setNotificationMessage] = useState("");
-  const [notificationMessageType, setNotificationMessageType] = useState("success");
+  const [notificationMessageType, setNotificationMessageType] =
+    useState("success");
   const [busyAvailabilityId, setBusyAvailabilityId] = useState("");
   const [busyNotificationId, setBusyNotificationId] = useState("");
   const [doctorAppointments, setDoctorAppointments] = useState([]);
   const [appointmentMessage, setAppointmentMessage] = useState("");
-  const [appointmentMessageType, setAppointmentMessageType] = useState("success");
+  const [appointmentMessageType, setAppointmentMessageType] =
+    useState("success");
   const [busyAppointmentId, setBusyAppointmentId] = useState("");
   const [cancelDialog, setCancelDialog] = useState(null);
   const [proposalDialog, setProposalDialog] = useState(null);
   const [patientHistorySelection, setPatientHistorySelection] = useState("");
   const [patientHistory, setPatientHistory] = useState([]);
   const [patientHistoryMessage, setPatientHistoryMessage] = useState("");
-  const [patientHistoryMessageType, setPatientHistoryMessageType] = useState("success");
+  const [patientHistoryMessageType, setPatientHistoryMessageType] =
+    useState("success");
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const visibleDoctors = useMemo(() => {
     if (user?.role !== "MEDICO") {
@@ -135,10 +150,18 @@ export function DoctorsPage() {
     }
 
     if (user?.role === "MEDICO") {
-      return visibleDoctors.find((doctor) => getItemId(doctor) === user.profileId) ?? visibleDoctors[0] ?? null;
+      return (
+        visibleDoctors.find((doctor) => getItemId(doctor) === user.profileId) ??
+        visibleDoctors[0] ??
+        null
+      );
     }
 
-    return visibleDoctors.find((doctor) => getItemId(doctor) === selectedDoctorId) ?? visibleDoctors[0] ?? null;
+    return (
+      visibleDoctors.find((doctor) => getItemId(doctor) === selectedDoctorId) ??
+      visibleDoctors[0] ??
+      null
+    );
   }, [selectedDoctorId, user, visibleDoctors]);
 
   const patientHistoryOptions = useMemo(
@@ -147,7 +170,10 @@ export function DoctorsPage() {
   );
 
   const selectedPatientHistoryOption = useMemo(
-    () => patientHistoryOptions.find((option) => option.label === patientHistorySelection) ?? null,
+    () =>
+      patientHistoryOptions.find(
+        (option) => option.label === patientHistorySelection,
+      ) ?? null,
     [patientHistoryOptions, patientHistorySelection],
   );
 
@@ -184,7 +210,10 @@ export function DoctorsPage() {
     }
 
     window.localStorage.setItem(selectedDoctorIdKey, getItemId(selectedDoctor));
-    window.localStorage.setItem(selectedDoctorUserKey, selectedDoctor.usuario ?? "");
+    window.localStorage.setItem(
+      selectedDoctorUserKey,
+      selectedDoctor.usuario ?? "",
+    );
     window.dispatchEvent(new Event("selected-doctor-changed"));
   }, [selectedDoctor, visibleDoctors]);
 
@@ -211,7 +240,9 @@ export function DoctorsPage() {
         ];
 
         if (user?.role === "MEDICO") {
-          requests.push(fetchDoctorAppointmentsHistory(getItemId(selectedDoctor)));
+          requests.push(
+            fetchDoctorAppointmentsHistory(getItemId(selectedDoctor)),
+          );
         }
 
         const results = await Promise.all(requests);
@@ -219,7 +250,9 @@ export function DoctorsPage() {
 
         const doctorId = getItemId(selectedDoctor);
         setAvailabilities(
-          allAvailabilities.filter((item) => String(item.idMedico) === String(doctorId)),
+          allAvailabilities.filter(
+            (item) => String(item.idMedico) === String(doctorId),
+          ),
         );
         setUnreadNotifications(unwrapNotifications(unread));
         setReadNotifications(unwrapNotifications(read));
@@ -257,7 +290,11 @@ export function DoctorsPage() {
     const [allAvailabilities, unread, read, appointments = []] = results;
 
     const doctorId = getItemId(selectedDoctor);
-    setAvailabilities(allAvailabilities.filter((item) => String(item.idMedico) === String(doctorId)));
+    setAvailabilities(
+      allAvailabilities.filter(
+        (item) => String(item.idMedico) === String(doctorId),
+      ),
+    );
     setUnreadNotifications(unwrapNotifications(unread));
     setReadNotifications(unwrapNotifications(read));
     setDoctorAppointments(Array.isArray(appointments) ? appointments : []);
@@ -316,7 +353,10 @@ export function DoctorsPage() {
       setBusyNotificationId(getItemId(notification));
       setNotificationMessage("");
       setNotificationMessageType("success");
-      await markNotificationAsRead(selectedDoctor.usuario, getItemId(notification));
+      await markNotificationAsRead(
+        selectedDoctor.usuario,
+        getItemId(notification),
+      );
       await refreshDetails();
       setNotificationMessage("Notificación marcada como leída.");
       setNotificationMessageType("success");
@@ -439,7 +479,9 @@ export function DoctorsPage() {
 
     if (!trimmedNextDateTime) {
       setProposalDialog((current) =>
-        current ? { ...current, error: "La nueva fecha y hora es obligatoria." } : current,
+        current
+          ? { ...current, error: "La nueva fecha y hora es obligatoria." }
+          : current,
       );
       return;
     }
@@ -489,7 +531,10 @@ export function DoctorsPage() {
       setBusyAppointmentId(`cancel:${cancelDialog.appointmentId}`);
       setAppointmentMessage("");
       setAppointmentMessageType("success");
-      await cancelAppointmentByDoctor(cancelDialog.appointmentId, trimmedReason);
+      await cancelAppointmentByDoctor(
+        cancelDialog.appointmentId,
+        trimmedReason,
+      );
       await refreshDetails();
       setAppointmentMessage("Turno actualizado.");
       setAppointmentMessageType("success");
@@ -516,7 +561,9 @@ export function DoctorsPage() {
     try {
       setPatientHistoryMessage("");
       setPatientHistoryMessageType("success");
-      const history = await fetchPatientAppointmentsHistory(selectedPatientHistoryOption.id);
+      const history = await fetchPatientAppointmentsHistory(
+        selectedPatientHistoryOption.id,
+      );
       setPatientHistory(Array.isArray(history) ? history : []);
       setPatientHistoryMessage("Historial cargado.");
       setPatientHistoryMessageType("success");
@@ -543,32 +590,44 @@ export function DoctorsPage() {
               <p className="eyebrow">Médicos</p>
               <h2>Gestión de médicos</h2>
             </div>
-              <p className="panel-copy">
-                {user?.role === "MEDICO"
-                  ? "Solo podés gestionar tu propio perfil y tus notificaciones."
-                  : "Seleccione un médico para revisar la disponibilidad y las notificaciones."}
-              </p>
+            <p className="panel-copy">
+              {user?.role === "MEDICO"
+                ? "Solo podés gestionar tu propio perfil y tus notificaciones."
+                : "Seleccione un médico para revisar la disponibilidad y las notificaciones."}
+            </p>
           </div>
 
-          {doctorError ? <div className="alert alert-error">{doctorError}</div> : null}
+          {doctorError ? (
+            <div className="alert alert-error">{doctorError}</div>
+          ) : null}
 
           <label className="field">
             <span className="field-label">Médico</span>
-              <select value={selectedDoctor ? getItemId(selectedDoctor) : selectedDoctorId} onChange={handleDoctorChange} disabled={isLoadingDoctors || user?.role === "MEDICO"}>
-                <option value="">Seleccione un médico</option>
-                {visibleDoctors.map((doctor) => (
-                  <option key={getItemId(doctor)} value={getItemId(doctor)}>
-                    {doctor.nombre}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <select
+              value={
+                selectedDoctor ? getItemId(selectedDoctor) : selectedDoctorId
+              }
+              onChange={handleDoctorChange}
+              disabled={isLoadingDoctors || user?.role === "MEDICO"}
+            >
+              <option value="">Seleccione un médico</option>
+              {visibleDoctors.map((doctor) => (
+                <option key={getItemId(doctor)} value={getItemId(doctor)}>
+                  {doctor.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
 
           {user?.role === "MEDICO" ? (
-            <p className="muted-text">Tu selección queda fijada a tu perfil autenticado.</p>
+            <p className="muted-text">
+              Tu selección queda fijada a tu perfil autenticado.
+            </p>
           ) : null}
 
-          {isLoadingDoctors ? <p className="muted-text">Cargando médicos...</p> : null}
+          {isLoadingDoctors ? (
+            <p className="muted-text">Cargando médicos...</p>
+          ) : null}
         </div>
 
         <article className="info-card stack-md">
@@ -577,7 +636,9 @@ export function DoctorsPage() {
               <p className="eyebrow">Perfil</p>
               <h2>{selectedDoctor?.nombre ?? "Ningún médico seleccionado"}</h2>
             </div>
-            {selectedDoctor?.matricula ? <p className="panel-copy">Matrícula {selectedDoctor.matricula}</p> : null}
+            {selectedDoctor?.matricula ? (
+              <p className="panel-copy">Matrícula {selectedDoctor.matricula}</p>
+            ) : null}
           </div>
 
           {selectedDoctor ? (
@@ -612,14 +673,21 @@ export function DoctorsPage() {
             </div>
           </div>
 
-          {detailError ? <div className="alert alert-error">{detailError}</div> : null}
+          {detailError ? (
+            <div className="alert alert-error">{detailError}</div>
+          ) : null}
 
           <form className="doctor-form" onSubmit={handleAvailabilitySubmit}>
             <label className="field">
               <span className="field-label">Día</span>
               <select
                 value={availabilityForm.diaSemana}
-                onChange={(event) => setAvailabilityForm({ ...availabilityForm, diaSemana: event.target.value })}
+                onChange={(event) =>
+                  setAvailabilityForm({
+                    ...availabilityForm,
+                    diaSemana: event.target.value,
+                  })
+                }
                 disabled={!selectedDoctor || isLoadingDetails}
               >
                 {days.map((day) => (
@@ -635,7 +703,12 @@ export function DoctorsPage() {
               <input
                 type="time"
                 value={availabilityForm.desde}
-                onChange={(event) => setAvailabilityForm({ ...availabilityForm, desde: event.target.value })}
+                onChange={(event) =>
+                  setAvailabilityForm({
+                    ...availabilityForm,
+                    desde: event.target.value,
+                  })
+                }
                 disabled={!selectedDoctor || isLoadingDetails}
               />
             </label>
@@ -645,7 +718,12 @@ export function DoctorsPage() {
               <input
                 type="time"
                 value={availabilityForm.hasta}
-                onChange={(event) => setAvailabilityForm({ ...availabilityForm, hasta: event.target.value })}
+                onChange={(event) =>
+                  setAvailabilityForm({
+                    ...availabilityForm,
+                    hasta: event.target.value,
+                  })
+                }
                 disabled={!selectedDoctor || isLoadingDetails}
               />
             </label>
@@ -653,25 +731,40 @@ export function DoctorsPage() {
             <button
               type="submit"
               className="primary-button"
-              disabled={!selectedDoctor || isLoadingDetails || busyAvailabilityId === "create"}
+              disabled={
+                !selectedDoctor ||
+                isLoadingDetails ||
+                busyAvailabilityId === "create"
+              }
             >
-              {busyAvailabilityId === "create" ? "Guardando..." : "Agregar disponibilidad"}
+              {busyAvailabilityId === "create"
+                ? "Guardando..."
+                : "Agregar disponibilidad"}
             </button>
           </form>
 
           {availabilityMessage ? (
-            <div className={`alert alert-${availabilityMessageType}`}>{availabilityMessage}</div>
+            <div className={`alert alert-${availabilityMessageType}`}>
+              {availabilityMessage}
+            </div>
           ) : null}
 
-          {isLoadingDetails ? <p className="muted-text">Cargando disponibilidad...</p> : null}
+          {isLoadingDetails ? (
+            <p className="muted-text">Cargando disponibilidad...</p>
+          ) : null}
 
           <div className="stack-md">
             {availabilities.length > 0 ? (
               availabilities.map((item) => (
-                <div key={getItemId(item)} className="inline-card availability-row">
+                <div
+                  key={getItemId(item)}
+                  className="inline-card availability-row"
+                >
                   <div>
                     <strong>{item.diaSemana}</strong>
-                    <p>{item.desde} - {item.hasta}</p>
+                    <p>
+                      {item.desde} - {item.hasta}
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -684,7 +777,9 @@ export function DoctorsPage() {
                 </div>
               ))
             ) : (
-              <p className="muted-text">Aún no hay disponibilidades registradas.</p>
+              <p className="muted-text">
+                Aún no hay disponibilidades registradas.
+              </p>
             )}
           </div>
         </article>
@@ -698,11 +793,15 @@ export function DoctorsPage() {
                 <p className="eyebrow">Turnos</p>
                 <h2>Mi historial y gestión</h2>
               </div>
-              {doctorAppointments.length > 0 ? <p className="panel-copy">{doctorAppointments.length} turnos</p> : null}
+              {doctorAppointments.length > 0 ? (
+                <p className="panel-copy">{doctorAppointments.length} turnos</p>
+              ) : null}
             </div>
 
             {appointmentMessage ? (
-              <div className={`alert alert-${appointmentMessageType}`}>{appointmentMessage}</div>
+              <div className={`alert alert-${appointmentMessageType}`}>
+                {appointmentMessage}
+              </div>
             ) : null}
 
             {doctorAppointments.length > 0 ? (
@@ -712,19 +811,33 @@ export function DoctorsPage() {
                   const canCancel = canStillBeCanceled(appointment.fechaHora);
                   const isReserved = appointment.estado === "RESERVADO";
                   const isConfirmed = appointment.estado === "CONFIRMADO";
-                  const isPast = new Date(appointment.fechaHora).getTime() <= currentTime;
+                  const isPast =
+                    new Date(appointment.fechaHora).getTime() <= currentTime;
 
                   return (
-                    <article key={appointmentId} className="inline-card stack-sm">
+                    <article
+                      key={appointmentId}
+                      className="inline-card stack-sm"
+                    >
                       <div className="panel-heading">
                         <div>
-                          <strong>{formatDateTime(appointment.fechaHora)}</strong>
-                          <p>{appointment.practica} · {appointment.sede}</p>
+                          <strong>
+                            {formatDateTime(appointment.fechaHora)}
+                          </strong>
+                          <p>
+                            {appointment.practica} · {appointment.sede}
+                          </p>
                         </div>
                         <span className="tag">{appointment.estado}</span>
                       </div>
 
-                      <p className="muted-text">Paciente: {appointment.paciente?.nombre ?? appointment.paciente?.id ?? appointment.paciente ?? "—"}</p>
+                      <p className="muted-text">
+                        Paciente:{" "}
+                        {appointment.paciente?.nombre ??
+                          appointment.paciente?.id ??
+                          appointment.paciente ??
+                          "—"}
+                      </p>
 
                       {user?.role === "MEDICO" ? (
                         <div className="appointment-actions">
@@ -733,16 +846,32 @@ export function DoctorsPage() {
                               <button
                                 type="button"
                                 className="secondary-button"
-                                onClick={() => handleAppointmentAction(appointmentId, "accept")}
-                                disabled={busyAppointmentId === `accept:${appointmentId}`}
+                                onClick={() =>
+                                  handleAppointmentAction(
+                                    appointmentId,
+                                    "accept",
+                                  )
+                                }
+                                disabled={
+                                  busyAppointmentId ===
+                                  `accept:${appointmentId}`
+                                }
                               >
                                 Aceptar
                               </button>
                               <button
                                 type="button"
                                 className="secondary-button"
-                                onClick={() => handleAppointmentAction(appointmentId, "reject")}
-                                disabled={busyAppointmentId === `reject:${appointmentId}`}
+                                onClick={() =>
+                                  handleAppointmentAction(
+                                    appointmentId,
+                                    "reject",
+                                  )
+                                }
+                                disabled={
+                                  busyAppointmentId ===
+                                  `reject:${appointmentId}`
+                                }
                               >
                                 Rechazar
                               </button>
@@ -750,7 +879,10 @@ export function DoctorsPage() {
                                 type="button"
                                 className="secondary-button"
                                 onClick={() => openProposalDialog(appointment)}
-                                disabled={busyAppointmentId === `proposal:${appointmentId}`}
+                                disabled={
+                                  busyAppointmentId ===
+                                  `proposal:${appointmentId}`
+                                }
                               >
                                 Proponer cambio
                               </button>
@@ -758,7 +890,10 @@ export function DoctorsPage() {
                                 type="button"
                                 className="secondary-button"
                                 onClick={() => openCancelDialog(appointmentId)}
-                                disabled={busyAppointmentId === `cancel:${appointmentId}` || !canCancel}
+                                disabled={
+                                  busyAppointmentId ===
+                                    `cancel:${appointmentId}` || !canCancel
+                                }
                               >
                                 Cancelar
                               </button>
@@ -770,8 +905,16 @@ export function DoctorsPage() {
                               <button
                                 type="button"
                                 className="secondary-button"
-                                onClick={() => handleAppointmentAction(appointmentId, "complete")}
-                                disabled={busyAppointmentId === `complete:${appointmentId}` || !isPast}
+                                onClick={() =>
+                                  handleAppointmentAction(
+                                    appointmentId,
+                                    "complete",
+                                  )
+                                }
+                                disabled={
+                                  busyAppointmentId ===
+                                    `complete:${appointmentId}` || !isPast
+                                }
                               >
                                 Completar
                               </button>
@@ -779,7 +922,10 @@ export function DoctorsPage() {
                                 type="button"
                                 className="secondary-button"
                                 onClick={() => openProposalDialog(appointment)}
-                                disabled={busyAppointmentId === `proposal:${appointmentId}`}
+                                disabled={
+                                  busyAppointmentId ===
+                                  `proposal:${appointmentId}`
+                                }
                               >
                                 Proponer cambio
                               </button>
@@ -787,7 +933,10 @@ export function DoctorsPage() {
                                 type="button"
                                 className="secondary-button"
                                 onClick={() => openCancelDialog(appointmentId)}
-                                disabled={busyAppointmentId === `cancel:${appointmentId}` || !canCancel}
+                                disabled={
+                                  busyAppointmentId ===
+                                    `cancel:${appointmentId}` || !canCancel
+                                }
                               >
                                 Cancelar
                               </button>
@@ -820,7 +969,9 @@ export function DoctorsPage() {
                 <input
                   list="doctor-patient-history-options"
                   value={patientHistorySelection}
-                  onChange={(event) => handlePatientHistorySelectionChange(event.target.value)}
+                  onChange={(event) =>
+                    handlePatientHistorySelectionChange(event.target.value)
+                  }
                   placeholder={
                     patientHistoryOptions.length > 0
                       ? "Buscá o seleccioná un paciente"
@@ -845,7 +996,9 @@ export function DoctorsPage() {
             </form>
 
             {!selectedPatientHistoryOption && patientHistorySelection.trim() ? (
-              <p className="muted-text">Seleccioná un paciente desde las opciones sugeridas.</p>
+              <p className="muted-text">
+                Seleccioná un paciente desde las opciones sugeridas.
+              </p>
             ) : null}
 
             {patientHistoryOptions.length === 0 ? (
@@ -855,29 +1008,39 @@ export function DoctorsPage() {
             ) : null}
 
             {patientHistoryMessage ? (
-              <div className={`alert alert-${patientHistoryMessageType}`}>{patientHistoryMessage}</div>
+              <div className={`alert alert-${patientHistoryMessageType}`}>
+                {patientHistoryMessage}
+              </div>
             ) : null}
 
             {patientHistory.length > 0 ? (
               <div className="stack-md">
                 {patientHistory.map((appointment) => (
-                  <article key={getItemId(appointment)} className="inline-card stack-sm">
+                  <article
+                    key={getItemId(appointment)}
+                    className="inline-card stack-sm"
+                  >
                     <div className="panel-heading">
                       <div>
-                          <strong>{formatDateTime(appointment.fechaHora)}</strong>
-                          <p>
-                            {appointment.medico?.nombre ?? appointment.medico?.id ?? appointment.medico ?? "—"}
-                            {" · "}
-                            {appointment.practica} · {appointment.sede}
-                          </p>
-                        </div>
+                        <strong>{formatDateTime(appointment.fechaHora)}</strong>
+                        <p>
+                          {appointment.medico?.nombre ??
+                            appointment.medico?.id ??
+                            appointment.medico ??
+                            "—"}
+                          {" · "}
+                          {appointment.practica} · {appointment.sede}
+                        </p>
+                      </div>
                       <span className="tag">{appointment.estado}</span>
                     </div>
                   </article>
                 ))}
               </div>
             ) : (
-              <p className="muted-text">No se cargó ningún historial todavía.</p>
+              <p className="muted-text">
+                No se cargó ningún historial todavía.
+              </p>
             )}
           </article>
         ) : null}
@@ -888,11 +1051,17 @@ export function DoctorsPage() {
               <p className="eyebrow">Notificaciones</p>
               <h2>Mensajes no leídos y leídos</h2>
             </div>
-            {selectedDoctor ? <p className="panel-copy">{unreadNotifications.length} sin leer</p> : null}
+            {selectedDoctor ? (
+              <p className="panel-copy">
+                {unreadNotifications.length} sin leer
+              </p>
+            ) : null}
           </div>
 
           {notificationMessage ? (
-            <div className={`alert alert-${notificationMessageType}`}>{notificationMessage}</div>
+            <div className={`alert alert-${notificationMessageType}`}>
+              {notificationMessage}
+            </div>
           ) : null}
 
           <div className="stack-md">
@@ -901,7 +1070,10 @@ export function DoctorsPage() {
               {unreadNotifications.length > 0 ? (
                 <div className="stack-md">
                   {unreadNotifications.map((notification) => (
-                    <article key={getItemId(notification)} className="inline-card notification-row">
+                    <article
+                      key={getItemId(notification)}
+                      className="inline-card notification-row"
+                    >
                       <div>
                         <p>{notification.mensaje}</p>
                       </div>
@@ -909,7 +1081,9 @@ export function DoctorsPage() {
                         type="button"
                         className="secondary-button"
                         onClick={() => handleMarkAsRead(notification)}
-                        disabled={busyNotificationId === getItemId(notification)}
+                        disabled={
+                          busyNotificationId === getItemId(notification)
+                        }
                       >
                         Marcar como leída
                       </button>
@@ -926,7 +1100,10 @@ export function DoctorsPage() {
               {readNotifications.length > 0 ? (
                 <div className="stack-md">
                   {readNotifications.map((notification) => (
-                    <article key={getItemId(notification)} className="inline-card notification-row">
+                    <article
+                      key={getItemId(notification)}
+                      className="inline-card notification-row"
+                    >
                       <p>{notification.mensaje}</p>
                     </article>
                   ))}
@@ -944,7 +1121,7 @@ export function DoctorsPage() {
         title="Proponer cambio de horario"
         description="Elegí una nueva fecha y hora y explicá el motivo. El paciente decidirá si acepta o rechaza la propuesta."
         onClose={closeProposalDialog}
-        footer={(
+        footer={
           <>
             <button
               type="button"
@@ -963,7 +1140,7 @@ export function DoctorsPage() {
               {busyAppointmentId ? "Enviando..." : "Enviar propuesta"}
             </button>
           </>
-        )}
+        }
       >
         <form
           id="doctor-proposal-appointment-form"
@@ -976,7 +1153,9 @@ export function DoctorsPage() {
               type="datetime-local"
               step="900"
               value={proposalDialog?.nextDateTime ?? ""}
-              onChange={(event) => updateProposalDialogField("nextDateTime", event.target.value)}
+              onChange={(event) =>
+                updateProposalDialogField("nextDateTime", event.target.value)
+              }
               required
             />
           </label>
@@ -986,7 +1165,9 @@ export function DoctorsPage() {
             <textarea
               rows="4"
               value={proposalDialog?.reason ?? ""}
-              onChange={(event) => updateProposalDialogField("reason", event.target.value)}
+              onChange={(event) =>
+                updateProposalDialogField("reason", event.target.value)
+              }
               placeholder="Contanos por qué querés proponer este cambio"
               required
             />
@@ -1003,7 +1184,7 @@ export function DoctorsPage() {
         title="Cancelar turno"
         description="Indicá el motivo de la cancelación para notificar correctamente al paciente."
         onClose={closeCancelDialog}
-        footer={(
+        footer={
           <>
             <button
               type="button"
@@ -1022,7 +1203,7 @@ export function DoctorsPage() {
               {busyAppointmentId ? "Guardando..." : "Confirmar cancelación"}
             </button>
           </>
-        )}
+        }
       >
         <form
           id="doctor-cancel-appointment-form"

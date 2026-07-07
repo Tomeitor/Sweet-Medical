@@ -70,14 +70,16 @@ export function SearchPage() {
   const [catalogError, setCatalogError] = useState("");
   const [patientHistory, setPatientHistory] = useState([]);
   const [patientHistoryMessage, setPatientHistoryMessage] = useState("");
-  const [patientHistoryMessageType, setPatientHistoryMessageType] = useState("success");
+  const [patientHistoryMessageType, setPatientHistoryMessageType] =
+    useState("success");
   const [busyPatientActionId, setBusyPatientActionId] = useState("");
   const [patientActionDialog, setPatientActionDialog] = useState(null);
   const [unreadNotifications, setUnreadNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState([]);
   const [busyNotificationId, setBusyNotificationId] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
-  const [notificationMessageType, setNotificationMessageType] = useState("success");
+  const [notificationMessageType, setNotificationMessageType] =
+    useState("success");
   const { addItem, removeItem, hasItem } = usePreseleccion();
   const { filters, updateFilter, clearFilters } = useFilters();
   const { pagination, setPaginationData } = usePagination();
@@ -184,8 +186,13 @@ export function SearchPage() {
       setHasSearched(true);
       setSearchError("");
 
-      const response = await fetchAvailableAppointments(buildRequestParams({ page }));
-      const { items, pagination: nextPagination } = getPagination(response, page);
+      const response = await fetchAvailableAppointments(
+        buildRequestParams({ page }),
+      );
+      const { items, pagination: nextPagination } = getPagination(
+        response,
+        page,
+      );
 
       setResults(items);
       setPaginationData(nextPagination);
@@ -336,7 +343,9 @@ export function SearchPage() {
 
     if (action === "reschedule" && !nextDateTime) {
       setPatientActionDialog((current) =>
-        current ? { ...current, error: "La nueva fecha y hora es obligatoria." } : current,
+        current
+          ? { ...current, error: "La nueva fecha y hora es obligatoria." }
+          : current,
       );
       return;
     }
@@ -383,7 +392,8 @@ export function SearchPage() {
     removeItem(crearIdTurno(slot));
   }
 
-  const hasActiveFilters = Object.values(filters).some(Boolean) || searchQuery.trim() !== "";
+  const hasActiveFilters =
+    Object.values(filters).some(Boolean) || searchQuery.trim() !== "";
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   return (
@@ -418,18 +428,34 @@ export function SearchPage() {
               className="primary-button"
               disabled={isLoading}
             >
-              {isLoading ? "Buscando..." : hasActiveFilters ? "Buscar" : "Buscar todos"}
+              {isLoading
+                ? "Buscando..."
+                : hasActiveFilters
+                  ? "Buscar"
+                  : "Buscar todos"}
             </button>
             <button
               type="button"
               className="secondary-button filter-btn"
               onClick={() => setShowFilters(!showFilters)}
             >
-              <svg className="filter-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              <svg
+                className="filter-icon"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
               </svg>
               {showFilters ? "Cerrar filtros" : "Filtros"}
-              {activeFilterCount > 0 && <span className="badge">{activeFilterCount}</span>}
+              {activeFilterCount > 0 && (
+                <span className="badge">{activeFilterCount}</span>
+              )}
             </button>
           </div>
         </form>
@@ -496,7 +522,9 @@ export function SearchPage() {
                   type="button"
                   className="secondary-button"
                   onClick={() => changePage(pagination.page + 1)}
-                  disabled={pagination.page >= pagination.totalPages || isLoading}
+                  disabled={
+                    pagination.page >= pagination.totalPages || isLoading
+                  }
                 >
                   Siguiente →
                 </button>
@@ -523,11 +551,15 @@ export function SearchPage() {
                 <p className="eyebrow">Mi historial</p>
                 <h2>Mis turnos</h2>
               </div>
-              {patientHistory.length > 0 ? <p className="panel-copy">{patientHistory.length} turnos</p> : null}
+              {patientHistory.length > 0 ? (
+                <p className="panel-copy">{patientHistory.length} turnos</p>
+              ) : null}
             </div>
 
             {patientHistoryMessage ? (
-              <div className={`alert alert-${patientHistoryMessageType}`}>{patientHistoryMessage}</div>
+              <div className={`alert alert-${patientHistoryMessageType}`}>
+                {patientHistoryMessage}
+              </div>
             ) : null}
 
             {patientHistory.length > 0 ? (
@@ -535,15 +567,27 @@ export function SearchPage() {
                 {patientHistory.map((appointment) => {
                   const appointmentId = getItemId(appointment);
                   const canCancel = canStillBeCanceled(appointment.fechaHora);
-                  const isActive = !["CANCELADO", "REALIZADO", "RECHAZADO"].includes(appointment.estado);
+                  const isActive = ![
+                    "CANCELADO",
+                    "REALIZADO",
+                    "RECHAZADO",
+                  ].includes(appointment.estado);
 
                   return (
-                    <article key={appointmentId} className="inline-card stack-sm">
+                    <article
+                      key={appointmentId}
+                      className="inline-card stack-sm"
+                    >
                       <div className="panel-heading">
                         <div>
-                          <strong>{formatDateTime(appointment.fechaHora)}</strong>
+                          <strong>
+                            {formatDateTime(appointment.fechaHora)}
+                          </strong>
                           <p>
-                            {appointment.medico?.nombre ?? appointment.medico?.id ?? appointment.medico ?? "—"}
+                            {appointment.medico?.nombre ??
+                              appointment.medico?.id ??
+                              appointment.medico ??
+                              "—"}
                             {" · "}
                             {appointment.practica} · {appointment.sede}
                           </p>
@@ -556,16 +600,26 @@ export function SearchPage() {
                           <button
                             type="button"
                             className="secondary-button"
-                            onClick={() => openPatientActionDialog(appointment, "reschedule")}
-                            disabled={busyPatientActionId === `reschedule:${appointmentId}` || !canCancel}
+                            onClick={() =>
+                              openPatientActionDialog(appointment, "reschedule")
+                            }
+                            disabled={
+                              busyPatientActionId ===
+                                `reschedule:${appointmentId}` || !canCancel
+                            }
                           >
                             Cambiar horario
                           </button>
                           <button
                             type="button"
                             className="secondary-button"
-                            onClick={() => openPatientActionDialog(appointment, "cancel")}
-                            disabled={busyPatientActionId === `cancel:${appointmentId}` || !canCancel}
+                            onClick={() =>
+                              openPatientActionDialog(appointment, "cancel")
+                            }
+                            disabled={
+                              busyPatientActionId ===
+                                `cancel:${appointmentId}` || !canCancel
+                            }
                           >
                             Cancelar
                           </button>
@@ -588,11 +642,15 @@ export function SearchPage() {
                 <p className="eyebrow">Notificaciones</p>
                 <h2>Mis mensajes</h2>
               </div>
-              <p className="panel-copy">{unreadNotifications.length} sin leer</p>
+              <p className="panel-copy">
+                {unreadNotifications.length} sin leer
+              </p>
             </div>
 
             {notificationMessage ? (
-              <div className={`alert alert-${notificationMessageType}`}>{notificationMessage}</div>
+              <div className={`alert alert-${notificationMessageType}`}>
+                {notificationMessage}
+              </div>
             ) : null}
 
             <div className="stack-md">
@@ -606,7 +664,10 @@ export function SearchPage() {
                         notification?.meta?.estado === "PENDIENTE";
 
                       return (
-                        <article key={getItemId(notification)} className="inline-card notification-row">
+                        <article
+                          key={getItemId(notification)}
+                          className="inline-card notification-row"
+                        >
                           <div className="stack-sm">
                             <p>{notification.mensaje}</p>
                             {isPendingProposal ? (
@@ -614,16 +675,32 @@ export function SearchPage() {
                                 <button
                                   type="button"
                                   className="primary-button"
-                                  onClick={() => handleProposalResponse(notification, "ACEPTAR")}
-                                  disabled={busyNotificationId === getItemId(notification)}
+                                  onClick={() =>
+                                    handleProposalResponse(
+                                      notification,
+                                      "ACEPTAR",
+                                    )
+                                  }
+                                  disabled={
+                                    busyNotificationId ===
+                                    getItemId(notification)
+                                  }
                                 >
                                   Aceptar cambio
                                 </button>
                                 <button
                                   type="button"
                                   className="secondary-button"
-                                  onClick={() => handleProposalResponse(notification, "RECHAZAR")}
-                                  disabled={busyNotificationId === getItemId(notification)}
+                                  onClick={() =>
+                                    handleProposalResponse(
+                                      notification,
+                                      "RECHAZAR",
+                                    )
+                                  }
+                                  disabled={
+                                    busyNotificationId ===
+                                    getItemId(notification)
+                                  }
                                 >
                                   Rechazar cambio
                                 </button>
@@ -634,8 +711,12 @@ export function SearchPage() {
                             <button
                               type="button"
                               className="secondary-button"
-                              onClick={() => handleMarkNotificationAsRead(notification)}
-                              disabled={busyNotificationId === getItemId(notification)}
+                              onClick={() =>
+                                handleMarkNotificationAsRead(notification)
+                              }
+                              disabled={
+                                busyNotificationId === getItemId(notification)
+                              }
                             >
                               Marcar como leída
                             </button>
@@ -654,13 +735,18 @@ export function SearchPage() {
                 {readNotifications.length > 0 ? (
                   <div className="stack-md">
                     {readNotifications.map((notification) => (
-                      <article key={getItemId(notification)} className="inline-card notification-row">
+                      <article
+                        key={getItemId(notification)}
+                        className="inline-card notification-row"
+                      >
                         <p>{notification.mensaje}</p>
                       </article>
                     ))}
                   </div>
                 ) : (
-                  <p className="muted-text">Aún no hay notificaciones leídas.</p>
+                  <p className="muted-text">
+                    Aún no hay notificaciones leídas.
+                  </p>
                 )}
               </div>
             </div>
@@ -670,14 +756,18 @@ export function SearchPage() {
 
       <Dialog
         isOpen={Boolean(patientActionDialog)}
-        title={patientActionDialog?.action === "reschedule" ? "Cambiar horario" : "Cancelar turno"}
+        title={
+          patientActionDialog?.action === "reschedule"
+            ? "Cambiar horario"
+            : "Cancelar turno"
+        }
         description={
           patientActionDialog?.action === "reschedule"
             ? "Elegí la nueva fecha y hora e indicá el motivo del cambio."
             : "Indicá el motivo de la cancelación para continuar."
         }
         onClose={closePatientActionDialog}
-        footer={(
+        footer={
           <>
             <button
               type="button"
@@ -700,7 +790,7 @@ export function SearchPage() {
                   : "Confirmar cancelación"}
             </button>
           </>
-        )}
+        }
       >
         <form
           id="patient-appointment-action-form"
@@ -714,7 +804,9 @@ export function SearchPage() {
                 type="datetime-local"
                 step="900"
                 value={patientActionDialog?.nextDateTime ?? ""}
-                onChange={(event) => updatePatientDialogField("nextDateTime", event.target.value)}
+                onChange={(event) =>
+                  updatePatientDialogField("nextDateTime", event.target.value)
+                }
                 required
               />
             </label>
@@ -725,7 +817,9 @@ export function SearchPage() {
             <textarea
               rows="4"
               value={patientActionDialog?.reason ?? ""}
-              onChange={(event) => updatePatientDialogField("reason", event.target.value)}
+              onChange={(event) =>
+                updatePatientDialogField("reason", event.target.value)
+              }
               placeholder={
                 patientActionDialog?.action === "reschedule"
                   ? "Contanos por qué querés cambiar el turno"
