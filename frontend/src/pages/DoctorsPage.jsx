@@ -6,6 +6,7 @@ import {
   cancelAppointmentByDoctor,
   deleteAvailability,
   fetchDoctorAppointmentsHistory,
+  proposeAppointmentChange,
   fetchDoctorAvailabilities,
   fetchDoctors,
   fetchPatientAppointmentsHistory,
@@ -17,6 +18,7 @@ import {
   markAppointmentAsCompleted,
 } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { serializeDateTimeLocal } from "../utils/dateTime.js";
 
 const selectedDoctorIdKey = "selectedDoctorId";
 const selectedDoctorUserKey = "selectedDoctorUsuarioId";
@@ -113,6 +115,7 @@ export function DoctorsPage() {
   const [appointmentMessageType, setAppointmentMessageType] = useState("success");
   const [busyAppointmentId, setBusyAppointmentId] = useState("");
   const [cancelDialog, setCancelDialog] = useState(null);
+  const [proposalDialog, setProposalDialog] = useState(null);
   const [patientHistorySelection, setPatientHistorySelection] = useState("");
   const [patientHistory, setPatientHistory] = useState([]);
   const [patientHistoryMessage, setPatientHistoryMessage] = useState("");
@@ -359,6 +362,39 @@ export function DoctorsPage() {
     });
   }
 
+  function openProposalDialog(appointment) {
+    setAppointmentMessage("");
+    setAppointmentMessageType("success");
+    setProposalDialog({
+      appointmentId: getItemId(appointment),
+      reason: "",
+      nextDateTime: "",
+      error: "",
+    });
+  }
+
+  function closeProposalDialog() {
+    if (busyAppointmentId) {
+      return;
+    }
+
+    setProposalDialog(null);
+  }
+
+  function updateProposalDialogField(field, value) {
+    setProposalDialog((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [field]: value,
+        error: "",
+      };
+    });
+  }
+
   async function handleAppointmentAction(appointmentId, action) {
     try {
       setBusyAppointmentId(`${action}:${appointmentId}`);
@@ -379,6 +415,55 @@ export function DoctorsPage() {
     } catch (error) {
       setAppointmentMessage(handleApiError(error));
       setAppointmentMessageType("error");
+    } finally {
+      setBusyAppointmentId("");
+    }
+  }
+
+  async function handleProposalSubmit(event) {
+    event.preventDefault();
+
+    if (!proposalDialog) {
+      return;
+    }
+
+    const trimmedReason = proposalDialog.reason.trim();
+    const trimmedNextDateTime = proposalDialog.nextDateTime.trim();
+
+    if (!trimmedReason) {
+      setProposalDialog((current) =>
+        current ? { ...current, error: "El motivo es obligatorio." } : current,
+      );
+      return;
+    }
+
+    if (!trimmedNextDateTime) {
+      setProposalDialog((current) =>
+        current ? { ...current, error: "La nueva fecha y hora es obligatoria." } : current,
+      );
+      return;
+    }
+
+    try {
+      setBusyAppointmentId(`proposal:${proposalDialog.appointmentId}`);
+      setAppointmentMessage("");
+      setAppointmentMessageType("success");
+      await proposeAppointmentChange(
+        proposalDialog.appointmentId,
+        serializeDateTimeLocal(trimmedNextDateTime),
+        trimmedReason,
+      );
+      await refreshDetails();
+      setAppointmentMessage("Se envió la propuesta de cambio al paciente.");
+      setAppointmentMessageType("success");
+      setProposalDialog(null);
+    } catch (error) {
+      const message = handleApiError(error);
+      setAppointmentMessage(message);
+      setAppointmentMessageType("error");
+      setProposalDialog((current) =>
+        current ? { ...current, error: message } : current,
+      );
     } finally {
       setBusyAppointmentId("");
     }
@@ -664,6 +749,14 @@ export function DoctorsPage() {
                               <button
                                 type="button"
                                 className="secondary-button"
+                                onClick={() => openProposalDialog(appointment)}
+                                disabled={busyAppointmentId === `proposal:${appointmentId}`}
+                              >
+                                Proponer cambio
+                              </button>
+                              <button
+                                type="button"
+                                className="secondary-button"
                                 onClick={() => openCancelDialog(appointmentId)}
                                 disabled={busyAppointmentId === `cancel:${appointmentId}` || !canCancel}
                               >
@@ -681,6 +774,14 @@ export function DoctorsPage() {
                                 disabled={busyAppointmentId === `complete:${appointmentId}` || !isPast}
                               >
                                 Completar
+                              </button>
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => openProposalDialog(appointment)}
+                                disabled={busyAppointmentId === `proposal:${appointmentId}`}
+                              >
+                                Proponer cambio
                               </button>
                               <button
                                 type="button"
@@ -837,6 +938,65 @@ export function DoctorsPage() {
           </div>
         </article>
       </section>
+
+      <Dialog
+        isOpen={Boolean(proposalDialog)}
+        title="Proponer cambio de horario"
+        description="Elegí una nueva fecha y hora y explicá el motivo. El paciente decidirá si acepta o rechaza la propuesta."
+        onClose={closeProposalDialog}
+        footer={(
+          <>
+            <button
+              type="button"
+              className="text-button"
+              onClick={closeProposalDialog}
+              disabled={Boolean(busyAppointmentId)}
+            >
+              Volver
+            </button>
+            <button
+              type="submit"
+              form="doctor-proposal-appointment-form"
+              className="primary-button"
+              disabled={Boolean(busyAppointmentId)}
+            >
+              {busyAppointmentId ? "Enviando..." : "Enviar propuesta"}
+            </button>
+          </>
+        )}
+      >
+        <form
+          id="doctor-proposal-appointment-form"
+          className="stack-md"
+          onSubmit={handleProposalSubmit}
+        >
+          <label className="field">
+            <span className="field-label">Nueva fecha y hora</span>
+            <input
+              type="datetime-local"
+              step="900"
+              value={proposalDialog?.nextDateTime ?? ""}
+              onChange={(event) => updateProposalDialogField("nextDateTime", event.target.value)}
+              required
+            />
+          </label>
+
+          <label className="field">
+            <span className="field-label">Motivo</span>
+            <textarea
+              rows="4"
+              value={proposalDialog?.reason ?? ""}
+              onChange={(event) => updateProposalDialogField("reason", event.target.value)}
+              placeholder="Contanos por qué querés proponer este cambio"
+              required
+            />
+          </label>
+
+          {proposalDialog?.error ? (
+            <div className="alert alert-error">{proposalDialog.error}</div>
+          ) : null}
+        </form>
+      </Dialog>
 
       <Dialog
         isOpen={Boolean(cancelDialog)}

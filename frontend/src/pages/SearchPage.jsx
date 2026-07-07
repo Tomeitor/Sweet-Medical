@@ -17,6 +17,7 @@ import {
   markNotificationAsRead,
   notifyNotificationsChanged,
   rescheduleAppointmentByPatient,
+  respondToAppointmentProposal,
 } from "../services/api.js";
 import { buildCatalog } from "../utils/catalog.js";
 import { crearIdTurno } from "../utils/preseleccion.js";
@@ -241,6 +242,35 @@ export function SearchPage() {
       await markNotificationAsRead(user.username, getItemId(notification));
       await refreshNotifications();
       setNotificationMessage("Notificación marcada como leída.");
+      setNotificationMessageType("success");
+    } catch (error) {
+      setNotificationMessage(handleApiError(error));
+      setNotificationMessageType("error");
+    } finally {
+      setBusyNotificationId("");
+    }
+  }
+
+  async function handleProposalResponse(notification, accion) {
+    if (!user?.username || !notification?.meta?.turnoId) {
+      return;
+    }
+
+    try {
+      setBusyNotificationId(getItemId(notification));
+      setNotificationMessage("");
+      setNotificationMessageType("success");
+      await respondToAppointmentProposal(
+        notification.meta.turnoId,
+        getItemId(notification),
+        accion,
+      );
+      await Promise.all([refreshHistory(), refreshNotifications()]);
+      setNotificationMessage(
+        accion === "ACEPTAR"
+          ? "Propuesta aceptada. El turno fue actualizado."
+          : "Propuesta rechazada.",
+      );
       setNotificationMessageType("success");
     } catch (error) {
       setNotificationMessage(handleApiError(error));
@@ -570,19 +600,49 @@ export function SearchPage() {
                 <h3>No leídas</h3>
                 {unreadNotifications.length > 0 ? (
                   <div className="stack-md">
-                    {unreadNotifications.map((notification) => (
-                      <article key={getItemId(notification)} className="inline-card notification-row">
-                        <p>{notification.mensaje}</p>
-                        <button
-                          type="button"
-                          className="secondary-button"
-                          onClick={() => handleMarkNotificationAsRead(notification)}
-                          disabled={busyNotificationId === getItemId(notification)}
-                        >
-                          Marcar como leída
-                        </button>
-                      </article>
-                    ))}
+                    {unreadNotifications.map((notification) => {
+                      const isPendingProposal =
+                        notification?.meta?.tipo === "propuesta_cambio" &&
+                        notification?.meta?.estado === "PENDIENTE";
+
+                      return (
+                        <article key={getItemId(notification)} className="inline-card notification-row">
+                          <div className="stack-sm">
+                            <p>{notification.mensaje}</p>
+                            {isPendingProposal ? (
+                              <div className="appointment-actions">
+                                <button
+                                  type="button"
+                                  className="primary-button"
+                                  onClick={() => handleProposalResponse(notification, "ACEPTAR")}
+                                  disabled={busyNotificationId === getItemId(notification)}
+                                >
+                                  Aceptar cambio
+                                </button>
+                                <button
+                                  type="button"
+                                  className="secondary-button"
+                                  onClick={() => handleProposalResponse(notification, "RECHAZAR")}
+                                  disabled={busyNotificationId === getItemId(notification)}
+                                >
+                                  Rechazar cambio
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                          {!isPendingProposal ? (
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              onClick={() => handleMarkNotificationAsRead(notification)}
+                              disabled={busyNotificationId === getItemId(notification)}
+                            >
+                              Marcar como leída
+                            </button>
+                          ) : null}
+                        </article>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="muted-text">No hay notificaciones sin leer.</p>

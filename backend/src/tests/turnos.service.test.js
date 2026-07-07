@@ -1,4 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from "@jest/globals";
 import dayjs from "dayjs";
 
 import { TurnoService } from "../services/turnos.service.js";
@@ -78,7 +85,9 @@ beforeEach(() => {
     .spyOn(disponibilidadesRepository, "getByMedico")
     .mockResolvedValue(disponibilidadesMock);
   jest.spyOn(turnosRepository, "findByMedicoYFecha").mockResolvedValue(null);
-  jest.spyOn(notificacionRepository, "findByDestinatarioYMensaje").mockResolvedValue(null);
+  jest
+    .spyOn(notificacionRepository, "findByDestinatarioYMensaje")
+    .mockResolvedValue(null);
   jest.spyOn(notificacionRepository, "create").mockResolvedValue({});
 });
 
@@ -242,7 +251,9 @@ describe("TurnoService", () => {
       };
 
       medicoRepository.getById.mockResolvedValue(medicoDoc);
-      jest.spyOn(turnosRepository, "add").mockImplementation(async (turno) => turno);
+      jest
+        .spyOn(turnosRepository, "add")
+        .mockImplementation(async (turno) => turno);
 
       await service.darDeAlta(
         medicoDoc.id,
@@ -324,7 +335,9 @@ describe("TurnoService", () => {
         usuario: "paciente-1",
       });
 
-      const resultado = await service.getHistorialMedico("507f1f77bcf86cd799439011");
+      const resultado = await service.getHistorialMedico(
+        "507f1f77bcf86cd799439011",
+      );
 
       expect(resultado).toEqual([
         expect.objectContaining({
@@ -352,8 +365,13 @@ describe("TurnoService", () => {
       );
 
       jest.spyOn(turnosRepository, "findById").mockResolvedValue(turno);
-      jest.spyOn(turnosRepository, "update").mockImplementation(async (valor) => valor);
-      pacientesRepository.getById.mockResolvedValue({ id: "1", usuario: "paciente-1" });
+      jest
+        .spyOn(turnosRepository, "update")
+        .mockImplementation(async (valor) => valor);
+      pacientesRepository.getById.mockResolvedValue({
+        id: "1",
+        usuario: "paciente-1",
+      });
       medicoRepository.getById.mockResolvedValue({
         id: "507f1f77bcf86cd799439011",
         usuario: "medico-1",
@@ -383,14 +401,23 @@ describe("TurnoService", () => {
       );
 
       jest.spyOn(turnosRepository, "findById").mockResolvedValue(turno);
-      jest.spyOn(turnosRepository, "update").mockImplementation(async (valor) => valor);
-      pacientesRepository.getById.mockResolvedValue({ id: "1", usuario: "paciente-1" });
+      jest
+        .spyOn(turnosRepository, "update")
+        .mockImplementation(async (valor) => valor);
+      pacientesRepository.getById.mockResolvedValue({
+        id: "1",
+        usuario: "paciente-1",
+      });
       medicoRepository.getById.mockResolvedValue({
         id: "507f1f77bcf86cd799439011",
         usuario: "medico-1",
       });
 
-      await service.darDeBajaPorMedico(turno.id, "Urgencia personal", "507f1f77bcf86cd799439011");
+      await service.darDeBajaPorMedico(
+        turno.id,
+        "Urgencia personal",
+        "507f1f77bcf86cd799439011",
+      );
 
       expect(notificacionRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -405,7 +432,13 @@ describe("TurnoService", () => {
     it("tolera shapes legacy de medico y no revienta si un turno no tiene id valido", async () => {
       const service = new TurnoService();
       const medicoId = "507f1f77bcf86cd799439011";
-      const manana = dayjs().add(1, "day").hour(10).minute(0).second(0).millisecond(0).toDate();
+      const manana = dayjs()
+        .add(1, "day")
+        .hour(10)
+        .minute(0)
+        .second(0)
+        .millisecond(0)
+        .toDate();
 
       jest.spyOn(turnosRepository, "getAll").mockResolvedValue([
         {
@@ -450,6 +483,143 @@ describe("TurnoService", () => {
       );
       expect(notificacionRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({ destinatario: { id: "paciente-2" } }),
+      );
+    });
+  });
+
+  describe("propuesta de cambio (medico -> paciente)", () => {
+    it("proponerCambio debe crear una notificación con meta tipo propuesta_cambio", async () => {
+      const service = new TurnoService();
+      const fecha = obtenerProximoDia(2, 9, 0).toDate();
+      const turno = new Turno(
+        "turno-123",
+        "507f1f77bcf86cd799439011",
+        { id: "1" },
+        fecha,
+        "Sede Centro",
+        "Consulta",
+        15000,
+      );
+
+      jest.spyOn(turnosRepository, "findById").mockResolvedValue(turno);
+      jest
+        .spyOn(turnosRepository, "findByMedicoYFecha")
+        .mockResolvedValue(null);
+      jest.spyOn(turnosRepository, "update").mockImplementation(async (t) => t);
+
+      pacientesRepository.getById.mockResolvedValue({
+        id: "1",
+        usuario: "paciente-1",
+      });
+      medicoRepository.getById.mockResolvedValue({
+        id: "507f1f77bcf86cd799439011",
+        usuario: "medico-1",
+      });
+
+      const crearSpy = jest.spyOn(notificacionRepository, "create");
+
+      await expect(
+        service.proponerCambio(
+          turno.id,
+          obtenerProximoDia(3, 8, 0).toDate(),
+          "Necesario reasignar",
+          "507f1f77bcf86cd799439011",
+        ),
+      ).resolves.toEqual(expect.any(Object));
+
+      expect(crearSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          destinatario: { id: "paciente-1" },
+          meta: expect.objectContaining({
+            tipo: "propuesta_cambio",
+            turnoId: String(turno.id),
+          }),
+        }),
+      );
+    });
+
+    it("responderPropuesta ACEPTAR debe aplicar el cambio y notificar al medico", async () => {
+      const service = new TurnoService();
+      const fecha = obtenerProximoDia(2, 9, 0).toDate();
+      const turno = new Turno(
+        "turno-999",
+        "507f1f77bcf86cd799439011",
+        { id: "1" },
+        fecha,
+        "Sede Centro",
+        "Consulta",
+        15000,
+      );
+
+      const fechaPropuesta = obtenerProximoDia(4, 8, 0).toDate();
+
+      const meta = {
+        tipo: "propuesta_cambio",
+        turnoId: String(turno.id),
+        fechaHoraPropuesta: fechaPropuesta,
+        motivo: "Cambio por agenda",
+        estado: "PENDIENTE",
+      };
+
+      // Simular instancia con métodos de dominio
+      const notificacionFake = {
+        id: "notif-1",
+        destinatario: { id: "paciente-1" },
+        remitente: { id: "medico-1" },
+        mensaje: "Propuesta",
+        fechaHoraCreacion: new Date(),
+        leida: false,
+        fechaHoraLeida: null,
+        meta,
+        actualizarMeta(newMeta) {
+          this.meta = newMeta;
+        },
+        marcarComoLeida() {
+          this.leida = true;
+          this.fechaHoraLeida = new Date();
+        },
+      };
+
+      jest
+        .spyOn(notificacionRepository, "findById")
+        .mockResolvedValue(notificacionFake);
+      jest.spyOn(turnosRepository, "findById").mockResolvedValue(turno);
+      jest
+        .spyOn(turnosRepository, "findByMedicoYFecha")
+        .mockResolvedValue(null);
+      jest.spyOn(turnosRepository, "update").mockImplementation(async (t) => t);
+      jest
+        .spyOn(notificacionRepository, "update")
+        .mockImplementation(async (n) => n);
+
+      pacientesRepository.getById.mockResolvedValue({
+        id: "1",
+        usuario: "paciente-1",
+      });
+      medicoRepository.getById.mockResolvedValue({
+        id: "507f1f77bcf86cd799439011",
+        usuario: "medico-1",
+      });
+
+      const crearSpy = jest.spyOn(notificacionRepository, "create");
+
+      const resultado = await service.responderPropuesta(
+        notificacionFake.id,
+        "ACEPTAR",
+        "paciente-1",
+      );
+
+      expect(resultado).toEqual(
+        expect.objectContaining({
+          id: expect.anything(),
+          fechaHora: expect.any(String),
+        }),
+      );
+      expect(crearSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          destinatario: { id: "medico-1" },
+          mensaje: expect.stringContaining("El paciente aceptó el cambio"),
+        }),
       );
     });
   });

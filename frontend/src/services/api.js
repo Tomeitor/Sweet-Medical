@@ -82,6 +82,16 @@ export async function rescheduleAppointmentByPatient(id, fechaHora, motivo) {
   return response.data
 }
 
+export async function proposeAppointmentChange(id, fechaHora, motivo) {
+  const response = await api.patch(`/turnos/${id}/proponer-cambio`, { fechaHora, motivo })
+  return response.data
+}
+
+export async function respondToAppointmentProposal(id, notificacionId, accion) {
+  const response = await api.patch(`/turnos/${id}/propuesta/responder`, { notificacionId, accion })
+  return response.data
+}
+
 export async function acceptAppointment(id) {
   const response = await api.patch(`/turnos/${id}/aceptar`, {})
   return response.data

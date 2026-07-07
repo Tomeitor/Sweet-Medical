@@ -542,7 +542,7 @@ export class TurnoService {
       `El médico propone cambiar tu turno del ${this.formatearFechaArgentina(turno.fechaHora)} al ${this.formatearFechaArgentina(fechaTurnoNueva)}.` +
       this.construirSufijoMotivoNotificacion(motivo);
 
-    await notificacionRepository.create({
+    const notificacionCreada = await notificacionRepository.create({
       destinatario: { id: pacienteUsuario },
       remitente: { id: await this.obtenerUsuarioMedicoTurno(turno) },
       mensaje,
@@ -558,7 +558,7 @@ export class TurnoService {
       },
     });
 
-    return { message: "Propuesta de cambio enviada al paciente" };
+    return notificacionCreada;
   }
 
   async responderPropuesta(notificacionId, accion, usuarioId) {
