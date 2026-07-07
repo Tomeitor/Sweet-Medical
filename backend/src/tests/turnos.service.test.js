@@ -428,6 +428,67 @@ describe("TurnoService", () => {
     });
   });
 
+  describe("marcar como realizado", () => {
+    it("debe marcar como realizado un turno confirmado en el pasado", async () => {
+      const service = new TurnoService();
+      const fechaPasada = dayjs().subtract(2, "day").toDate();
+      const turno = new Turno(
+        "507f1f77bcf86cd799439111",
+        "507f1f77bcf86cd799439011",
+        { id: "1" },
+        fechaPasada,
+        "Sede Centro",
+        "Consulta",
+        15000,
+      );
+      turno.estado = EstadoTurno.CONFIRMADO;
+
+      jest.spyOn(turnosRepository, "findById").mockResolvedValue(turno);
+      jest
+        .spyOn(turnosRepository, "update")
+        .mockImplementation(async (valor) => valor);
+
+      const resultado = await service.marcarComoRealizado(
+        turno.id,
+        "507f1f77bcf86cd799439011",
+      );
+
+      expect(resultado).toEqual(
+        expect.objectContaining({
+          id: turno.id,
+          estado: EstadoTurno.REALIZADO,
+        }),
+      );
+      expect(turnosRepository.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: turno.id,
+          estado: EstadoTurno.REALIZADO,
+        }),
+      );
+    });
+
+    it("debe lanzar TurnoFuturoError si el turno está en el futuro", async () => {
+      const service = new TurnoService();
+      const fechaFutura = dayjs().add(1, "day").toDate();
+      const turno = new Turno(
+        "507f1f77bcf86cd799439112",
+        "507f1f77bcf86cd799439011",
+        { id: "1" },
+        fechaFutura,
+        "Sede Centro",
+        "Consulta",
+        15000,
+      );
+      turno.estado = EstadoTurno.CONFIRMADO;
+
+      jest.spyOn(turnosRepository, "findById").mockResolvedValue(turno);
+
+      await expect(
+        service.marcarComoRealizado(turno.id, "507f1f77bcf86cd799439011"),
+      ).rejects.toThrow("No se puede marcar como realizado un turno futuro");
+    });
+  });
+
   describe("generarRecordatoriosTurnosDelDiaSiguiente", () => {
     it("tolera shapes legacy de medico y no revienta si un turno no tiene id valido", async () => {
       const service = new TurnoService();

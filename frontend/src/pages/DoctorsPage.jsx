@@ -130,6 +130,7 @@ export function DoctorsPage() {
   const [busyAppointmentId, setBusyAppointmentId] = useState("");
   const [cancelDialog, setCancelDialog] = useState(null);
   const [proposalDialog, setProposalDialog] = useState(null);
+  const [completeConfirmDialog, setCompleteConfirmDialog] = useState(null);
   const [patientHistorySelection, setPatientHistorySelection] = useState("");
   const [patientHistory, setPatientHistory] = useState([]);
   const [patientHistoryMessage, setPatientHistoryMessage] = useState("");
@@ -402,6 +403,20 @@ export function DoctorsPage() {
     });
   }
 
+  function openCompleteConfirmDialog(appointmentId) {
+    setAppointmentMessage("");
+    setAppointmentMessageType("success");
+    setCompleteConfirmDialog({ appointmentId, error: "" });
+  }
+
+  function closeCompleteConfirmDialog() {
+    if (busyAppointmentId) {
+      return;
+    }
+
+    setCompleteConfirmDialog(null);
+  }
+
   function openProposalDialog(appointment) {
     setAppointmentMessage("");
     setAppointmentMessageType("success");
@@ -455,6 +470,34 @@ export function DoctorsPage() {
     } catch (error) {
       setAppointmentMessage(handleApiError(error));
       setAppointmentMessageType("error");
+    } finally {
+      setBusyAppointmentId("");
+    }
+  }
+
+  async function handleCompleteConfirmSubmit(event) {
+    event.preventDefault();
+
+    if (!completeConfirmDialog) {
+      return;
+    }
+
+    try {
+      setBusyAppointmentId(`complete:${completeConfirmDialog.appointmentId}`);
+      setAppointmentMessage("");
+      setAppointmentMessageType("success");
+      await markAppointmentAsCompleted(completeConfirmDialog.appointmentId);
+      await refreshDetails();
+      setAppointmentMessage("Turno marcado como realizado.");
+      setAppointmentMessageType("success");
+      setCompleteConfirmDialog(null);
+    } catch (error) {
+      const message = handleApiError(error);
+      setAppointmentMessage(message);
+      setAppointmentMessageType("error");
+      setCompleteConfirmDialog((current) =>
+        current ? { ...current, error: message } : current,
+      );
     } finally {
       setBusyAppointmentId("");
     }
@@ -906,17 +949,14 @@ export function DoctorsPage() {
                                 type="button"
                                 className="secondary-button"
                                 onClick={() =>
-                                  handleAppointmentAction(
-                                    appointmentId,
-                                    "complete",
-                                  )
+                                  openCompleteConfirmDialog(appointmentId)
                                 }
                                 disabled={
                                   busyAppointmentId ===
                                     `complete:${appointmentId}` || !isPast
                                 }
                               >
-                                Completar
+                                Marcar como realizado
                               </button>
                               <button
                                 type="button"
@@ -1115,6 +1155,45 @@ export function DoctorsPage() {
           </div>
         </article>
       </section>
+
+      <Dialog
+        isOpen={Boolean(completeConfirmDialog)}
+        title="Confirmar turno realizado"
+        description="¿Confirmás que este turno ya fue atendido y se debe marcar como realizado?"
+        onClose={closeCompleteConfirmDialog}
+        footer={
+          <>
+            <button
+              type="button"
+              className="text-button"
+              onClick={closeCompleteConfirmDialog}
+              disabled={Boolean(busyAppointmentId)}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="complete-appointment-confirm-form"
+              className="primary-button"
+              disabled={Boolean(busyAppointmentId)}
+            >
+              {busyAppointmentId ? "Guardando..." : "Confirmar"}
+            </button>
+          </>
+        }
+      >
+        <form
+          id="complete-appointment-confirm-form"
+          className="stack-md"
+          onSubmit={handleCompleteConfirmSubmit}
+        >
+          {completeConfirmDialog?.error ? (
+            <div className="alert alert-error">
+              {completeConfirmDialog.error}
+            </div>
+          ) : null}
+        </form>
+      </Dialog>
 
       <Dialog
         isOpen={Boolean(proposalDialog)}
