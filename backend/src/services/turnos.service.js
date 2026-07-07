@@ -127,12 +127,29 @@ export class TurnoService {
   }
 
   async enriquecerTurnosConNombres(turnos) {
-    const idsMedicos = [...new Set(turnos.map((turno) => this.obtenerMedicoIdTurno(turno)).filter(Boolean))];
-    const idsPacientes = [...new Set(turnos.map((turno) => this.obtenerPacienteIdTurno(turno)).filter(Boolean))];
+    const idsMedicos = [
+      ...new Set(
+        turnos.map((turno) => this.obtenerMedicoIdTurno(turno)).filter(Boolean),
+      ),
+    ];
+    const idsPacientes = [
+      ...new Set(
+        turnos
+          .map((turno) => this.obtenerPacienteIdTurno(turno))
+          .filter(Boolean),
+      ),
+    ];
 
     const [medicos, pacientes] = await Promise.all([
-      Promise.all(idsMedicos.map(async (id) => [id, await medicoRepository.getById(id)])),
-      Promise.all(idsPacientes.map(async (id) => [id, await pacientesRepository.getById(id)])),
+      Promise.all(
+        idsMedicos.map(async (id) => [id, await medicoRepository.getById(id)]),
+      ),
+      Promise.all(
+        idsPacientes.map(async (id) => [
+          id,
+          await pacientesRepository.getById(id),
+        ]),
+      ),
     ]);
 
     const medicosPorId = new Map(medicos);
@@ -183,8 +200,7 @@ export class TurnoService {
     }
 
     return (
-      OBJECT_ID_REGEX.test(id) ||
-      (!Number.isNaN(Number(id)) && Number(id) > 0)
+      OBJECT_ID_REGEX.test(id) || (!Number.isNaN(Number(id)) && Number(id) > 0)
     );
   }
 
@@ -332,7 +348,10 @@ export class TurnoService {
       throw new NotFoundError("El turno que querés cancelar no existe");
     }
 
-    if (pacienteId !== undefined && String(pacienteId) !== this.obtenerPacienteIdTurno(turno)) {
+    if (
+      pacienteId !== undefined &&
+      String(pacienteId) !== this.obtenerPacienteIdTurno(turno)
+    ) {
       throw new ForbiddenError("No podés cancelar un turno que no es tuyo");
     }
 
@@ -355,7 +374,10 @@ export class TurnoService {
       throw new NotFoundError("El turno que querés cancelar no existe");
     }
 
-    if (medicoId !== undefined && String(medicoId) !== this.obtenerMedicoIdTurno(turno)) {
+    if (
+      medicoId !== undefined &&
+      String(medicoId) !== this.obtenerMedicoIdTurno(turno)
+    ) {
       throw new ForbiddenError("No podés cancelar un turno que no es tuyo");
     }
 
@@ -378,7 +400,10 @@ export class TurnoService {
       throw new NotFoundError("El turno no existe");
     }
 
-    if (medicoId !== undefined && String(medicoId) !== this.obtenerMedicoIdTurno(turno)) {
+    if (
+      medicoId !== undefined &&
+      String(medicoId) !== this.obtenerMedicoIdTurno(turno)
+    ) {
       throw new ForbiddenError("No podés aceptar un turno que no es tuyo");
     }
 
@@ -403,7 +428,10 @@ export class TurnoService {
       throw new NotFoundError("El turno no existe");
     }
 
-    if (medicoId !== undefined && String(medicoId) !== this.obtenerMedicoIdTurno(turno)) {
+    if (
+      medicoId !== undefined &&
+      String(medicoId) !== this.obtenerMedicoIdTurno(turno)
+    ) {
       throw new ForbiddenError("No podés rechazar un turno que no es tuyo");
     }
 
@@ -424,7 +452,10 @@ export class TurnoService {
     }
 
     const fechaTurnoNueva = new Date(nuevaFechaHora);
-    if (pacienteId !== undefined && String(pacienteId) !== this.obtenerPacienteIdTurno(turno)) {
+    if (
+      pacienteId !== undefined &&
+      String(pacienteId) !== this.obtenerPacienteIdTurno(turno)
+    ) {
       throw new ForbiddenError("No podés cambiar un turno que no es tuyo");
     }
 
@@ -461,8 +492,155 @@ export class TurnoService {
     return this.normalizarTurnoParaRespuesta(turnoActualizado);
   }
 
+  async proponerCambio(turnoId, nuevaFechaHora, motivo, medicoId) {
+    const turno = await turnosRepository.findById(turnoId);
+    if (!turno) {
+      throw new NotFoundError("El turno que querés modificar no existe");
+    }
+
+    if (
+      medicoId !== undefined &&
+      String(medicoId) !== this.obtenerMedicoIdTurno(turno)
+    ) {
+      throw new ForbiddenError(
+        "No podés proponer cambios para un turno que no es tuyo",
+      );
+    }
+
+    this.validarTurnoPuedeModificarse(turno, "proponer cambio");
+
+    const fechaTurnoNueva = new Date(nuevaFechaHora);
+
+    if (!dayjs(fechaTurnoNueva).isAfter(dayjs())) {
+      throw new ConflictError("No se puede proponer un turno en el pasado");
+    }
+
+    if (!this.esHorarioValidoParaTurno(fechaTurnoNueva)) {
+      throw new ConflictError(
+        "Los turnos solo pueden ser a horarios en punto, y 15, y 30 o y 45",
+      );
+    }
+
+    const medicoIdTurno = this.obtenerMedicoIdTurno(turno);
+
+    const atiende = await this.validarAgendaMedico(
+      medicoIdTurno,
+      fechaTurnoNueva,
+    );
+    if (!atiende)
+      throw new ConflictError("El médico no atiende en ese horario");
+
+    const ocupado = await turnosRepository.findByMedicoYFecha(
+      medicoIdTurno,
+      fechaTurnoNueva,
+    );
+    if (ocupado) throw new ConflictError("Horario ya reservado");
+
+    // Crear notificación para el paciente con la propuesta
+    const pacienteUsuario = await this.obtenerUsuarioPacienteTurno(turno);
+    const mensaje =
+      `El médico propone cambiar tu turno del ${this.formatearFechaArgentina(turno.fechaHora)} al ${this.formatearFechaArgentina(fechaTurnoNueva)}.` +
+      this.construirSufijoMotivoNotificacion(motivo);
+
+    const notificacionCreada = await notificacionRepository.create({
+      destinatario: { id: pacienteUsuario },
+      remitente: { id: await this.obtenerUsuarioMedicoTurno(turno) },
+      mensaje,
+      fechaHoraCreacion: new Date(),
+      leida: false,
+      fechaHoraLeida: null,
+      meta: {
+        tipo: "propuesta_cambio",
+        turnoId: String(turno.id ?? turno._id),
+        fechaHoraPropuesta: fechaTurnoNueva,
+        motivo: motivo,
+        estado: "PENDIENTE",
+      },
+    });
+
+    return notificacionCreada;
+  }
+
+  async responderPropuesta(notificacionId, accion, usuarioId) {
+    const notificacion = await notificacionRepository.findById(notificacionId);
+    if (!notificacion) throw new NotFoundError("Notificación no encontrada");
+
+    if (String(notificacion.destinatario?.id) !== String(usuarioId)) {
+      throw new ForbiddenError(
+        "No podés responder una notificación que no es tuya",
+      );
+    }
+
+    const meta = notificacion.meta || {};
+    if (meta.tipo !== "propuesta_cambio") {
+      throw new BadRequestError(
+        "La notificación no corresponde a una propuesta de cambio",
+      );
+    }
+
+    if (meta.estado !== "PENDIENTE") {
+      throw new ConflictError("La propuesta ya fue respondida");
+    }
+
+    const turno = await turnosRepository.findById(meta.turnoId);
+    if (!turno) throw new NotFoundError("Turno asociado no encontrado");
+
+    if (accion === "ACEPTAR") {
+      // volver a verificar disponibilidad
+      const fechaNueva = new Date(meta.fechaHoraPropuesta);
+      const medicoIdTurno = this.obtenerMedicoIdTurno(turno);
+      const ocupado = await turnosRepository.findByMedicoYFecha(
+        medicoIdTurno,
+        fechaNueva,
+      );
+      if (ocupado) throw new ConflictError("Horario ya reservado");
+
+      turno.cambiarFechaHora(
+        fechaNueva,
+        "PACIENTE",
+        `Aceptó propuesta. ${meta.motivo ?? ""}`,
+      );
+      const turnoActualizado = await turnosRepository.update(turno);
+
+      // actualizar notificacion meta
+      meta.estado = "ACEPTADA";
+      notificacion.actualizarMeta(meta);
+      notificacion.marcarComoLeida();
+      await notificacionRepository.update(notificacion);
+
+      // notificar al medico
+      await this.crearNotificacionParaUsuario(
+        await this.obtenerUsuarioMedicoTurno(turnoActualizado),
+        `El paciente aceptó el cambio del turno al ${this.formatearFechaArgentina(turnoActualizado.fechaHora)}.`,
+      );
+
+      return this.normalizarTurnoParaRespuesta(turnoActualizado);
+    } else if (accion === "RECHAZAR") {
+      meta.estado = "RECHAZADA";
+      notificacion.actualizarMeta(meta);
+      notificacion.marcarComoLeida();
+      await notificacionRepository.update(notificacion);
+
+      // notificar al medico
+      await this.crearNotificacionParaUsuario(
+        await this.obtenerUsuarioMedicoTurno(turno),
+        `El paciente rechazó la propuesta de cambio para el turno del ${this.formatearFechaArgentina(turno.fechaHora)}.`,
+      );
+
+      return { message: "Propuesta rechazada" };
+    } else {
+      throw new BadRequestError("Acción inválida. Debe ser ACEPTAR o RECHAZAR");
+    }
+  }
+
   validarTurnoPuedeModificarse(turno, accion) {
-    if ([EstadoTurno.CANCELADO, EstadoTurno.REALIZADO, EstadoTurno.RECHAZADO].includes(turno.estado)) {
+    if (
+      [
+        EstadoTurno.CANCELADO,
+        EstadoTurno.REALIZADO,
+        EstadoTurno.RECHAZADO,
+      ].includes(turno.estado)
+    ) {
       throw new ConflictError(
         `No se puede ${accion}: el turno ya no se puede modificar`,
       );
@@ -485,8 +663,13 @@ export class TurnoService {
       throw new NotFoundError("El turno no existe");
     }
 
-    if (medicoId !== undefined && String(medicoId) !== this.obtenerMedicoIdTurno(turno)) {
-      throw new ForbiddenError("No podés marcar como realizado un turno de otro médico");
+    if (
+      medicoId !== undefined &&
+      String(medicoId) !== this.obtenerMedicoIdTurno(turno)
+    ) {
+      throw new ForbiddenError(
+        "No podés marcar como realizado un turno de otro médico",
+      );
     }
 
     if (turno.estado === EstadoTurno.REALIZADO) {
@@ -494,7 +677,9 @@ export class TurnoService {
     }
 
     if (turno.estado !== EstadoTurno.CONFIRMADO) {
-      throw new ConflictError("Solo se puede marcar como realizado un turno confirmado");
+      throw new ConflictError(
+        "Solo se puede marcar como realizado un turno confirmado",
+      );
     }
 
     if (dayjs(turno.fechaHora).isAfter(dayjs())) {
@@ -547,7 +732,9 @@ export class TurnoService {
     const turnos = await turnosRepository.getAll();
 
     const turnosDelDiaSiguiente = turnos.filter((turno) => {
-      if (![EstadoTurno.RESERVADO, EstadoTurno.CONFIRMADO].includes(turno.estado)) {
+      if (
+        ![EstadoTurno.RESERVADO, EstadoTurno.CONFIRMADO].includes(turno.estado)
+      ) {
         return false;
       }
 

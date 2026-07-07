@@ -94,7 +94,9 @@ export class TurnosController {
       const pacienteId = req.auth?.profileId;
 
       if (!pacienteId) {
-        throw new BadRequestError("Debes iniciar sesión como paciente para reservar un turno");
+        throw new BadRequestError(
+          "Debes iniciar sesión como paciente para reservar un turno",
+        );
       }
 
       const nuevoTurno = await service.darDeAlta(
@@ -131,7 +133,11 @@ export class TurnosController {
       const { id } = req.params;
       const datosValidados = cancelarTurnoSchema.parse(req.body);
 
-      await service.darDeBajaPorMedico(id, datosValidados.motivo, req.auth?.profileId);
+      await service.darDeBajaPorMedico(
+        id,
+        datosValidados.motivo,
+        req.auth?.profileId,
+      );
 
       res.status(200).json({ message: "Turno cancelado con éxito" });
     } catch (error) {
@@ -145,16 +151,17 @@ export class TurnosController {
       const pacienteIdAutorizado = req.auth?.profileId;
 
       if (!pacienteIdAutorizado) {
-        throw new BadRequestError("Debes iniciar sesión como paciente para ver tu historial");
+        throw new BadRequestError(
+          "Debes iniciar sesión como paciente para ver tu historial",
+        );
       }
 
       if (String(datosValidados.pacienteId) !== String(pacienteIdAutorizado)) {
         throw new ForbiddenError("No podés ver el historial de otro paciente");
       }
 
-      const historial = await service.getHistorialPaciente(
-        pacienteIdAutorizado,
-      );
+      const historial =
+        await service.getHistorialPaciente(pacienteIdAutorizado);
 
       res.status(200).json(historial);
     } catch (error) {
@@ -166,7 +173,9 @@ export class TurnosController {
     try {
       const datosValidados = historialPacienteParamsSchema.parse(req.params);
 
-      const historial = await service.getHistorialPaciente(datosValidados.pacienteId);
+      const historial = await service.getHistorialPaciente(
+        datosValidados.pacienteId,
+      );
 
       res.status(200).json(historial);
     } catch (error) {
@@ -182,7 +191,9 @@ export class TurnosController {
         throw new ForbiddenError("No podés ver el historial de otro médico");
       }
 
-      const historial = await service.getHistorialMedico(datosValidados.medicoId);
+      const historial = await service.getHistorialMedico(
+        datosValidados.medicoId,
+      );
 
       res.status(200).json(historial);
     } catch (error) {
@@ -202,6 +213,47 @@ export class TurnosController {
       );
 
       res.status(200).json(turno);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async proponerCambio(req, res, next) {
+    try {
+      const { id } = req.params;
+      const datosValidados = cambiarTurnoSchema.parse(req.body);
+
+      const resultado = await service.proponerCambio(
+        id,
+        datosValidados.fechaHora,
+        datosValidados.motivo,
+        req.auth?.profileId,
+      );
+
+      res.status(200).json(resultado);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async responderPropuesta(req, res, next) {
+    try {
+      const { id } = req.params; // id del turno (no estrictamente necesario)
+      const { notificacionId, accion } = req.body;
+
+      if (!notificacionId || !accion) {
+        throw new BadRequestError("Faltan parámetros: notificacionId y accion");
+      }
+
+      const usuarioId = req.auth?.username;
+
+      const resultado = await service.responderPropuesta(
+        notificacionId,
+        accion.toUpperCase(),
+        usuarioId,
+      );
+
+      res.status(200).json(resultado);
     } catch (error) {
       next(error);
     }
@@ -243,10 +295,13 @@ export class TurnosController {
   async disponibles(req, res, next) {
     try {
       const filtros = turnosDisponiblesQuerySchema.parse(req.query);
-      const pacienteId = req.auth?.role === 'PACIENTE' ? req.auth.profileId : null;
+      const pacienteId =
+        req.auth?.role === "PACIENTE" ? req.auth.profileId : null;
 
       if (!pacienteId) {
-        throw new BadRequestError("Debes iniciar sesión como paciente para ver los turnos disponibles");
+        throw new BadRequestError(
+          "Debes iniciar sesión como paciente para ver los turnos disponibles",
+        );
       }
 
       const turnosDisponibles = await service.getTurnosDisponibles({

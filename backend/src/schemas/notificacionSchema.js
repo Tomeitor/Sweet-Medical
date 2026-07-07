@@ -1,34 +1,45 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 import { Notificacion } from "../domain/Notificacion.js";
 
-const notificacionSchema = new mongoose.Schema({
+const notificacionSchema = new mongoose.Schema(
+  {
     destinatario: {
-        id: String
+      id: String,
     },
     remitente: {
-        id: String
+      id: String,
     },
     mensaje: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
+    },
+    meta: {
+      type: Object,
+      default: null,
     },
     fechaHoraCreacion: {
-        type: Date,
-        required: true
+      type: Date,
+      required: true,
     },
     fechaHoraLeida: {
-        type: Date,
-        default: null
+      type: Date,
+      default: null,
     },
     leida: {
-        type: Boolean
-    }
-},{
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
     timestamps: true,
     //versionKey: false,
-    collection: 'notificaciones'
-});
+    collection: "notificaciones",
+  },
+);
 
 notificacionSchema.loadClass(Notificacion);
 
-export const NotificacionModel = mongoose.model('Notificacion', notificacionSchema);
+export const NotificacionModel = mongoose.model(
+  "Notificacion",
+  notificacionSchema,
+);
