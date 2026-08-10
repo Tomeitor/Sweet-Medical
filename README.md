@@ -146,7 +146,44 @@ GET http://localhost:3000/docs
 
 > El frontend también expone funcionalidades como agenda de pacientes, historial de turnos, propuestas de cambios y notificaciones.
 
-## 🧪 Pruebas
+## � Guía de uso básica
+
+1. Inicia el backend y el frontend siguiendo los pasos anteriores.
+2. Abre la aplicación en el navegador.
+3. Selecciona el rol de usuario para ingresar como médico o paciente.
+4. Usa las credenciales demo para iniciar sesión.
+5. Explora las funcionalidades:
+   - Ver médicos y disponibilidad.
+   - Reservar y cancelar turnos.
+   - Ver historial de turnos de paciente o médico.
+   - Proponer cambios y responder notificaciones.
+
+### Usuarios demo
+
+El seed de datos incluye usuarios de ejemplo con la contraseña común:
+
+- Contraseña: `Demo123!`
+
+Usuarios de médicos:
+
+- `ana.gomez`
+- `juan.martinez`
+- `carlos.lopez`
+- `maria.rodriguez`
+- `pedro.sanchez`
+- `lucia.garcia`
+
+Usuarios de pacientes:
+
+- `juan.perez`
+- `maria.lopez`
+- `lucas.fernandez`
+- `sofia.navarro`
+- `martin.suarez`
+
+> Incluir estas credenciales en el README es aceptable cuando son cuentas de prueba creadas específicamente para la demostración. No uses datos sensibles o reales.
+
+## �🧪 Pruebas
 
 El backend incluye tests con Jest.
 
@@ -199,4 +236,3 @@ El backend está organizado en capas:
 - Documentación API: `http://localhost:3000/docs`
 - Código fuente backend: `backend/`
 - Código fuente frontend: `frontend/`
-
