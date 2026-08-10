@@ -184,7 +184,7 @@ El backend está organizado en capas:
 - `middlewares`: manejo de errores, autenticación y logging
 - `schemas`: validación de datos de entrada con Zod
 
-## 🎯 Qué se puede mostrar en el portfolio
+## 🎯 Qué se puede mostrar en el proyecto
 
 - Integración de frontend y backend
 - Autenticación JWT y manejo de sesiones
