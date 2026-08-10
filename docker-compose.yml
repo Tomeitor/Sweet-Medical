@@ -1,0 +1,43 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: sweet-medical-db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: backend-grupo-02
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sweet-medical-backend
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      PATH_APP: /api/v1
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB_NAME: backend-grupo-02
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:3000/api/v1
+    container_name: sweet-medical-frontend
+    ports:
+      - "5151:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
